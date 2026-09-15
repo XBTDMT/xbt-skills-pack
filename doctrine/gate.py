@@ -39,7 +39,8 @@ def process_model(pid):
         return ""
     import subprocess
     try:
-        args = subprocess.run(["ps", "-o", "args=", "-p", str(pid)], capture_output=True, text=True).stdout.split()
+        args = subprocess.run(["ps", "-o", "args=", "-p", str(pid)], capture_output=True, encoding="utf-8",
+                              errors="replace").stdout.split()
     except OSError:
         return ""
     model = ""
@@ -78,13 +79,13 @@ def daemon_model(data):
     """A background session's model from Claude Code's own records. Internal files, read only; anything missing or in
     another shape returns "" and the next source is tried."""
     try:
-        return flag_model(json.loads((Path(os.environ["CLAUDE_JOB_DIR"]) / "state.json").read_text()).get("respawnFlags") or [])
+        return flag_model(json.loads((Path(os.environ["CLAUDE_JOB_DIR"]) / "state.json").read_text(encoding="utf-8")).get("respawnFlags") or [])
     except (KeyError, OSError, ValueError, AttributeError):
         pass
     pid = os.environ.get("CLAUDE_PID", "")
     sid = data.get("session_id") if isinstance(data, dict) else None
     try:
-        workers = json.loads((config_dir() / "daemon" / "roster.json").read_text()).get("workers") or []
+        workers = json.loads((config_dir() / "daemon" / "roster.json").read_text(encoding="utf-8")).get("workers") or []
     except (OSError, ValueError, AttributeError):
         return ""
     for w in (workers.values() if isinstance(workers, dict) else workers):

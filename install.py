@@ -182,6 +182,10 @@ class Installer:
         # UTF-8; an existing one keeps the encoding it had, because adding or dropping a BOM rewrites how every
         # accented character already in it is read.
         encoding = "utf-8-sig" if raw is None or raw.startswith(b"\xef\xbb\xbf") else "utf-8"
+        # Decoding bytes leaves CRLF standing, so compare in LF and put the file's own ending back on write:
+        # otherwise a CRLF profile never equals the LF block below and every run rewrites (and backs up) the profile.
+        newline = "\r\n" if "\r\n" in text else ("\n" if raw is not None else None)  # a new file: the platform's own
+        text = text.replace("\r\n", "\n")
         new = replace_block(text, block)
         if new == text:
             self.say(f"  same    {path}")
@@ -190,7 +194,8 @@ class Installer:
         self.say(f"  write   {path}")
         if not self.dry:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(new, encoding=encoding)
+            with open(path, "w", encoding=encoding, newline=newline) as fh:  # newline=: 3.9 has no Path kwarg
+                fh.write(new)
 
 
 def same_tree(a, b):

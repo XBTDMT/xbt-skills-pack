@@ -17,7 +17,7 @@ import install  # noqa: E402
 FAKE_CLAUDE = """#!{python}
 import json, os, sys
 log = os.environ["FAKE_CLAUDE_LOG"]
-with open(log, "a") as fh:
+with open(log, "a", encoding="utf-8") as fh:
     fh.write(json.dumps(sys.argv[1:]) + "\\n")
 args = sys.argv[1:]
 fail = os.environ.get("FAKE_CLAUDE_FAIL", "")
@@ -41,11 +41,11 @@ class InstallRun(unittest.TestCase):
         # On Windows `shutil.which("claude")` only considers PATHEXT names, so the fake is a .bat that runs the script.
         if os.name == "nt":
             script = bin_dir / "fake_claude.py"
-            script.write_text(FAKE_CLAUDE.format(python=sys.executable))
-            (bin_dir / "claude.bat").write_text(f'@echo off\r\n"{sys.executable}" "{script}" %*\r\n')
+            script.write_text(FAKE_CLAUDE.format(python=sys.executable), encoding="utf-8")
+            (bin_dir / "claude.bat").write_text(f'@echo off\r\n"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
         else:
             fake = bin_dir / "claude"
-            fake.write_text(FAKE_CLAUDE.format(python=sys.executable))
+            fake.write_text(FAKE_CLAUDE.format(python=sys.executable), encoding="utf-8")
             fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
         self.log = self.root / "calls.jsonl"
         env = {"PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}", "FAKE_CLAUDE_LOG": str(self.log)}
@@ -60,7 +60,7 @@ class InstallRun(unittest.TestCase):
         return code, out.getvalue()
 
     def calls(self):
-        return [json.loads(l) for l in self.log.read_text().splitlines()] if self.log.exists() else []
+        return [json.loads(l) for l in self.log.read_text(encoding="utf-8").splitlines()] if self.log.exists() else []
 
     def test_a_default_install_is_the_skills_and_the_end_of_turn_check(self):
         code, out = self.install()
@@ -68,7 +68,7 @@ class InstallRun(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in self.claude_dir.iterdir()), ["settings.json", "skills"])
         self.assertEqual(sorted(p.name for p in (self.claude_dir / "skills").iterdir()), sorted(install.SKILLS))
         self.assertIn("greenman", install.SKILLS)
-        settings = json.loads((self.claude_dir / "settings.json").read_text())
+        settings = json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))
         self.assertEqual(settings["hooks"], {"Stop": [{"hooks": [{"type": "command", "command": sys.executable,
             "args": [str(self.claude_dir / "skills" / "doc-guardrails" / "turn_check.py")], "timeout": 30}]}]})
         self.assertFalse(self.profile.exists())
@@ -82,10 +82,10 @@ class InstallRun(unittest.TestCase):
     def test_the_turn_check_is_registered_once_keeps_other_stop_hooks_and_runs(self):
         self.claude_dir.mkdir(parents=True)
         (self.claude_dir / "settings.json").write_text(json.dumps(
-            {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "stop.cmd"}]}]}}))
+            {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "stop.cmd"}]}]}}), encoding="utf-8")
         self.install()
         self.install()
-        stop = [h for g in json.loads((self.claude_dir / "settings.json").read_text())["hooks"]["Stop"] for h in g["hooks"]]
+        stop = [h for g in json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))["hooks"]["Stop"] for h in g["hooks"]]
         self.assertEqual(stop[0], {"type": "command", "command": "stop.cmd"})
         checks = [h for h in stop if install.is_turn_check_hook(h)]
         self.assertEqual(len(checks), 1)
@@ -102,15 +102,15 @@ class InstallRun(unittest.TestCase):
             self.assertTrue((self.claude_dir / "skills" / skill / "SKILL.md").is_file(), skill)
         self.assertTrue((self.claude_dir / "skills" / "closeout" / "closeout.py").is_file())
         self.assertTrue((self.claude_dir / "CLAUDE.md").is_file())
-        hooks = json.loads((self.claude_dir / "settings.json").read_text())["hooks"]["SessionStart"]
-        self.assertEqual(len(json.loads((self.claude_dir / "settings.json").read_text())["hooks"]["Stop"]), 1)
+        hooks = json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))["hooks"]["SessionStart"]
+        self.assertEqual(len(json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))["hooks"]["Stop"]), 1)
         self.assertEqual(hooks, [{"hooks": [{"type": "command", "command": sys.executable,
                                              "args": [str(self.claude_dir / "doctrine" / "gate.py")], "timeout": 10}]}])
-        profile = self.profile.read_text()
+        profile = self.profile.read_text(encoding="utf-8")
         self.assertIn(f'. "{self.claude_dir / "doctrine" / "cc.ps1"}"', profile)
 
     def test_every_plugin_is_installed_then_switched_on_or_off_as_the_manifest_says(self):
-        manifest = json.loads((PACK / "plugins.json").read_text())
+        manifest = json.loads((PACK / "plugins.json").read_text(encoding="utf-8"))
         self.install("--with-plugins")
         calls = self.calls()
         added = [c[3] for c in calls if c[:3] == ["plugin", "marketplace", "add"]]
@@ -150,21 +150,21 @@ class InstallRun(unittest.TestCase):
         (self.claude_dir / "settings.json").write_text(json.dumps({
             "theme": "dark",
             "hooks": {"SessionStart": [{"hooks": [other_hook, {"type": "command", "command": "py C:/old/gate.py"}]}],
-                      "Stop": [{"hooks": [{"type": "command", "command": "stop.cmd"}]}]}}))
+                      "Stop": [{"hooks": [{"type": "command", "command": "stop.cmd"}]}]}}), encoding="utf-8")
         self.profile.parent.mkdir(parents=True)
-        self.profile.write_text("Set-Alias ll Get-ChildItem\n")
-        (self.claude_dir / "CLAUDE.md").write_text("mine\n")
+        self.profile.write_text("Set-Alias ll Get-ChildItem\n", encoding="utf-8")
+        (self.claude_dir / "CLAUDE.md").write_text("mine\n", encoding="utf-8")
         code, out = self.install("--with-doctrine")
         self.assertEqual(code, 0, out)
-        settings = json.loads((self.claude_dir / "settings.json").read_text())
+        settings = json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))
         self.assertEqual(settings["theme"], "dark")
         self.assertEqual(settings["hooks"]["Stop"][0], {"hooks": [{"type": "command", "command": "stop.cmd"}]})
         self.assertTrue(install.is_turn_check_hook(settings["hooks"]["Stop"][1]["hooks"][0]))  # plus the turn check
         start = [h for g in settings["hooks"]["SessionStart"] for h in g["hooks"]]
         self.assertEqual(start[0], other_hook)
         self.assertEqual(sum(install.is_gate_hook(h) for h in start), 1)
-        self.assertTrue(self.profile.read_text().startswith("Set-Alias ll Get-ChildItem\n"))
-        self.assertEqual((self.claude_dir / "CLAUDE.md").read_text(), "mine\n")
+        self.assertTrue(self.profile.read_text(encoding="utf-8").startswith("Set-Alias ll Get-ChildItem\n"))
+        self.assertEqual((self.claude_dir / "CLAUDE.md").read_text(encoding="utf-8"), "mine\n")
         self.assertEqual(len(list(self.claude_dir.glob("settings.json.bak-*"))), 1)
 
     def test_a_profile_keeps_its_encoding_and_a_new_one_is_written_with_a_bom(self):
@@ -188,20 +188,20 @@ class InstallRun(unittest.TestCase):
     def test_a_skill_that_differs_is_backed_up_before_it_is_replaced(self):
         old = self.claude_dir / "skills" / "eli5"
         old.mkdir(parents=True)
-        (old / "SKILL.md").write_text("an older eli5\n")
+        (old / "SKILL.md").write_text("an older eli5\n", encoding="utf-8")
         self.install("--with-doctrine")
         self.assertEqual(list((self.claude_dir / "skills").glob("*.bak-*")), [])  # never beside the skills: it would load
         backups = list((self.claude_dir / "skill-backups").glob("eli5.bak-*"))
         self.assertEqual(len(backups), 1)
-        self.assertEqual((backups[0] / "SKILL.md").read_text(), "an older eli5\n")
+        self.assertEqual((backups[0] / "SKILL.md").read_text(encoding="utf-8"), "an older eli5\n")
         self.assertEqual((old / "SKILL.md").read_bytes(), (PACK / "skills" / "eli5" / "SKILL.md").read_bytes())
 
     def test_invalid_settings_json_stops_that_step_without_touching_the_file(self):
         self.claude_dir.mkdir(parents=True)
-        (self.claude_dir / "settings.json").write_text("{ not json")
+        (self.claude_dir / "settings.json").write_text("{ not json", encoding="utf-8")
         code, out = self.install("--with-doctrine")
         self.assertEqual(code, 1)
-        self.assertEqual((self.claude_dir / "settings.json").read_text(), "{ not json")
+        self.assertEqual((self.claude_dir / "settings.json").read_text(encoding="utf-8"), "{ not json")
         self.assertIn("is not valid JSON", out)
 
     def test_dry_run_writes_nothing(self):
@@ -213,7 +213,7 @@ class InstallRun(unittest.TestCase):
 
     def test_the_installed_hook_runs_and_injects_the_doctrine(self):
         self.install("--with-doctrine")
-        hook = json.loads((self.claude_dir / "settings.json").read_text())["hooks"]["SessionStart"][0]["hooks"][0]
+        hook = json.loads((self.claude_dir / "settings.json").read_text(encoding="utf-8"))["hooks"]["SessionStart"][0]["hooks"][0]
         import subprocess
         r = subprocess.run([hook["command"], *hook["args"]], input=b'{"model": "claude-opus-5"}', capture_output=True,
                            env={**os.environ, "CLAUDE_CONFIG_DIR": str(self.claude_dir)})

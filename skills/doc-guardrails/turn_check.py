@@ -38,6 +38,18 @@ FIRST_TURN_LOOKBACK = 3600
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 SLACK = 2.0  # seconds around a tool call's window: file times and transcript times come from different clocks'
 MAX_ROOTS = 20
+# The paths a tool call names in its own text, so a command that works in another checkout still has that checkout
+# checked. Posix and Windows spellings both: a Bash or PowerShell command on Windows names `C:\repo` or `\\box\share`,
+# which no leading-slash pattern can see, and that checkout's documents then go unattributed.
+PATH_RE = re.compile(r"(?:~|/)[^\s'\"`;|&<>()]+"           # /abs/path, ~/under the home directory
+                     r"|[A-Za-z]:[\\/][^\s'\"`;|&<>()]*"    # C:\path or C:/path
+                     r"|\\\\[^\s'\"`;|&<>()]+")             # \\server\share
+
+
+def same_path(path):
+    """A path in the form paths are compared in: symlinks resolved, and on Windows one casing and one separator
+    (normcase is the identity on posix, so nothing is loosened there)."""
+    return os.path.normcase(os.path.realpath(path))
 
 
 def state_dir():
@@ -112,11 +124,11 @@ def session_activity(transcript, since, now):
                     inp = item.get("input") or {}
                     target = inp.get("file_path") or inp.get("notebook_path")
                     if item.get("name") in WRITE_TOOLS and target:
-                        written.add(os.path.realpath(os.path.expanduser(target)))
+                        written.add(same_path(os.path.expanduser(target)))
                     else:
                         starts[item.get("id")] = when
                     for text in (v for v in inp.values() if isinstance(v, str)):
-                        named.update(m.group(0) for m in re.finditer(r"(?:~|/)[^\s'\"`;|&<>()]+", text))
+                        named.update(m.group(0) for m in PATH_RE.finditer(text))
                 elif item.get("type") == "tool_result" and item.get("tool_use_id") in starts:
                     ends[item.get("tool_use_id")] = when
     windows = [(start - SLACK, ends.get(uid, now) + SLACK) for uid, start in starts.items()]
@@ -129,6 +141,8 @@ def candidate_roots(cwd, written, named):
         p = Path(os.path.expanduser(path))
         while not p.exists() and p.parent != p:
             p = p.parent
+        if p == Path("."):
+            continue  # what was named was not a path on this machine: walking up left nothing to look at
         if p.is_file():
             p = p.parent
         root = closeout.repo_root(p) if p.is_dir() else None
@@ -146,14 +160,14 @@ def check(payload, states=None, now=None):
     session = str(payload.get("session_id") or "unknown").replace("/", "_")
     marker = states / session
     try:
-        since = float(marker.read_text())
+        since = float(marker.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         since = now - FIRST_TURN_LOOKBACK
     if payload.get("stop_hook_active"):
         return None  # the session is already continuing because of a stop hook: never block twice
     try:
         states.mkdir(parents=True, exist_ok=True)
-        marker.write_text(str(now))
+        marker.write_text(str(now), encoding="utf-8")
     except OSError:
         pass
     cwd = Path(payload.get("cwd") or os.getcwd())
@@ -166,7 +180,7 @@ def check(payload, states=None, now=None):
         roots = candidate_roots(str(cwd), written, named)
 
         def attribute(path):
-            if os.path.realpath(str(path)) in written:
+            if same_path(str(path)) in written:
                 return True
             try:
                 mtime = path.stat().st_mtime

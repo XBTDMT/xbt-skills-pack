@@ -41,7 +41,7 @@ class Gate(unittest.TestCase):
     def test_no_model_on_stdin_falls_back_to_the_launcher_then_settings(self):
         _, out, _ = run("{}", DOCTRINE_MODEL="claude-fable-5-1", **self.env)
         self.assertIn("Claude Fable 5.1", out.splitlines()[0])
-        Path(self.cfg.name, "settings.json").write_text(json.dumps({"model": "sonnet"}))
+        Path(self.cfg.name, "settings.json").write_text(json.dumps({"model": "sonnet"}), encoding="utf-8")
         _, out, _ = run("", **self.env)
         self.assertIn("Claude Sonnet 5", out.splitlines()[0])
 
@@ -65,10 +65,10 @@ class Gate(unittest.TestCase):
         cfg = Path(self.cfg.name)
         (cfg / "daemon").mkdir()
         parent = cfg / "parent.jsonl"
-        parent.write_text(json.dumps({"type": "assistant", "message": {"model": "claude-fable-5-1"}}) + "\n")
+        parent.write_text(json.dumps({"type": "assistant", "message": {"model": "claude-fable-5-1"}}) + "\n", encoding="utf-8")
         (cfg / "daemon" / "roster.json").write_text(json.dumps({"workers": [
             {"replPid": 4242, "sessionId": "s1", "dispatch": {"launch": {"flagArgs": ["--effort", "low", "--model", "claude-fable-5-1"]}}},
-            {"replPid": 4343, "sessionId": "s2", "dispatch": {"launch": {"flagArgs": [], "transcriptPath": str(parent)}}}]}))
+            {"replPid": 4343, "sessionId": "s2", "dispatch": {"launch": {"flagArgs": [], "transcriptPath": str(parent)}}}]}), encoding="utf-8")
         _, out, _ = run(json.dumps({"session_id": "new"}), CLAUDE_PID="4242", **self.env)
         self.assertIn("Claude Fable 5.1", out.splitlines()[0])
         _, out, _ = run(json.dumps({"session_id": "new"}), CLAUDE_PID="4343", **self.env)
@@ -76,10 +76,10 @@ class Gate(unittest.TestCase):
         _, out, _ = run(json.dumps({"session_id": "s1"}), CLAUDE_PID="1", **self.env)
         self.assertIn("Claude Fable 5.1", out.splitlines()[0])
         job = cfg / "job"; job.mkdir()
-        (job / "state.json").write_text(json.dumps({"respawnFlags": ["--model", "claude-fable-5-1"]}))
+        (job / "state.json").write_text(json.dumps({"respawnFlags": ["--model", "claude-fable-5-1"]}), encoding="utf-8")
         _, out, _ = run("{}", CLAUDE_PID="1", CLAUDE_JOB_DIR=str(job), CLAUDE_CONFIG_DIR=str(cfg / "none"))
         self.assertIn("Claude Fable 5.1", out.splitlines()[0])
-        (cfg / "daemon" / "roster.json").write_text("not json")
+        (cfg / "daemon" / "roster.json").write_text("not json", encoding="utf-8")
         _, out, _ = run(json.dumps({"session_id": "s1"}), CLAUDE_PID="1", **self.env)
         self.assertIn("Claude Opus 5", out.splitlines()[0])  # a broken record falls through, never crashes
 

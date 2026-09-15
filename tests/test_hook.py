@@ -21,8 +21,8 @@ class Hook(unittest.TestCase):
         subprocess.run(["git", "init", "-q"], cwd=self.root, check=True, capture_output=True)
         (self.root / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"
                                              "id form: bullet tags `R-<n>`\nlinked kinds: knowledge/*.md\n"
-                                             "guardrails: report\n")
-        (self.root / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a thing\n")
+                                             "guardrails: report\n", encoding="utf-8")
+        (self.root / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a thing\n", encoding="utf-8")
 
     def run_hook(self, path, env=None):
         payload = json.dumps({"tool_input": {"file_path": str(path)}})
@@ -32,7 +32,7 @@ class Hook(unittest.TestCase):
 
     def test_an_unlinked_document_is_reported_the_moment_it_is_written(self):
         doc = self.root / "knowledge" / "02-spec.md"
-        doc.write_text("# spec\n")
+        doc.write_text("# spec\n", encoding="utf-8")
         code, out = self.run_hook(doc)
         self.assertEqual(code, 2, out)
         self.assertIn("doc-guardrails", out)
@@ -40,7 +40,7 @@ class Hook(unittest.TestCase):
 
     def test_a_linked_document_a_missing_file_and_a_non_document_are_silent(self):
         linked = self.root / "knowledge" / "03-spec.md"
-        linked.write_text("# spec\nroadmap: R-1\n")
+        linked.write_text("# spec\nroadmap: R-1\n", encoding="utf-8")
         for path in (linked, self.root / "knowledge" / "gone.md", self.root / "notes.txt"):
             with self.subTest(path.name):
                 self.assertEqual(self.run_hook(path), (0, ""))
@@ -55,7 +55,7 @@ class Hook(unittest.TestCase):
         # `closeout/closeout.py` next to the hook's folder in both trees: this repo's root and the copies' skills/.
         shutil.copy2(HOOK.parent.parent / "closeout" / "closeout.py", cfg / "skills" / "closeout" / "closeout.py")
         doc = self.root / "knowledge" / "04-spec.md"
-        doc.write_text("# spec\n")
+        doc.write_text("# spec\n", encoding="utf-8")
         payload = json.dumps({"tool_input": {"file_path": str(doc)}})
         r = subprocess.run([str(cfg / "skills" / "doc-guardrails" / "hook.sh")], input=payload, capture_output=True,
                            text=True, env={**os.environ, "CLAUDE_CONFIG_DIR": str(cfg)})

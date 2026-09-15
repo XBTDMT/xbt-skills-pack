@@ -30,7 +30,9 @@ class Repo:
     def write(self, rel, text):
         p = self.path / rel
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(text, encoding="utf-8")
+        # Bytes, not write_text: Windows text mode would rewrite every \n as \r\n, so a fixture meant to carry LF
+        # endings would never reach the code under test with the endings the test is about.
+        p.write_bytes(text.encode("utf-8"))
         return p
 
     def commit(self, msg, *rels):
@@ -50,7 +52,7 @@ class Base(unittest.TestCase):
 
 class DayZero(Base):
     def test_folder_without_git(self):
-        (self.dir / "notes.md").write_text("hi")
+        (self.dir / "notes.md").write_text("hi", encoding="utf-8")
         f = closeout.facts(self.dir)
         self.assertIsNone(f["git"])
         self.assertEqual(f["pins"], [])
@@ -118,9 +120,9 @@ class Facts(Base):
         cfg = self.dir / "cfg"
         m = cfg / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(self.dir)) / "memory"
         m.mkdir(parents=True)
-        (m / "MEMORY.md").write_text("- [A](a.md) — x\n- [Gone](gone.md) — y\n")
-        (m / "a.md").write_text("a")
-        (m / "b.md").write_text("b")
+        (m / "MEMORY.md").write_text("- [A](a.md) — x\n- [Gone](gone.md) — y\n", encoding="utf-8")
+        (m / "a.md").write_text("a", encoding="utf-8")
+        (m / "b.md").write_text("b", encoding="utf-8")
         closeout.config_dirs = lambda: [cfg, cfg]  # a linked second account resolves to the same folder
         try:
             mem = closeout.facts(self.dir)["memory"]
@@ -192,13 +194,13 @@ class Stamp(Base):
     def test_inserts_after_a_leading_comment(self):
         pin = self.r.write("knowledge/00-CURRENT.md", "<!-- the pin -->\n## State\nbody\n")
         closeout.stamp(pin, None, today="2026-09-11")
-        self.assertEqual(pin.read_text().splitlines()[:3],
+        self.assertEqual(pin.read_text(encoding="utf-8").splitlines()[:3],
                          ["<!-- the pin -->", f"last_marker: {self.head}", "updated: 2026-09-11"])
 
     def test_replaces_a_combined_line_with_two(self):
         pin = self.r.write("p.md", "# pin\nlast_marker: 0000000        updated: 2026-01-01\nrest\n")
         closeout.stamp(pin, None, today="2026-09-11")
-        text = pin.read_text()
+        text = pin.read_text(encoding="utf-8")
         self.assertEqual(text.count("last_marker:"), 1)
         self.assertIn(f"last_marker: {self.head}\nupdated: 2026-09-11\nrest", text)
 
@@ -207,15 +209,15 @@ class Stamp(Base):
         with self.assertRaises(SystemExit):
             closeout.stamp(pin, None)
         closeout.stamp(pin, None, force=True, today="2026-09-11")
-        self.assertIn(f"last_marker: {self.head}", pin.read_text())
+        self.assertIn(f"last_marker: {self.head}", pin.read_text(encoding="utf-8"))
 
     def test_keep_marker_moves_only_the_date(self):
         pin = self.r.write("p.md", "> DO NOT ADVANCE `last_marker`\nlast_marker: abc1234        updated: 2026-01-01\nx\n")
         self.assertEqual(closeout.stamp(pin, None, keep_marker=True, today="2026-09-11"), "abc1234")
-        self.assertIn("last_marker: abc1234\nupdated: 2026-09-11\nx", pin.read_text())
+        self.assertIn("last_marker: abc1234\nupdated: 2026-09-11\nx", pin.read_text(encoding="utf-8"))
         pin2 = self.r.write("q.md", "# pin\nbody\n")
         closeout.stamp(pin2, None, keep_marker=True, today="2026-09-11")
-        self.assertEqual(pin2.read_text(), "# pin\nupdated: 2026-09-11\nbody\n")
+        self.assertEqual(pin2.read_text(encoding="utf-8"), "# pin\nupdated: 2026-09-11\nbody\n")
 
     def test_a_pin_keeps_its_own_line_endings(self):
         crlf = self.r.path / "crlf.md"
@@ -224,7 +226,8 @@ class Stamp(Base):
         self.assertEqual(crlf.read_bytes(), b"# pin\r\nupdated: 2026-09-11\r\nbody\r\n")
         closeout.stamp(crlf, None, today="2026-09-11")
         self.assertNotIn(b"\n", crlf.read_bytes().replace(b"\r\n", b""))
-        lf = self.r.write("lf.md", "# pin\nbody\n")
+        lf = self.r.path / "lf.md"
+        lf.write_bytes(b"# pin\nbody\n")            # bytes on both platforms, so the file really does carry LF endings
         closeout.stamp(lf, None, today="2026-09-11")
         self.assertNotIn(b"\r", lf.read_bytes())
 
@@ -244,7 +247,7 @@ class Hunks(Base):
         self.assertEqual(len(hunks), 2)
         closeout.stage_hunks(self.dir / "README.md", [1])
         self.assertEqual(sh(self.dir, "git", "show", ":README.md"), "title\nnew fact\nmiddle\nend")
-        self.assertIn("## their draft", (self.dir / "README.md").read_text())
+        self.assertIn("## their draft", (self.dir / "README.md").read_text(encoding="utf-8"))
         self.assertIn("their draft", sh(self.dir, "git", "diff", "--", "README.md"))
 
     def test_a_later_hunk_alone_applies_at_the_right_place(self):
@@ -395,7 +398,7 @@ class Audit(Base):
         found, counts = closeout.link_audit(self.dir)
         inv = self.dir / "knowledge" / f"UNLINKED-{datetime.date.today().isoformat()}.md"  # the project's own tree
         self.assertTrue(inv.is_file())
-        text = inv.read_text()
+        text = inv.read_text(encoding="utf-8")
         self.assertIn("| `knowledge/02-SPEC-e.md` | The e spec |", text)
         self.assertIn("roadmap: none —", text)
         levels = closeout.audit(self.dir, ["knowledge/02-SPEC-e.md"])
@@ -521,10 +524,10 @@ class Audit(Base):
     def test_install_gate_adds_one_marked_block_keeps_a_foreign_hook_and_gates_real_commits(self):
         hooks = self.dir / ".git" / "hooks"
         hooks.mkdir(parents=True, exist_ok=True)
-        (hooks / "pre-commit").write_text("#!/bin/sh\necho theirs\n")
+        (hooks / "pre-commit").write_text("#!/bin/sh\necho theirs\n", encoding="utf-8")
         closeout.install_gate(self.dir)
         closeout.install_gate(self.dir)  # twice: still one block
-        text = (hooks / "pre-commit").read_text()
+        text = (hooks / "pre-commit").read_text(encoding="utf-8")
         self.assertIn("echo theirs", text)
         self.assertEqual(text.count(closeout.GATE_BEGIN), 1)
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
@@ -543,7 +546,7 @@ class Audit(Base):
 
     def test_the_gate_names_its_interpreter_and_helper_and_fails_safe_when_it_cannot_run(self):
         hook = closeout.install_gate(self.dir)
-        text = hook.read_text()
+        text = hook.read_text(encoding="utf-8")
         self.assertIn(Path(sys.executable).as_posix(), text)                       # no python3 on PATH needed
         self.assertIn(Path(closeout.__file__).absolute().as_posix(), text)        # no ~/.claude/skills needed
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
@@ -636,9 +639,9 @@ class Audit(Base):
         self.assertEqual(len(fails), 1)
         self.assertIn("README.md:4", fails[0][2])
         wl.write_text("- [x] README.md:2 — 235 tests → unchanged (swift test)\n"
-                      "- [x] README.md:4 — 3 commits → now 5 (git rev-list --count)\n")
+                      "- [x] README.md:4 — 3 commits → now 5 (git rev-list --count)\n", encoding="utf-8")
         self.assertEqual(self.levels(closeout.audit(self.dir, ["src/app.py"], worklist=wl), "FAIL"), [])
-        wl.write_text("- [x] README.md:2 — 235 tests\n- [x] README.md:4 — 3 commits →   \n")  # ticked, nothing found
+        wl.write_text("- [x] README.md:2 — 235 tests\n- [x] README.md:4 — 3 commits →   \n", encoding="utf-8")  # ticked, nothing found
         fails = self.levels(closeout.audit(self.dir, ["src/app.py"], worklist=wl), "FAIL")
         self.assertEqual([f[1] for f in fails], ["wl.md:1", "wl.md:2"])
         self.assertIn("no finding", fails[0][2])
@@ -713,7 +716,7 @@ class MemoryReport(Base):
         super().setUp()
         self.proj = self.dir / "garden_app"
         (self.proj / "knowledge").mkdir(parents=True)
-        (self.proj / "knowledge" / "00-CURRENT.md").write_text("pin")
+        (self.proj / "knowledge" / "00-CURRENT.md").write_text("pin", encoding="utf-8")
         self.cfg = self.dir / "cfg"
         self.own = self.mem(escaped(self.proj))
         self.home = self.mem(escaped(Path.home()))
@@ -730,13 +733,13 @@ class MemoryReport(Base):
         return m
 
     def test_entries_about_the_project_are_found_in_every_memory_folder(self):
-        (self.own / "mine.md").write_text("anything")
-        (self.own / "MEMORY.md").write_text("- [Mine](mine.md) — x\n")
-        (self.home / "a.md").write_text("garden_app ships on Friday")
-        (self.home / "b.md").write_text("the Garden-App widget")
-        (self.home / "c.md").write_text("recipe_app only; garden_apps is another word")
-        (self.other / "d.md").write_text(f"see {self.proj}/README.md")
-        (self.other / "e.md").write_text("nothing here")
+        (self.own / "mine.md").write_text("anything", encoding="utf-8")
+        (self.own / "MEMORY.md").write_text("- [Mine](mine.md) — x\n", encoding="utf-8")
+        (self.home / "a.md").write_text("garden_app ships on Friday", encoding="utf-8")
+        (self.home / "b.md").write_text("the Garden-App widget", encoding="utf-8")
+        (self.home / "c.md").write_text("recipe_app only; garden_apps is another word", encoding="utf-8")
+        (self.other / "d.md").write_text(f"see {self.proj}/README.md", encoding="utf-8")
+        (self.other / "e.md").write_text("nothing here", encoding="utf-8")
         r = closeout.memory_report(self.proj)
         self.assertEqual([(d["kind"], d["about_project"]) for d in r["dirs"]],
                          [("own", ["mine.md"]), ("home", ["a.md", "b.md"]), ("other", ["d.md"])])
@@ -744,19 +747,19 @@ class MemoryReport(Base):
                          [("home", ["a.md", "b.md"]), ("other", ["d.md"])])
 
     def test_index_problems_own_folder_all_elsewhere_only_this_projects(self):
-        (self.own / "mine.md").write_text("x")
-        (self.own / "extra.md").write_text("x")
-        (self.own / "MEMORY.md").write_text("- [Mine](mine.md) — x\n- [Mine](mine.md) — x\n- [Gone](gone.md) — y\n")
-        (self.home / "a.md").write_text("garden_app")
-        (self.home / "a2.md").write_text("garden_app")
-        (self.home / "n.md").write_text("recipe_app")
-        (self.home / "loose.md").write_text("garden_app, missing from the index")
+        (self.own / "mine.md").write_text("x", encoding="utf-8")
+        (self.own / "extra.md").write_text("x", encoding="utf-8")
+        (self.own / "MEMORY.md").write_text("- [Mine](mine.md) — x\n- [Mine](mine.md) — x\n- [Gone](gone.md) — y\n", encoding="utf-8")
+        (self.home / "a.md").write_text("garden_app", encoding="utf-8")
+        (self.home / "a2.md").write_text("garden_app", encoding="utf-8")
+        (self.home / "n.md").write_text("recipe_app", encoding="utf-8")
+        (self.home / "loose.md").write_text("garden_app, missing from the index", encoding="utf-8")
         (self.home / "MEMORY.md").write_text(
             "- [A](a.md) — garden_app START HERE: HANDOFF-1\n- [A](a.md) — garden_app START HERE: HANDOFF-1\n"
             "- [A2](a2.md) — ⇒ garden_app — START HERE: HANDOFF-2\n"
             "- [See](a.md) — ⇒ START HERE: another project's start, only linked to an entry about this one\n"
             "- [N](n.md) — recipe_app START HERE\n- [N](n.md) — recipe_app START HERE\n"
-            "- [Old](old-garden.md) — garden_app pointer to a deleted entry\n- [X](x-gone.md) — unrelated\n")
+            "- [Old](old-garden.md) — garden_app pointer to a deleted entry\n- [X](x-gone.md) — unrelated\n", encoding="utf-8")
         own, home = closeout.memory_report(self.proj)["dirs"][:2]
         self.assertEqual((own["duplicate_index_lines"], own["not_in_index"], own["index_points_at_missing"]),
                          (["- [Mine](mine.md) — x"], ["extra.md"], ["gone.md"]))
@@ -768,14 +771,20 @@ class MemoryReport(Base):
 
     def test_paths_an_entry_names_that_are_gone(self):
         (self.proj / "validation").mkdir()
-        (self.own / "mine.md").write_text(f"read `{self.dir}/gone.md` and `knowledge/00-CURRENT.md`, "
-                                          "not `knowledge/GONE.md`; an ellipsis is prose: `validation/…`")
-        (self.home / "a.md").write_text(f"garden_app: see `{self.proj}` and `{self.dir}/nope/x.md`; "
-                                     "`knowledge/GONE.md` has no folder to be relative to here")
+        # A code span is split with shlex, where a backslash escapes the next character, so an entry names its paths
+        # with forward slashes. `rooted` drops the drive as well: a shared folder's entry is only checked for a rooted
+        # path, and on Windows the temporary folder sits on a drive letter, which is not one.
+        tmp, proj = self.dir.as_posix(), self.proj.as_posix()
+        rooted = "/" + self.dir.relative_to(self.dir.anchor).as_posix()
+        (self.own / "mine.md").write_text(f"read `{tmp}/gone.md` and `knowledge/00-CURRENT.md`, "
+                                          "not `knowledge/GONE.md`; an ellipsis is prose: `validation/…`",
+                                          encoding="utf-8")
+        (self.home / "a.md").write_text(f"garden_app: see `{proj}` and `{rooted}/nope/x.md`; "
+                                        "`knowledge/GONE.md` has no folder to be relative to here", encoding="utf-8")
         dead = closeout.memory_report(self.proj)["dead_paths"]
         self.assertEqual([(d["dir"], d["entry"], d["path"]) for d in dead],
-                         [("own", "mine.md", f"{self.dir}/gone.md"), ("own", "mine.md", "knowledge/GONE.md"),
-                          ("home", "a.md", f"{self.dir}/nope/x.md")])
+                         [("own", "mine.md", f"{tmp}/gone.md"), ("own", "mine.md", "knowledge/GONE.md"),
+                          ("home", "a.md", f"{rooted}/nope/x.md")])
 
 
 class Worklist(Base):
@@ -785,31 +794,31 @@ class Worklist(Base):
     def test_every_line_with_a_figure_becomes_an_item_plus_one_per_doc(self):
         (self.dir / "README.md").write_text(
             "# Title\n235 tests pass\nStep 1 is fine\n3 commits ahead\nlast seen 2026-09-07\n"
-            "fixed in `7f24ee4`\nplain prose\n90% done\nversion v2\nbuilt with Xcode 26.1\n")
+            "fixed in `7f24ee4`\nplain prose\n90% done\nversion v2\nbuilt with Xcode 26.1\n", encoding="utf-8")
         items = self.items(closeout.worklist(self.dir, ["README.md"]))
         self.assertIn("whole doc", items[0])
         self.assertEqual([int(re.search(r"README\.md:(\d+)", i).group(1)) for i in items[1:]], [2, 4, 5, 6, 8, 10])
 
     def test_html_skips_style_and_script_and_tags(self):
         (self.dir / "o.html").write_text('<meta charset="utf-8">\n<style>\n.a{margin:12px}\n</style>\n'
-                                         "<p>42 feeds</p>\n<p>no figure</p>\n<script>\nvar x=10;\n</script>\n")
+                                         "<p>42 feeds</p>\n<p>no figure</p>\n<script>\nvar x=10;\n</script>\n", encoding="utf-8")
         items = self.items(closeout.worklist(self.dir, ["o.html"]))
         self.assertEqual(items[1:], ["- [ ] o.html:5 — 42 feeds"])
 
     def test_a_line_inside_a_code_block_is_tagged(self):
-        (self.dir / "d.md").write_text("42 feeds\n```sql\nINSERT INTO t VALUES (12, 'x');\n```\n88 rows\n")
+        (self.dir / "d.md").write_text("42 feeds\n```sql\nINSERT INTO t VALUES (12, 'x');\n```\n88 rows\n", encoding="utf-8")
         self.assertEqual(self.items(closeout.worklist(self.dir, ["d.md"]))[1:],
                          ["- [ ] d.md:1 — 42 feeds", "- [ ] d.md:3 [code] — INSERT INTO t VALUES (12, 'x');",
                           "- [ ] d.md:5 — 88 rows"])
 
     def test_html_pre_is_tagged(self):
         (self.dir / "o.html").write_text('<meta charset="utf-8">\n<pre>\ngarden_app/  (12 files)\n</pre>\n'
-                                         "<p>7 gates</p>\n")
+                                         "<p>7 gates</p>\n", encoding="utf-8")
         self.assertEqual(self.items(closeout.worklist(self.dir, ["o.html"]))[1:],
                          ["- [ ] o.html:3 [code] — garden_app/ (12 files)", "- [ ] o.html:5 — 7 gates"])
 
     def test_cli(self):
-        (self.dir / "README.md").write_text("12 tests\n")
+        (self.dir / "README.md").write_text("12 tests\n", encoding="utf-8")
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             self.assertEqual(closeout.main(["worklist", str(self.dir), "--docs", "README.md"]), 0)

@@ -35,7 +35,7 @@ class TurnCheck(unittest.TestCase):
     def write(self, rel, text):
         p = self.root / rel
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(text)
+        p.write_text(text, encoding="utf-8")
         return p
 
     def payload(self, **kw):
@@ -47,7 +47,7 @@ class TurnCheck(unittest.TestCase):
     def test_a_document_written_from_the_shell_this_turn_blocks_the_turn_once_with_the_list(self):
         self.run_check()  # an earlier turn ended: this is the baseline
         time.sleep(0.02)
-        subprocess.run([sys.executable, "-c", "open('knowledge/02-SPEC-new.md','w').write('# new\\nno line\\n')"],
+        subprocess.run([sys.executable, "-c", "open('knowledge/02-SPEC-new.md','w',encoding='utf-8').write('# new\\nno line\\n')"],
                        cwd=self.root, check=True)
         self.write("knowledge/02-SPEC-linked.md", "# linked\nroadmap: R-1\n")
         out = self.run_check()
@@ -109,7 +109,7 @@ class Attribution(unittest.TestCase):
     def repo(self, name):
         root = self.tmp / name
         (root / "knowledge").mkdir(parents=True)
-        (root / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a\n")
+        (root / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a\n", encoding="utf-8")
         sh(root, "git", "init", "-q", "-b", "main")
         sh(root, "git", "add", "-A")
         sh(root, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base")
@@ -119,13 +119,13 @@ class Attribution(unittest.TestCase):
         rows = [{"type": "assistant", "timestamp": ts(start), "message": {"content": [{"type": "tool_use", "id": uid, "name": name, "input": inp}]}},
                 {"type": "user", "timestamp": ts(end), "message": {"content": [{"type": "tool_result", "tool_use_id": uid, "content": "ok"}]}}]
         target = transcript or self.transcript
-        with open(target, "a") as fh:
+        with open(target, "a", encoding="utf-8") as fh:
             for r in rows:
                 fh.write(json.dumps(r) + "\n")
 
     def touch(self, path, text, when):
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text)
+        path.write_text(text, encoding="utf-8")
         os.utime(path, (when, when))
 
     def check(self, now):
@@ -156,7 +156,7 @@ class Attribution(unittest.TestCase):
 
     def test_a_subagents_writes_count_as_this_sessions(self):
         t0 = time.time() - 600
-        self.transcript.write_text("")  # the session's own transcript exists; the write is in its subagent's
+        self.transcript.write_text("", encoding="utf-8")  # the session's own transcript exists; the write is in its subagent's
         sub = self.transcript.parent / "s1" / "subagents" / "agent-x.jsonl"
         sub.parent.mkdir(parents=True)
         self.tool("a1", "Write", {"file_path": str(self.lane / "knowledge" / "02-spec-agent.md")}, t0 + 200, t0 + 201, transcript=sub)

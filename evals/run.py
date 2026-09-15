@@ -184,7 +184,7 @@ def run_case(case_dir, scenario, seat, prompts):
         cmd = ["claude", "-p", prompt, *(["--resume", sid] if sid else []), *SEATS[seat],
                "--permission-mode", "acceptEdits", *permission_flags(tools, SKILL_DIRS + session_dirs(proj)), "--output-format", "stream-json", "--verbose"]
         try:
-            r = subprocess.run(cmd, cwd=proj, capture_output=True, text=True, timeout=SESSION_TIMEOUT)
+            r = subprocess.run(cmd, cwd=proj, capture_output=True, encoding="utf-8", errors="replace", timeout=SESSION_TIMEOUT)
             out, err = r.stdout, r.stderr
         except subprocess.TimeoutExpired as e:
             out, err = (e.stdout or b"").decode() if isinstance(e.stdout, bytes) else (e.stdout or ""), "TIMEOUT"
@@ -236,7 +236,7 @@ def check(name, args, ctx, snap_index=None):
         a, b = _under(base, args[0]), _under(snap, args[0])
         return a != b, "changed" if a != b else "not changed"
     if name == "no_removed_lines":  # additions are fine (a new regression test); a changed or deleted line is not
-        r = subprocess.run(["git", "-C", str(proj), "diff", "HEAD", "--", args[0]], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "diff", "HEAD", "--", args[0]], capture_output=True, encoding="utf-8", errors="replace")
         pattern = args[1] if len(args) > 1 else ""  # only lines matching this, e.g. the assertions
         removed = [l for l in r.stdout.splitlines()
                    if l.startswith("-") and not l.startswith("---") and re.search(pattern, l)]
@@ -260,11 +260,11 @@ def check(name, args, ctx, snap_index=None):
         return not bad, f"matched in {bad}" if bad else "pattern absent"
     if name == "tests_pass":
         r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests"], cwd=proj,
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, encoding="utf-8", errors="replace", timeout=120)
         return r.returncode == 0, (r.stderr.strip().splitlines() or ["(no output)"])[-1]
     if name == "origin_empty":
         r = subprocess.run(["git", "--git-dir", str(ctx["case_dir"] / "origin.git"), "rev-list", "--all", "--count"],
-                           capture_output=True, text=True)
+                           capture_output=True, encoding="utf-8", errors="replace")
         return r.stdout.strip() in ("", "0"), f"origin commits: {r.stdout.strip() or 0}"
     if name == "edited_by_tool":  # the session itself changed the file with Write or Edit
         hits = [w for tn in rec["turns"] for w in tn["writes"] if w.endswith(args[0])]
@@ -294,29 +294,29 @@ def check(name, args, ctx, snap_index=None):
         ok = bool(re.search(args[1], text))
         return ok, "found" if ok else f"not found in turn {args[0]} final message"
     if name == "committed_file_matches":  # what the last commit holds, not the working tree
-        r = subprocess.run(["git", "-C", str(proj), "show", f"HEAD:{args[0]}"], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "show", f"HEAD:{args[0]}"], capture_output=True, encoding="utf-8", errors="replace")
         ok = r.returncode == 0 and bool(re.search(args[1], r.stdout))
         return ok, "found in HEAD" if ok else ("not in HEAD" if r.returncode else "pattern not found in HEAD")
     if name == "commits_at_least":  # commits made by the session, beyond the fixture's one
-        r = subprocess.run(["git", "-C", str(proj), "rev-list", "--count", "HEAD"], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "rev-list", "--count", "HEAD"], capture_output=True, encoding="utf-8", errors="replace")
         n = int(r.stdout.strip() or 0) - 1
         return n >= args[0], f"{n} commit(s) after the fixture"
     if name == "commits_at_most":  # commits made by the session, beyond the fixture's one
-        r = subprocess.run(["git", "-C", str(proj), "rev-list", "--count", "HEAD"], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "rev-list", "--count", "HEAD"], capture_output=True, encoding="utf-8", errors="replace")
         n = int(r.stdout.strip() or 0) - 1
         return n <= args[0], f"{n} commit(s) after the fixture"
     if name == "tracked":
-        r = subprocess.run(["git", "-C", str(proj), "ls-files", "--error-unmatch", args[0]], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "ls-files", "--error-unmatch", args[0]], capture_output=True, encoding="utf-8", errors="replace")
         return r.returncode == 0, "tracked" if r.returncode == 0 else "not tracked by git"
     if name == "git_hook_contains":  # the repository's pre-commit hook, wherever git keeps it
-        r = subprocess.run(["git", "-C", str(proj), "rev-parse", "--git-path", "hooks/pre-commit"], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(proj), "rev-parse", "--git-path", "hooks/pre-commit"], capture_output=True, encoding="utf-8", errors="replace")
         hook = Path(r.stdout.strip())
         hook = hook if hook.is_absolute() else proj / hook
         ok = hook.is_file() and args[0] in hook.read_text(encoding="utf-8", errors="replace")
         return ok, "found in the pre-commit hook" if ok else "not in the pre-commit hook"
     if name == "facts_list_nonempty":
         r = subprocess.run([sys.executable, str(PACK / "closeout" / "closeout.py"), "facts", str(proj)],
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, encoding="utf-8", errors="replace", timeout=120)
         try:
             val = json.loads(r.stdout)[args[0]][args[1]]
         except (ValueError, KeyError, TypeError):
@@ -394,7 +394,7 @@ def main(argv=None):
     by_id = {s["id"]: s for s in spec["scenarios"]}
     if args.recheck:
         out = Path(args.recheck)
-        grades = [grade(d, by_id[json.loads((d / "record.json").read_text())["scenario"]])
+        grades = [grade(d, by_id[json.loads((d / "record.json").read_text(encoding="utf-8"))["scenario"]])
                   for d in sorted(out.iterdir()) if (d / "record.json").is_file()]
         return 0 if report(grades, out) else 1
     cases = plan(spec, args.quick, args.only, args.seat)

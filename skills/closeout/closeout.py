@@ -30,7 +30,9 @@ import argparse
 import datetime
 import html
 import json
+import ntpath
 import os
+import posixpath
 import re
 import shlex
 import subprocess
@@ -92,6 +94,14 @@ def run_git(folder, *args):
 def git(folder, *args):
     code, out = run_git(folder, *args)
     return out if code == 0 else ""
+
+
+def git_bytes(folder, *args):
+    """git's stdout exactly as git wrote it. A diff that is going back into `git apply` must never be decoded and
+    re-encoded: text mode translates the line endings (on Windows every LF becomes CRLF), and the patch no longer
+    matches the bytes in the file."""
+    r = subprocess.run(["git", "-C", str(folder), *args], capture_output=True)
+    return r.stdout if r.returncode == 0 else b""
 
 
 def repo_root(folder):
@@ -245,7 +255,7 @@ def memory_report(folder):
                 for span in re.findall(r"`([^`\n]+)`", texts[e]):
                     # A relative path in a shared folder's entry has no known folder to be relative to.
                     dead += [{"dir": kind, "entry": e, "path": w} for w in missing_paths(span, folder, folder, files)
-                             if kind == "own" or w.startswith(("/", "~/"))]
+                             if kind == "own" or rooted(w)]
     dirs.sort(key=lambda d: KIND_ORDER[d["kind"]])
     dead.sort(key=lambda d: KIND_ORDER[d["dir"]])
     return {"project": folder.name, "dirs": dirs, "dead_paths": dead}
@@ -501,9 +511,10 @@ def stamp_date_only(pin, text, today):
 # ---------------------------------------------------------------------------------------------------- hunks
 
 def split_hunks(diff):
+    """`diff` is the bytes git printed, and the lines stay bytes all the way back to `git apply` (see git_bytes)."""
     header, hunks = [], []
-    for line in diff.split("\n"):
-        if line.startswith("@@"):
+    for line in diff.split(b"\n"):
+        if line.startswith(b"@@"):
             hunks.append([line])
         elif hunks:
             hunks[-1].append(line)
@@ -519,7 +530,7 @@ def file_hunks(path):
     if root is None:
         raise SystemExit(f"refused: {path} is not inside a git repository")
     rel = path.relative_to(root.resolve()).as_posix()
-    return root, rel, split_hunks(git(root, "diff", "-U0", "--no-color", "--", rel))
+    return root, rel, split_hunks(git_bytes(root, "diff", "-U0", "--no-color", "--", rel))
 
 
 def stage_hunks(path, keep):
@@ -529,11 +540,11 @@ def stage_hunks(path, keep):
     bad = [k for k in keep if not 1 <= k <= len(hunks)]
     if not hunks or bad:
         raise SystemExit(f"refused: {rel} has {len(hunks)} unstaged hunk(s); asked for {sorted(keep)}")
-    patch = "\n".join(header + [l for k in sorted(set(keep)) for l in hunks[k - 1]]) + "\n"
+    patch = b"\n".join(header + [l for k in sorted(set(keep)) for l in hunks[k - 1]]) + b"\n"
     r = subprocess.run(["git", "-C", str(root), "apply", "--cached", "--unidiff-zero", "-"],
-                       input=patch, capture_output=True, encoding="utf-8", errors="replace")
+                       input=patch, capture_output=True)
     if r.returncode:
-        raise SystemExit(f"refused: git apply --cached failed: {r.stderr.strip()}")
+        raise SystemExit(f"refused: git apply --cached failed: {r.stderr.decode('utf-8', 'replace').strip()}")
     return rel
 
 
@@ -610,6 +621,13 @@ def worklist(folder, docs):
 
 # ---------------------------------------------------------------------------------------------------- audit
 
+def rooted(word):
+    """True when the word names a place rather than something relative: `/a/b`, `~/a`, and the Windows spellings
+    `C:\\a`, `C:/a` and `\\\\box\\share`. A document names its paths for the machine it was written on, so both
+    spellings are read here, whichever machine is doing the reading."""
+    return word.startswith("~/") or posixpath.isabs(word) or ntpath.isabs(word)
+
+
 def path_words(span):
     """Words inside a code span that look like a path, stripped of line numbers and punctuation.
 
@@ -618,7 +636,9 @@ def path_words(span):
     (`/closeout`). Quoted words keep their spaces: `rm -rf "/Applications/My Tool.app"`.
     """
     try:
-        words = shlex.split(span)
+        # posix=False: a backslash is a separator in `C:\logs\x.md`, not an escape. In posix mode shlex eats it and
+        # the word becomes `C:logsx.md`, so every Windows path in a document was mis-read or dropped.
+        words = shlex.split(span, posix=False)
     except ValueError:
         words = span.split()
     for w in words:
@@ -629,14 +649,14 @@ def path_words(span):
         if (not w or w.startswith(("-", "../")) or "://" in w or "…" in w or re.search(r"[*?<>{}$|=@]", w)
                 or re.search(r"YYYY|MM-DD", w) or re.fullmatch(r"/[^/]+", w)):
             continue
-        if w.startswith(("~/", "/")) or "/" in w.strip("/"):
+        if rooted(w) or "/" in w.strip("/"):
             yield w
 
 
 def spaced_path_exists(word, span):
     """A path with spaces in a longer span (`71259 /Applications/My Tool.app/Contents/MacOS/X`) splits
     at its spaces; rejoin the words that follow the one starting it and see whether a real path begins there."""
-    if not word.startswith(("/", "~/")) or word not in span:
+    if not rooted(word) or word not in span:
         return False
     rest = span[span.index(word):].split(" ")
     return any(Path(os.path.expanduser(" ".join(rest[:n]).rstrip(".,;:)"))).exists() for n in range(len(rest), 1, -1))
@@ -645,11 +665,13 @@ def spaced_path_exists(word, span):
 def resolve_exists(word, root, base, files):
     """True when the path exists, or when it is not rooted in this project (a branch name, another repo's
     folder), where there is nothing here to check it against."""
-    if word.startswith("/"):
-        return Path(word).exists()
     if word.startswith("~/"):
         top = Path.home() / word[2:].split("/", 1)[0]
         return not top.exists() or Path(os.path.expanduser(word)).exists()  # `~/a/b` in prose is an example
+    if rooted(word):
+        # Rooted the other platform's way (`C:\\proj\\x` read on a Mac, `/usr/local/x` read on Windows) names a place
+        # this machine does not have, so there is nothing here to check it against either.
+        return Path(word).exists() if os.path.isabs(word) else True
     w = word[2:] if word.startswith("./") else word
     first = w.split("/", 1)[0]
     if not ((root / first).is_dir() or (base / first).is_dir()):
@@ -661,7 +683,7 @@ def resolve_exists(word, root, base, files):
 def missing_paths(span, root, base, files):
     """The path-like words of one code span that name nothing on disk."""
     span = span.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").strip()
-    if span.startswith(("~/", "/")) and Path(os.path.expanduser(span)).exists():
+    if rooted(span) and Path(os.path.expanduser(span)).exists():
         return []  # a whole-span path with a space in it: `/Applications/My Tool.app`
     return [w for w in path_words(span) if not resolve_exists(w, root, base, files) and not spaced_path_exists(w, span)]
 
@@ -1031,14 +1053,21 @@ def install_gate(folder):
              '  echo "doc-guardrails: gate skipped: no python or closeout.py found (report-only project, commit continues)" >&2\n'
              "fi\n"
              f"{GATE_END}\n")
-    text = hook.read_text(encoding="utf-8") if hook.is_file() else "#!/bin/sh\n"
+    # newline="" both ways: the hook is a /bin/sh script, and text mode would give every line of it a CR on Windows,
+    # which the shell git runs hooks through reads as part of the command. The rest of the file is left as it stands.
+    if hook.is_file():
+        with open(hook, encoding="utf-8", errors="replace", newline="") as fh:
+            text = fh.read()
+    else:
+        text = "#!/bin/sh\n"
     if GATE_BEGIN in text and GATE_END in text:
         start = text.index(GATE_BEGIN)
-        end = text.index(GATE_END) + len(GATE_END) + 1
-        text = text[:start] + block + text[end:]
+        rest = text[text.index(GATE_END) + len(GATE_END):]
+        text = text[:start] + block + (rest[2:] if rest.startswith("\r\n") else rest[1:] if rest.startswith("\n") else rest)
     else:
-        text = text.rstrip("\n") + "\n" + block
-    hook.write_text(text, encoding="utf-8")
+        text = text.rstrip("\r\n") + "\n" + block
+    with open(hook, "w", encoding="utf-8", newline="") as fh:
+        fh.write(text)
     hook.chmod(hook.stat().st_mode | 0o111)
     return hook
 
@@ -1252,7 +1281,7 @@ def main(argv=None):
     elif args.cmd == "hunks":
         _, rel, (_, hunks) = file_hunks(args.file)
         for i, h in enumerate(hunks, 1):
-            print(f"--- hunk {i} of {rel}\n" + "\n".join(h))
+            print(f"--- hunk {i} of {rel}\n" + "\n".join(l.decode("utf-8", "replace") for l in h))
         print(f"{len(hunks)} unstaged hunk(s) in {rel}")
     elif args.cmd == "stage-hunks":
         print(f"staged hunk(s) {sorted(set(args.n))} of {stage_hunks(args.file, args.n)}")
