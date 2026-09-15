@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 830" width="1200" height="830" role="img" aria-labelledby="t d">
+  <title id="t">How xbt-skills-pack works</title>
+  <desc id="d">Three phases of a Claude Code session (start, work, finish) and the project documents they read and write, all linked to the roadmap. While working, greenman records real choices, redman explains failures and files findings, eli5 gives a receipt, and an end-of-turn check makes sure every new document names its roadmap item. At the finish, closeout proves the work, updates the documents and writes the handoff, which starts the next session.</desc>
+  <style>
+    :root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#6b6b70; --card:#ffffff; --line:#e3e1db; --accent:#3b5bdb; --accent-soft:#eef2ff; --accent-ink:#ffffff; --green:#2f7d4f; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#16171a; --ink:#ececef; --muted:#9a9aa2; --card:#1f2024; --line:#34353b; --accent:#7c9bff; --accent-soft:#232a45; --accent-ink:#0f1320; --green:#6cc494; }
+    }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: var(--ink); }
+    .bg { fill: var(--bg); }
+    .title { font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+    .sub { font-size: 15px; fill: var(--muted); }
+    .phase { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; fill: var(--accent); }
+    .phase-sub { font-size: 13px; fill: var(--muted); }
+    .card { fill: var(--card); stroke: var(--line); stroke-width: 1; }
+    .name { font-size: 15px; font-weight: 650; }
+    .opt { font-size: 11px; font-weight: 600; fill: var(--muted); letter-spacing: .4px; }
+    .on { font-size: 11px; font-weight: 700; fill: var(--green); letter-spacing: .4px; }
+    .desc { font-size: 13px; fill: var(--muted); }
+    .flow { stroke: var(--accent); stroke-width: 2; fill: none; }
+    .head { fill: var(--accent); }
+    .band { fill: var(--accent-soft); }
+    .chip { fill: var(--card); stroke: var(--line); }
+    .hub { fill: var(--accent); }
+    .chip-name { font-size: 14px; font-weight: 650; }
+    .chip-role { font-size: 12px; fill: var(--muted); }
+    .hub-name { font-size: 14px; font-weight: 700; fill: var(--accent-ink); }
+    .hub-role { font-size: 12px; fill: var(--accent-ink); opacity: .85; }
+    .tick { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 4; }
+    .foot { font-size: 12.5px; fill: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1200" height="830" rx="18"/>
+
+  <text class="title" x="50" y="56">xbt-skills-pack</text>
+  <text class="sub" x="50" y="84">Claude Code skills that keep a project honest, from the first session to the handoff.</text>
+
+  <!-- phase 1: start -->
+  <text class="phase" x="50" y="132">1 · START</text>
+  <text class="phase-sub" x="128" y="132">a session opens</text>
+  <rect class="card" x="30" y="146" width="340" height="340" rx="14"/>
+  <text class="name" x="54" y="184">Read the pin and the HANDOFF</text>
+  <text class="desc" x="54" y="205">The pin says where things stand; the</text>
+  <text class="desc" x="54" y="223">handoff says what to do next.</text>
+  <text class="name" x="54" y="268">Doctrine hook <tspan class="opt" dx="6">OPTIONAL</tspan></text>
+  <text class="desc" x="54" y="289">Working rules for every session: stay in</text>
+  <text class="desc" x="54" y="307">scope, show proof before “done”, push back</text>
+  <text class="desc" x="54" y="325">once when a request looks wrong, never work</text>
+  <text class="desc" x="54" y="343">around a permission you refused.</text>
+  <text class="name" x="54" y="388"><tspan class="mono">cc</tspan> seats <tspan class="opt" dx="6">OPTIONAL · WINDOWS</tspan></text>
+  <text class="desc" x="54" y="409"><tspan class="mono">cc</tspan> everyday · <tspan class="mono">cc opus</tspan> reviewer ·</text>
+  <text class="desc" x="54" y="427"><tspan class="mono">cc plain</tspan> no doctrine.</text>
+
+  <!-- arrow 1 → 2 -->
+  <path class="flow" d="M378 316 H418"/>
+  <path class="head" d="M422 316 l-9 -5 v10 z"/>
+
+  <!-- phase 2: work -->
+  <text class="phase" x="450" y="132">2 · WORK</text>
+  <text class="phase-sub" x="524" y="132">while you build</text>
+  <rect class="card" x="430" y="146" width="340" height="340" rx="14"/>
+  <text class="name" x="454" y="184">greenman <tspan class="on" dx="6">ALWAYS ON</tspan></text>
+  <text class="desc" x="454" y="205">A real choice: routes that differ, the</text>
+  <text class="desc" x="454" y="223">shortcut rejected, the call written down.</text>
+  <text class="name" x="454" y="262"><tspan class="mono">/redman</tspan></text>
+  <text class="desc" x="454" y="283">A failed step says why and what it served;</text>
+  <text class="desc" x="454" y="301">side findings are sized and filed.</text>
+  <text class="name" x="454" y="340"><tspan class="mono">/eli5</tspan></text>
+  <text class="desc" x="454" y="361">A plain-English receipt after every turn.</text>
+  <text class="name" x="454" y="400">doc check <tspan class="on" dx="6">END OF EVERY TURN</tspan></text>
+  <text class="desc" x="454" y="421">Every document this session wrote, whatever</text>
+  <text class="desc" x="454" y="439">wrote it: does it name its roadmap item?</text>
+  <text class="desc" x="454" y="470">+ Apple references that turn on by themselves</text>
+
+  <!-- arrow 2 → 3 -->
+  <path class="flow" d="M778 316 H818"/>
+  <path class="head" d="M822 316 l-9 -5 v10 z"/>
+
+  <!-- phase 3: finish -->
+  <text class="phase" x="850" y="132">3 · FINISH</text>
+  <text class="phase-sub" x="936" y="132">something is done</text>
+  <rect class="card" x="830" y="146" width="340" height="340" rx="14"/>
+  <text class="name" x="854" y="184"><tspan class="mono">/closeout</tspan></text>
+  <text class="desc" x="854" y="205">Prove it, update the docs, carry findings</text>
+  <text class="desc" x="854" y="223">and decisions into the plan, write the</text>
+  <text class="desc" x="854" y="241">HANDOFF and overview, audit, commit.</text>
+  <text class="name" x="854" y="286"><tspan class="mono">/project-update</tspan></text>
+  <text class="desc" x="854" y="307">Nothing closed yet: make every document</text>
+  <text class="desc" x="854" y="325">match what is true today.</text>
+  <text class="name" x="854" y="370">commit gate <tspan class="opt" dx="6">PER PROJECT</tspan></text>
+  <text class="desc" x="854" y="391">Staged documents checked at every commit;</text>
+  <text class="desc" x="854" y="409">a warning, or a refusal if the project says so.</text>
+  <text class="name" x="854" y="448"><tspan class="mono">/doc-guardrails</tspan></text>
+  <text class="desc" x="854" y="469">On demand: every document not yet linked.</text>
+
+  <!-- dotted ticks from phases to the docs -->
+  <line class="tick" x1="200" y1="486" x2="200" y2="534"/>
+  <line class="tick" x1="600" y1="486" x2="600" y2="534"/>
+  <line class="tick" x1="1000" y1="486" x2="1000" y2="534"/>
+
+  <!-- the project's docs -->
+  <rect class="band" x="30" y="534" width="1140" height="156" rx="14"/>
+  <text class="phase" x="54" y="564">THE PROJECT’S OWN DOCS</text>
+  <text class="phase-sub" x="278" y="564">in the project’s own folders; each skill reads and writes them; every one links to the roadmap</text>
+
+  <rect class="hub" x="54" y="586" width="146" height="72" rx="10"/>
+  <text class="hub-name" x="70" y="616">ROADMAP</text>
+  <text class="hub-role" x="70" y="636">the plan · the hub</text>
+
+  <rect class="chip" x="212" y="586" width="146" height="72" rx="10"/>
+  <text class="chip-name" x="228" y="616">Pin</text>
+  <text class="chip-role" x="228" y="636">where things stand</text>
+
+  <rect class="chip" x="370" y="586" width="146" height="72" rx="10"/>
+  <text class="chip-name" x="386" y="616">HANDOFF</text>
+  <text class="chip-role" x="386" y="636">what to do next</text>
+
+  <rect class="chip" x="528" y="586" width="146" height="72" rx="10"/>
+  <text class="chip-name" x="544" y="616">BRAIN</text>
+  <text class="chip-role" x="544" y="636">lessons learned</text>
+
+  <rect class="chip" x="686" y="586" width="146" height="72" rx="10"/>
+  <text class="chip-name" x="702" y="616">LEDGER</text>
+  <text class="chip-role" x="702" y="636">redman’s findings</text>
+
+  <rect class="chip" x="844" y="586" width="146" height="72" rx="10"/>
+  <text class="chip-name" x="860" y="616">DECISIONS</text>
+  <text class="chip-role" x="860" y="636">greenman’s calls</text>
+
+  <rect class="chip" x="1002" y="586" width="144" height="72" rx="10"/>
+  <text class="chip-name" x="1018" y="616">Overview</text>
+  <text class="chip-role" x="1018" y="636">one HTML page</text>
+
+  <!-- the loop back -->
+  <path class="flow" d="M1000 690 V734 H200 V702"/>
+  <path class="head" d="M200 692 l-5 9 h10 z"/>
+  <text class="desc" x="600" y="725" text-anchor="middle">the next session starts from the pin and the HANDOFF, so nothing is lost between threads</text>
+
+  <text class="foot" x="50" y="790">Underneath: <tspan class="mono">closeout.py</tspan> (facts · audit · link-audit · install-gate) and <tspan class="mono">turn_check.py</tspan>, plain Python on Windows, macOS and Linux. MIT.</text>
+</svg>

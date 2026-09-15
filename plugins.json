@@ -1,0 +1,49 @@
+{
+  "_about": "A starting set of plugins that work well with the pack. install.py --with-plugins installs each one; remove any you do not want before running it.",
+  "marketplaces": {
+    "claude-plugins-official": "anthropics/claude-plugins-official",
+    "superpowers-marketplace": "obra/superpowers-marketplace"
+  },
+  "plugins": [
+    {
+      "id": "claude-md-management@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "code-review@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "context7@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "pr-review-toolkit@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "pyright-lsp@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "session-report@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "skill-creator@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "superpowers-chrome@superpowers-marketplace",
+      "enabled": true
+    },
+    {
+      "id": "superpowers@claude-plugins-official",
+      "enabled": true
+    },
+    {
+      "id": "typescript-lsp@claude-plugins-official",
+      "enabled": true
+    }
+  ]
+}
