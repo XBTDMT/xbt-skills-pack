@@ -16,7 +16,8 @@
     .sub { font-size: 14px; fill: var(--muted); }
     .axlabel { font-size: 12.5px; fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .tick { font-size: 12.5px; fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .name { font-size: 14.5px; font-weight: 600; }
+    .name { font-size: 14.5px; font-weight: 650; }
+    .delta { font-size: 13.5px; font-weight: 400; fill: var(--muted); }
     .note { font-size: 12.5px; fill: var(--muted); }
     .grid { stroke: var(--grid); stroke-width: 1; }
     .axis { stroke: var(--line); stroke-width: 1.5; }
@@ -56,38 +57,33 @@
     <!-- Fable 5.1 low: bare 86 @18.85 -> layer 94 @20.17 -->
     <line class="link" x1="351" y1="620" x2="366" y2="340"/>
     <circle cx="351" cy="620" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
-    <circle cx="366" cy="340" r="8" fill="var(--fable)"/>
-    <text class="name" x="356" y="322" text-anchor="end">Fable 5.1 low</text>
-    <text class="note" x="356" y="338" text-anchor="end">86 → 94</text>
+    <circle cx="366" cy="340" r="7.5" fill="var(--fable)" stroke="var(--bg)" stroke-width="2"/>
+    <text class="name" x="330" y="624" text-anchor="end">Fable 5.1 low <tspan class="delta">86 → 94</tspan></text>
 
     <!-- Fable 5.1 medium: bare 91 @21.25 -> layer 94 @21.70 -->
     <line class="link" x1="378" y1="445" x2="384" y2="340"/>
     <circle cx="378" cy="445" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
-    <circle cx="384" cy="340" r="8" fill="var(--fable)"/>
-    <text class="name" x="400" y="336">Fable 5.1 medium</text>
-    <text class="note" x="400" y="352">91 → 94</text>
+    <circle cx="384" cy="340" r="7.5" fill="var(--fable)" stroke="var(--bg)" stroke-width="2"/>
+    <text class="name" x="345" y="449" text-anchor="end">Fable 5.1 medium <tspan class="delta">91 → 94</tspan></text>
 
     <!-- Opus 5 high: bare 92 @25.17 -> doctrine 97 @27.41 -->
     <line class="link" x1="422" y1="410" x2="448" y2="235"/>
     <circle cx="422" cy="410" r="8" fill="var(--bg)" stroke="var(--opus)" stroke-width="2.5"/>
     <circle cx="448" cy="235" r="8" fill="var(--opus)"/>
-    <text class="name" x="466" y="231">Opus 5 high</text>
-    <text class="note" x="466" y="247">92 → 97 — the best result here</text>
+    <text class="name" x="468" y="239">Opus 5 high <tspan class="delta">92 → 97</tspan></text>
 
     <!-- Sonnet 5 max: bare 90 @32.75 -> doctrine 87 @38.86 -->
     <line class="link" x1="507" y1="480" x2="576" y2="585"/>
     <circle cx="507" cy="480" r="8" fill="var(--bg)" stroke="var(--sonnet)" stroke-width="2.5"/>
     <circle cx="576" cy="585" r="8" fill="var(--sonnet)"/>
-    <text class="name" x="594" y="581">Sonnet 5 max</text>
-    <text class="note" x="594" y="597">90 → 87 — worse with the layer, and dearer</text>
+    <text class="name" x="596" y="589" fill="var(--sonnet)">Sonnet 5 max <tspan class="delta" fill="var(--sonnet)">90 → 87, worse</tspan></text>
 
     <!-- Opus 5 max: bare 91 @36.99 -> doctrine 92 @83.75 -->
     <line class="link" x1="555" y1="445" x2="1080" y2="410"/>
     <circle cx="555" cy="445" r="8" fill="var(--bg)" stroke="var(--opus)" stroke-width="2.5"/>
     <circle cx="1080" cy="410" r="8" fill="var(--opus)"/>
-    <text class="name" x="1080" y="386" text-anchor="middle">Opus 5 max</text>
-    <text class="note" x="1080" y="402" text-anchor="middle">91 → 92, for $37 → $84</text>
-    <text class="note" x="1080" y="434" text-anchor="middle">the layer let it spawn 18 agents</text>
+    <text class="name" x="1062" y="376" text-anchor="end">Opus 5 max <tspan class="delta">91 → 92</tspan></text>
+    <text class="delta" x="1062" y="396" text-anchor="end">for $37 → $84, on 18 agents</text>
   </g>
 
   <!-- legend -->
