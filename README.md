@@ -69,8 +69,10 @@ hallucination at the token level. The full method, every run, and what is still 
 
 ## What is coming next
 
-- **The skills control run** — the same tasks with the skills installed and with them removed, doctrine off in both
-  arms, three repeats. It is designed and costed; the result gets published here whichever way it comes out.
+- **The skills control run** — done on 22 September 2026, published whichever way it came out: on four held-out
+  tasks, three repeats each, the installed skills changed no outcome and cost about a third more to carry, because
+  nothing in those tasks invoked them. The numbers and what they mean are in
+  [`docs/evidence.md`](docs/evidence.md#the-skills-with-and-without-the-control-run-22-september-2026).
 - **UI/UX design skills** — nothing in this repo helps with interface work today. A design-side set (component and
   layout review, accessibility, design decisions recorded the way code decisions are) is planned, not started.
 
@@ -234,7 +236,7 @@ python3 evals/run.py                    # the full set, about $33
 ```
 
 The suite needs the skills installed (it uses your real `~/.claude` setup) and a plan with both Fable 5.1 and
-Opus 5 (`--seat opus55` runs the Opus scenarios on Opus 5.5 instead); `--seat fable` or `--seat opus` runs one of them. `docs/evidence.md` has the method, what each case checks,
+Opus 5.5 (`--seat opus` runs the Opus scenarios on Opus 5 instead); `--seat fable` or `--seat opus55` runs one of them. `docs/evidence.md` has the method, what each case checks,
 and what the numbers do and do not show.
 
 </details>

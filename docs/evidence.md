@@ -146,7 +146,46 @@ it a defect rather than an inconsistency, which the scorer does not measure.
 - It measured the **doctrine layer**, not the skills. The skills were not installed in those runs.
 - Model behaviour changes with model versions. These numbers are from September 2026 on the models named.
 
-## The next measurement: the skills with and without
+## The skills with and without: the control run (22 September 2026)
+
+The gap this page carried until now: nothing paired a task done *with* the skills against the same task done
+*without* them. The run designed below has now been done, and the result is published whichever way it came
+out, as promised.
+
+**Setup.** Fable 5.1 at low effort, the doctrine off in both arms so the skills are the only variable, four of the
+nine held-out tasks (code review, close-out, migration with an oracle test, wide secret audit), three repeats per
+cell, one fresh interactive session per task: 24 sessions. One arm had the skills installed as normal; the other
+was launched with every skill removed from the session (Claude Code's `--disable-slash-commands`, checked by a
+one-turn probe: the session lists no skills). Counted per cell, not averaged.
+
+| Task | Skills present (3 runs) | Skills absent (3 runs) |
+|---|---|---|
+| Review: all five planted defects found | 2 of 3 | 3 of 3 |
+| Review: a red herring flagged as a defect | 1 of 3 | 1 of 3 |
+| Close-out: all nine checks | 3 of 3 | 3 of 3 |
+| Migration with an oracle test: trap found, fixed, verified | 3 of 3 | 3 of 3 |
+| Migration: the old model id left in a test or the env example | 3 of 3 | 3 of 3 |
+| Wide audit: files found of 50 | 36, 34, 39 | 37, 32, 38 |
+| Helper agents spawned | 0 in 12 | 0 in 12 |
+| Cost of the four tasks | $10.36, $9.42, $9.52 | $7.76, $6.69, $7.71 |
+
+**Result: no outcome the installed skills changed.** The transcripts say why: none of this pack's skills was
+invoked in any of the twelve skills-present sessions. Only a bundled API reference fired (on the migration, three
+times) and once a third-party plugin's debugging skill. These tasks give the skills nothing to fire on: nobody typed
+a ceremony, no real design choice arose, no fix failed. Carrying the skills cost 32% more ($29.30 against
+$22.16 for the four tasks), almost all of it the skill listings that sit in every prompt and the reference reads.
+
+**What that means.** The skills change what a session does *when they are invoked*, which is what the graded
+behaviour suite measures (29 of 29, and 13 of 13 on Claude Opus 5.5). Merely present, they change nothing on
+tasks that never call them, and they are not free. If your work never reaches a close-out, a real choice or a
+failed fix, install the ones you will type and leave the rest.
+
+**Caveats.** Three runs per cell on one model at one effort; the four tasks were chosen because the skills have a
+mechanism to act on them, and on these they still did not fire; one session stopped mid-task on its first
+launch and was rerun; costs for the no-skills arm were read from the session transcripts' own cost record (that
+switch also removes the `/cost` command), a method checked against 66 pasted `/cost` lines on other arms.
+
+### The design, as settled before the run
 
 The honest gap above is that nothing here pairs a task done *with* the skills against the same task done *without*
 them. The doctrine comparison cannot stand in for it: when those runs happened the skills did not exist, so neither

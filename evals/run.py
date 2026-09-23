@@ -31,9 +31,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PACK = HERE.parent
 SEATS = {"fable": ["--model", "claude-fable-5-1", "--effort", "low"],
-         "opus": ["--model", "claude-opus-5", "--effort", "high"],
-         "opus55": ["--model", "claude-opus-5-5", "--effort", "high"]}   # 2026-09-22: runs in place of "opus" via --seat opus55
-SEAT_ALIAS = {"opus55": "opus"}   # a seat that stands in for another: the scenarios name "opus"; --seat opus55 runs those on Opus 5.5
+         "opus55": ["--model", "claude-opus-5-5", "--effort", "high"],   # the reviewer seat since 2026-09-22 (G-2); the scenarios name it
+         "opus": ["--model", "claude-opus-5", "--effort", "high"]}       # the reviewer seat until 2026-09-22; --seat opus runs the Opus scenarios on it
+SEAT_ALIAS = {"opus": "opus55"}   # a seat that stands in for another: the scenarios name "opus55"; --seat opus runs those on Opus 5
 ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Bash(python3:*)", "Bash(git status:*)",
            "Bash(git diff:*)", "Bash(git log:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(ls:*)", "Bash(cat:*)"]
 
