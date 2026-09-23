@@ -228,6 +228,8 @@ few hours earlier.
 | Helper agents spawned | 0 in 12 | 0 in 12 | 0 in 12 |
 | Cost of the four tasks | $10.88, $10.34, $11.56 | $10.36, $9.42, $9.52 | $7.76, $6.69, $7.71 |
 
+![The skills control run: absent, present, invoked — counts per cell for four tasks](control-run.svg)
+
 **Result: the outcome counts do not move; what changes is what the session leaves behind.** Every named skill
 loaded when asked (the receipt in 6 of 6, the close-out in 3 of 3, the decision skill in 3 of 3, read from the
 transcripts). The nine tasks were built to be passable without any skill, and they are: the counts match the
