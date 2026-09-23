@@ -1,7 +1,7 @@
 # Claude Code seats for PowerShell. xbt-skills-pack's installer (--with-doctrine) loads this from your PowerShell profile.
 #
 #   cc            engineer: the everyday seat. $CcEngineerModel at low effort, with the short working notes.
-#   cc opus       reviewer: Claude Opus 5 at high effort, with the full doctrine. Reviews, hard maths, long builds.
+#   cc opus       reviewer: Claude Opus 5.5 at high effort, with its working notes. Reviews, hard maths, long builds.
 #   cc plain      plain Claude Code: no doctrine injected, no model or effort pinned.
 #
 # Anything after the seat goes to claude unchanged:  cc opus --continue
@@ -29,7 +29,7 @@ function cc {
             return
         }
         if ($seat -eq 'opus' -or $seat -eq 'reviewer') {
-            $seatName = 'reviewer'; $model = 'claude-opus-5'; $effort = 'high'
+            $seatName = 'reviewer'; $model = 'claude-opus-5-5'; $effort = 'high'
         } else {
             $seatName = 'engineer'; $model = $CcEngineerModel; $effort = 'low'
         }

@@ -8,14 +8,14 @@ start of the session.
 | Seat | Type | What you get | Use it for |
 |---|---|---|---|
 | Engineer | `cc` | Fable 5.1 (or whatever `$CcEngineerModel` says), low effort, the short working notes | most work: features, bug fixes, scripts, data wrangling, writing docs, `/closeout` |
-| Reviewer | `cc opus` | Opus 5, high effort, the full doctrine | reviewing code, checking a derivation or a model, anything where one wrong sign or off-by-one costs more than the session, long builds where it checks its own work as it goes |
+| Reviewer | `cc opus` | Opus 5.5, high effort, its own working notes | reviewing code, checking a derivation or a model, anything where one wrong sign or off-by-one costs more than the session, long builds where it checks its own work as it goes |
 | Plain | `cc plain` | Claude Code exactly as installed, nothing added | seeing what Claude does without the doctrine, or when the doctrine gets in the way |
 
 On macOS and Linux the same three seats are:
 
 ```sh
 claude --model claude-fable-5-1                 # engineer — set the effort to low with /effort at the start
-claude --model claude-opus-5                    # reviewer — effort high
+claude --model claude-opus-5-5                  # reviewer — effort high
 DOCTRINE=off claude                             # plain — the hook adds nothing
 ```
 

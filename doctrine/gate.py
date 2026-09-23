@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """SessionStart hook: print the doctrine layer for the session's model, which Claude Code adds to the context.
 
+  Opus 5.5                      -> opus-5-5-layer.md (since 2026-09-22)
   Opus / Sonnet / Haiku / other -> opus-layer.md   (its first line is rewritten to name the real model)
   Fable                         -> fable-layer.md
 
@@ -131,7 +132,7 @@ def display_name(model):
     # A Sonnet session told it "runs Claude Opus 5" read that as a mismatch and refused the task, so the
     # header names the model that is really running.
     for key, name in (("sonnet", "Claude Sonnet 5"), ("haiku", "Claude Haiku"), ("fable", "Claude Fable 5.1"),
-                      ("opus", "Claude Opus 5")):
+                      ("opus-5-5", "Claude Opus 5.5"), ("opus", "Claude Opus 5")):
         if key in model:
             return name
     return model or "Claude Opus 5"
@@ -140,7 +141,10 @@ def display_name(model):
 def render(layer, model):
     text = layer.read_text(encoding="utf-8")
     first, sep, rest = text.partition("\n")
-    return first.replace(HEADER_MODEL, display_name(model)) + sep + rest
+    name = display_name(model)
+    if name in first:  # a layer written for this model already names it; substituting would make "Claude Opus 5.5.5"
+        return text
+    return first.replace(HEADER_MODEL, name) + sep + rest
 
 
 def main(stdin_text, out=sys.stdout, err=sys.stderr):
@@ -154,7 +158,10 @@ def main(stdin_text, out=sys.stdout, err=sys.stderr):
             print(f"gate.py: DOCTRINE_LAYER={forced} is not readable; injecting nothing", file=err)
             return 0
     else:
-        layer = HERE / ("fable-layer.md" if "fable" in model else "opus-layer.md")
+        if "opus-5-5" in model:                      # 2026-09-22: the layer measured for Opus 5.5; its header names the model
+            layer = HERE / "opus-5-5-layer.md"
+        else:
+            layer = HERE / ("fable-layer.md" if "fable" in model else "opus-layer.md")
     out.write(render(layer, model))
     return 0
 

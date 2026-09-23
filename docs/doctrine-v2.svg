@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" role="img" aria-labelledby="vt vd">
   <title id="vt">What the second version of the rules changed</title>
-  <desc id="vd">A scatter chart of correctness against cost on four held-out tasks, comparing the first version of the doctrine with the second. The engineer seat, Fable 5.1 at low effort, goes from 81.5 correct at $6.46 to 91.5 at $6.51 — nearly all of the gain coming from the code-review task. The reviewer seat, Opus 5 at high effort, is level: 96.5 at $8.99 against 97.5 at $8.72. On the review task the engineer seat found the planted defect in two of two runs with the second version and none of four runs without it.</desc>
+  <desc id="vd">A scatter chart of correctness against cost on four held-out tasks, comparing the first version of the doctrine with the second. The engineer seat, Fable 5.1 at low effort, goes from 86.5 correct at $6.46 to 96.4 at $6.51 — all of the gain coming from one code-review run. The reviewer seat, Opus 5 at high effort, is level: 96.5 at $8.99 against 97.5 at $8.72. The review-run gap did not repeat: the repeat scored 100 on both versions (corrected 22 September 2026; the earlier claim rested on a scorer defect).</desc>
   <style>
     :root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#7a7a80; --line:#e0ddd5; --grid:#edebe5;
             --opus:#3b5bdb; --fable:#b03a5b; --link:#b8b5ad; }
@@ -51,15 +51,15 @@
   </g>
 
   <g>
-    <!-- engineer seat: Fable 5.1 low, v1 81.5 @6.46 -> v2 91.5 @6.51 -->
+    <!-- engineer seat: Fable 5.1 low, v1 86.5 @6.46 -> v2 96.4 @6.51 (rescored 2026-09-22) -->
     <line class="link" x1="256" y1="648" x2="269" y2="368"/>
-    <circle cx="256" cy="648" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
-    <circle cx="269" cy="368" r="8" fill="var(--fable)"/>
+    <circle cx="256" cy="513" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
+    <circle cx="269" cy="236" r="8" fill="var(--fable)"/>
     <text class="name" x="289" y="364">Engineer seat — Fable 5.1, low</text>
-    <text class="note" x="289" y="382">81.5 → 91.5 for $6.46 → $6.51</text>
-    <text class="note" x="289" y="400">nearly all of it on the code-review task:</text>
-    <text class="note" x="289" y="418">it found the planted defect in 2 of 2 runs</text>
-    <text class="note" x="289" y="436">with the new rules, and 0 of 4 without them</text>
+    <text class="note" x="289" y="382">86.5 → 96.4 for $6.46 → $6.51</text>
+    <text class="note" x="289" y="400">all of the gain on one code-review run;</text>
+    <text class="note" x="289" y="418">its repeat the same evening scored 100</text>
+    <text class="note" x="289" y="436">on both versions (corrected 22 September)</text>
 
     <!-- reviewer seat: Opus 5 high, v1 96.5 @8.99 -> v2 97.5 @8.72 -->
     <line class="link" x1="895" y1="228" x2="827" y2="200"/>
@@ -70,5 +70,5 @@
   </g>
 
   <line class="grid" x1="50" y1="756" x2="1150" y2="756"/>
-  <text class="note" x="50" y="774">One session per task per version, so a point or two either way is noise; the review-task counts above are the part that repeated.</text>
+  <text class="note" x="50" y="774">One session per task per version, so a point or two either way is noise; the review gap did not survive its repeat.</text>
 </svg>

@@ -31,7 +31,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PACK = HERE.parent
 SEATS = {"fable": ["--model", "claude-fable-5-1", "--effort", "low"],
-         "opus": ["--model", "claude-opus-5", "--effort", "high"]}
+         "opus": ["--model", "claude-opus-5", "--effort", "high"],
+         "opus55": ["--model", "claude-opus-5-5", "--effort", "high"]}   # 2026-09-22: runs in place of "opus" via --seat opus55
+SEAT_ALIAS = {"opus55": "opus"}   # a seat that stands in for another: the scenarios name "opus"; --seat opus55 runs those on Opus 5.5
 ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Bash(python3:*)", "Bash(git status:*)",
            "Bash(git diff:*)", "Bash(git log:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(ls:*)", "Bash(cat:*)"]
 
@@ -181,10 +183,20 @@ def run_case(case_dir, scenario, seat, prompts):
     tools = ALLOWED + (["Bash(git:*)"] if scenario.get("allow_git") else [])
     for n, key in enumerate(scenario["turns"], 1):
         prompt = prompts.get(key, key)
+        # 2026-09-22: a session gets a writable scratch folder, named in its system prompt, as an interactive session does.
+        # Without one, /project-update's worklist (a scratch file the skill will not write into the repo) went to
+        # `$TMPDIR/…`, which the headless permission check refused (a variable in the path, a redirect outside the
+        # project), and the session stopped, correctly, at the refusal (project_update_records on opus55).
+        scratch = case_dir / "scratch"; scratch.mkdir(exist_ok=True)
         cmd = ["claude", "-p", prompt, *(["--resume", sid] if sid else []), *SEATS[seat],
-               "--permission-mode", "acceptEdits", *permission_flags(tools, SKILL_DIRS + session_dirs(proj)), "--output-format", "stream-json", "--verbose"]
+               "--permission-mode", "acceptEdits", *permission_flags(tools, SKILL_DIRS + session_dirs(proj)),
+               "--add-dir", str(scratch),
+               "--append-system-prompt", f"Scratchpad directory: {scratch} — use it for temporary files (a worklist, a note, "
+                                         f"intermediate output); write the path literally, without shell variables.",
+               "--output-format", "stream-json", "--verbose"]
+        env = dict(os.environ, TMPDIR=str(scratch))
         try:
-            r = subprocess.run(cmd, cwd=proj, capture_output=True, encoding="utf-8", errors="replace", timeout=SESSION_TIMEOUT)
+            r = subprocess.run(cmd, cwd=proj, capture_output=True, encoding="utf-8", errors="replace", timeout=SESSION_TIMEOUT, env=env)
             out, err = r.stdout, r.stderr
         except subprocess.TimeoutExpired as e:
             out, err = (e.stdout or b"").decode() if isinstance(e.stdout, bytes) else (e.stdout or ""), "TIMEOUT"
@@ -357,6 +369,8 @@ def plan(spec, quick, only, seat):
         for st in (s.get("quick", []) if quick else s["seats"]):
             if not seat or st == seat:
                 cases.append((s, st))
+            elif SEAT_ALIAS.get(seat) == st:
+                cases.append((s, seat))
     return cases
 
 

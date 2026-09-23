@@ -76,6 +76,9 @@ kinds — 183 check-runs in a full pass. `--quick` runs 11 of the 29.
 | 2026-09-15 | 29 | **29 / 29** | — (suite grown to 16 scenarios; $33.17) |
 | 2026-09-15 | 11 (quick) | 10 / 11 | `gate_block_own` on Opus — it edited a document to get past the gate instead of adding the line and committing |
 | 2026-09-15 | 11 (quick) | **11 / 11** | — ($9.45) |
+| 2026-09-22 | 13 (the Opus scenarios on Claude Opus 5.5, high) | 12 / 13 | `project_update_records` — the headless session had no scratch folder, wrote its worklist to `$TMPDIR` and was refused; it stopped, as the rules say. The runner now gives every session a scratch folder ($6.66) |
+| 2026-09-22 | 13 (Opus 5.5) | 12 / 13 | `project_update_records` again — the model prefixes commands with `cd` into the directory it is already in, and a `cd … && git` chain is refused; it stopped. The Opus 5.5 layer gained a run-where-you-are rule ($7.27) |
+| 2026-09-22 | 13 (Opus 5.5) | **13 / 13** | — ($7.48; the layer and runner as above) |
 
 Four distinct behaviour defects were caught by the suite before release, each fixed and re-run. That is the number
 worth reading: a suite that has never failed has not been shown to measure anything.
@@ -104,22 +107,35 @@ Correctness, nine tasks weighted equally, 0–100, as recorded by the author's h
 | Model and effort | With the layer | Bare | Difference |
 |---|---|---|---|
 | Claude Opus 5, high | 97 | 92 | +5 |
-| Claude Fable 5.1, low | 94 | 86 | +8 |
-| Claude Fable 5.1, medium | 94 | 91 | +3 |
-| Claude Opus 5, max | 92 | 91 | +1 |
+| Claude Fable 5.1, low | 98 | 90 | +8 |
+| Claude Fable 5.1, medium | 97 | 93 | +4 |
+| Claude Opus 5, max | 94 | 91 | +3 |
 | Claude Sonnet 5, max | 87 | 90 | −3 |
+
+(Figures as rescored on 22 September 2026, after two scorer corrections: the no-change task's explanation check
+accepting plain English (14 September) and the review check crediting the off-by-one in words as well as symbols
+(22 September). The earlier version of this table, 94/86, 94/91 and 92/91 on the Fable and Opus-max rows, was the
+pre-correction scoring.)
 
 **The Sonnet row is the one to read first.** The layer improved how that seat reported its work and made its
 results slightly worse; it also flagged both decoys in the review task as real defects, which bare Sonnet did not.
 That is why the doctrine is optional, off by default, and why the README says to read it before installing it.
 
 A later, smaller run compared two versions of the rules on four of the tasks, one session per task per version
-(`doctrine-v2.svg`): the engineer seat (Fable 5.1, low) went from 81.5 to 91.5 for $6.46 → $6.51, and the reviewer
-seat (Opus 5, high) stayed level at 96.5 → 97.5. Nearly all of the engineer's gain was on the code-review task,
-and that part repeated: it found the planted defect in 2 of 2 runs with the new rules and 0 of 4 without them. A
-re-check after the most recent edits found no change on either seat at the same or lower cost. One caveat: the
-scorer was widened between those two runs (one check began accepting a plain-English answer), so the four-task
-numbers here are not directly comparable with the nine-task table above.
+(`doctrine-v2.svg`): the engineer seat (Fable 5.1, low) went from 86.5 to 96.4 for $6.46 → $6.51, and the reviewer
+seat (Opus 5, high) stayed level at 96.5 → 97.5. All of the engineer's gain was on one code-review run; its repeat
+scored 100 on both versions. A re-check after the most recent edits found no change on either seat at the same or
+lower cost. One caveat: the scorer was widened between those two runs (one check began accepting a plain-English
+answer), so the four-task numbers here are not directly comparable with the nine-task table above.
+
+**Correction, 22 September 2026.** An earlier version of this page said the engineer seat "found the planted
+defect in 2 of 2 runs with the new rules and 0 of 4 without them", and gave the engineer's first-version figure as
+81.5. That was a scorer defect, not a doctrine effect: the review check credited the off-by-one only when the
+message contained the literal `>=`, and the first-version runs wrote "greater-or-equal" with the same substance.
+The check was fixed to accept the change named in words or symbols together with its consequence, and every
+configuration was rescored; the figures on this page and in `doctrine-v2.svg` are the rescored ones. On the
+corrected scorer every configuration registers that defect, and none of them, with or without the doctrine, calls
+it a defect rather than an inconsistency, which the scorer does not measure.
 
 ### What the benchmark does not show
 

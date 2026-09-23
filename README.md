@@ -47,7 +47,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 
 | | |
 |---|---|
-| **The skills** | 16 scenarios · 29 graded sessions · 101 checks · last full run **29/29** · four real defects caught before release |
+| **The skills** | 16 scenarios · 29 graded sessions · 101 checks · last full run **29/29** (Fable 5.1 and Opus 5) · the 13 Opus scenarios **13/13** on Claude Opus 5.5 (22 September 2026) · four real defects caught before release |
 | **The doctrine layer** *(optional)* | 9 held-out tasks · 74 fresh sessions · measured **with it and without it** |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
@@ -234,7 +234,7 @@ python3 evals/run.py                    # the full set, about $33
 ```
 
 The suite needs the skills installed (it uses your real `~/.claude` setup) and a plan with both Fable 5.1 and
-Opus 5; `--seat fable` or `--seat opus` runs one of them. `docs/evidence.md` has the method, what each case checks,
+Opus 5 (`--seat opus55` runs the Opus scenarios on Opus 5.5 instead); `--seat fable` or `--seat opus` runs one of them. `docs/evidence.md` has the method, what each case checks,
 and what the numbers do and do not show.
 
 </details>

@@ -30,7 +30,7 @@ SKILLS = ("closeout", "project-update", "eli5", "redman", "greenman", "doc-guard
 # document the session changed since its previous turn, however it was written. The per-write hook, hook.sh, is a zsh
 # script for macOS and Linux and is left for you to add by hand (README: "The per-write hook"). The third layer, the
 # commit gate, is added per project by /closeout.
-DOCTRINE_FILES = ("gate.py", "opus-layer.md", "fable-layer.md", "desktop-architect.md", "SEATS.md")
+DOCTRINE_FILES = ("gate.py", "opus-layer.md", "opus-5-5-layer.md", "fable-layer.md", "desktop-architect.md", "SEATS.md")
 PROFILE_BEGIN = "# >>> xbt-skills-pack >>>"
 PROFILE_END = "# <<< xbt-skills-pack <<<"
 STAMP = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

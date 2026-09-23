@@ -33,6 +33,21 @@ class Gate(unittest.TestCase):
         _, out, _ = run(json.dumps({"model": {"id": "claude-fable-5-1"}}), **self.env)
         self.assertTrue(out.startswith("# Working notes (injected: this session runs Claude Fable 5.1)"))
 
+    def test_opus_5_5_gets_its_own_layer(self):
+        # Opus 5.5 shipped 2026-09-22 and got a layer of its own the same day (measured: 98% at high, no agents); its
+        # header already names the model, so nothing is rewritten. Before that the generic "opus" match called it Opus 5.
+        code, out, _ = run(json.dumps({"model": "claude-opus-5-5"}), **self.env)
+        self.assertEqual(code, 0)
+        self.assertTrue(out.startswith("# Working notes (injected: this session runs Claude Opus 5.5)"), out.splitlines()[0])
+        self.assertNotIn("Opus 5.5.5", out)
+
+    def test_a_forced_layer_that_already_names_the_model_is_not_rewritten(self):
+        # A layer written for Opus 5.5 starts "runs Claude Opus 5.5"; the substitution of "Claude Opus 5" would give "5.5.5".
+        layer = Path(self.cfg.name) / "opus-5-5-layer.md"
+        layer.write_text("# Working notes (injected: this session runs Claude Opus 5.5)\n\nbody\n", encoding="utf-8")
+        _, out, _ = run(json.dumps({"model": "claude-opus-5-5"}), DOCTRINE_LAYER=str(layer), **self.env)
+        self.assertTrue(out.startswith("# Working notes (injected: this session runs Claude Opus 5.5)\n"), out.splitlines()[0])
+
     def test_sonnet_gets_the_opus_layer_naming_sonnet(self):
         _, out, _ = run(json.dumps({"model": "claude-sonnet-5"}), **self.env)
         self.assertTrue(out.startswith("# Working doctrine (injected: this session runs Claude Sonnet 5)"))
