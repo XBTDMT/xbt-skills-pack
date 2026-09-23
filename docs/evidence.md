@@ -228,7 +228,7 @@ few hours earlier.
 | Helper agents spawned | 0 in 12 | 0 in 12 | 0 in 12 |
 | Cost of the four tasks | $10.88, $10.34, $11.56 | $10.36, $9.42, $9.52 | $7.76, $6.69, $7.71 |
 
-![The skills control run: absent, present, invoked — counts per cell for four tasks](control-run.svg)
+![The skills control run: absent, present, invoked, and redman typed — counts per cell for four tasks](control-run.svg)
 
 **Result: the outcome counts do not move; what changes is what the session leaves behind.** Every named skill
 loaded when asked (the receipt in 6 of 6, the close-out in 3 of 3, the decision skill in 3 of 3, read from the
@@ -238,12 +238,18 @@ close-out, and a decision record and a named source after the migration, which i
 cost $32.78 for the four tasks against $29.30 uninvoked and $22.16 absent: 12% over carrying the skills unused,
 48% over not having them.
 
-**One thing this run could not measure.** The side-buddy skill (`/redman`) is marked so the model cannot invoke
-it; only a person typing it can. A prompt that says "turn on /redman" therefore does nothing, and five of the six
-sessions asked to said so in their first line. Its effect when a person types it is still unmeasured here.
+**The side-buddy skill, typed.** `/redman` is marked so the model cannot invoke it; only a person typing it can, so
+the twelve sessions above ran without it even where the prompt asked. A further six sessions (same model, effort
+and tasks; the migration and the audit, the two tasks it has something to act on; three repeats) opened with
+`/redman` typed as the first message and the task pasted second. It loaded in all six. On the migration it left a
+findings ledger row beside every decision record, and one session was the first of any arm to clear the old model
+id from the env example as well; outcome counts were otherwise level with the invoked arm (audit 40, 43, 35 files
+of 50). On the audit its rule, file every finding as a row, met the prompt's "do not edit anything": two sessions
+held the findings in the report and said so on the receipt, one filed the row and failed the task's no-edits
+check. Cost $8.20, $8.28, $8.64 for the two tasks against $7.16, $6.73, $7.96 invoked without it.
 
 **Caveats.** Three runs per cell on one model at one effort; the baselines are from the same day but a few hours
-earlier; the close-out's "handoff written" row is what the ceremony is defined to do, so it measures compliance,
+earlier; the typed arm ran two of the four tasks; the close-out's "handoff written" row is what the ceremony is defined to do, so it measures compliance,
 not benefit; one scorer check was corrected during scoring (it read the whole pin for the old next action and
 failed a pin that kept it visibly marked superseded), every earlier configuration was rescored and none moved.
 

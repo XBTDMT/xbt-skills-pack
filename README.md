@@ -56,7 +56,7 @@ model.**
 
 ![Correctness against cost for nine tasks, each configuration with the layer and without it](docs/measurements.svg)
 
-Every configuration measured so far, Claude Opus 5.5 included, is on one chart in [`docs/all-configurations.svg`](docs/all-configurations.svg). The skills control run, absent against installed against invoked, is one table in [`docs/control-run.svg`](docs/control-run.svg).
+Every configuration measured so far, Claude Opus 5.5 included, is on one chart in [`docs/all-configurations.svg`](docs/all-configurations.svg). The skills control run, absent against installed against invoked against typed, is one table in [`docs/control-run.svg`](docs/control-run.svg).
 
 The Sonnet row is not a typo, and it is why the doctrine ships **off by default**: there the layer improved how the
 session *reported* its work and made its *results* slightly worse. The Opus max row is the other warning — the
@@ -75,7 +75,8 @@ hallucination at the token level. The full method, every run, and what is still 
   tasks, three repeats each, the installed skills changed no outcome and cost about a third more to carry, because
   nothing in those tasks invoked them. The same evening the other half ran, with the prompt calling the skills: the
   outcome counts still did not move, and the invoked sessions were the only ones that left a handoff, an overview and
-  a decision record behind, at 12% more cost than carrying the skills unused. The numbers and what they mean are in
+  a decision record behind, at 12% more cost than carrying the skills unused; typed, the side-buddy skill filed a
+  findings row beside every migration and once collided with a "do not edit" prompt. The numbers and what they mean are in
   [`docs/evidence.md`](docs/evidence.md#the-skills-with-and-without-the-control-run-22-september-2026).
 - **UI/UX design skills** — nothing in this repo helps with interface work today. A design-side set (component and
   layout review, accessibility, design decisions recorded the way code decisions are) is planned, not started.
