@@ -73,7 +73,9 @@ hallucination at the token level. The full method, every run, and what is still 
 
 - **The skills control run** — done on 22 September 2026, published whichever way it came out: on four held-out
   tasks, three repeats each, the installed skills changed no outcome and cost about a third more to carry, because
-  nothing in those tasks invoked them. The numbers and what they mean are in
+  nothing in those tasks invoked them. The same evening the other half ran, with the prompt calling the skills: the
+  outcome counts still did not move, and the invoked sessions were the only ones that left a handoff, an overview and
+  a decision record behind, at 12% more cost than carrying the skills unused. The numbers and what they mean are in
   [`docs/evidence.md`](docs/evidence.md#the-skills-with-and-without-the-control-run-22-september-2026).
 - **UI/UX design skills** — nothing in this repo helps with interface work today. A design-side set (component and
   layout review, accessibility, design decisions recorded the way code decisions are) is planned, not started.

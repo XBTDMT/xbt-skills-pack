@@ -206,6 +206,45 @@ mechanism to act on them, and on these they still did not fire; one session stop
 launch and was rerun; costs for the no-skills arm were read from the session transcripts' own cost record (that
 switch also removes the `/cost` command), a method checked against 66 pasted `/cost` lines on other arms.
 
+### The other half: the same tasks with the skills invoked (22 September 2026, evening)
+
+The run above measured the skills installed but never called. This one has the prompt call them, on the same four
+tasks, same model and effort, doctrine off, three repeats: the review with the receipt mode on, the close-out by
+typing the close-out ceremony, the migration with a real design choice put to the decision skill, the audit with
+the receipt mode on. Twelve sessions, compared three ways with the two arms above, which were run the same way a
+few hours earlier.
+
+| Task | Invoked (3 runs) | Present, not invoked (3 runs) | Absent (3 runs) |
+|---|---|---|---|
+| Review: all five planted defects found | 2 of 3 | 2 of 3 | 3 of 3 |
+| Review: a red herring flagged as a defect | 1 of 3 | 1 of 3 | 1 of 3 |
+| Close-out: all nine outcome checks | 3 of 3 | 3 of 3 | 3 of 3 |
+| Close-out: a handoff and an overview written, the pin re-derived | 3 of 3 | 0 of 3 | 0 of 3 |
+| Migration with an oracle test: trap found, fixed, verified | 3 of 3 | 3 of 3 | 3 of 3 |
+| Migration: the source of the change named | 3 of 3 | 1 of 3 | 1 of 3 |
+| Migration: a decision record left in the repo | 3 of 3 | 0 of 3 | 0 of 3 |
+| Migration: the old model id left in the env example | 3 of 3 | 3 of 3 | 3 of 3 |
+| Wide audit: files found of 50 | 39, 41, 35 | 36, 34, 39 | 37, 32, 38 |
+| Helper agents spawned | 0 in 12 | 0 in 12 | 0 in 12 |
+| Cost of the four tasks | $10.88, $10.34, $11.56 | $10.36, $9.42, $9.52 | $7.76, $6.69, $7.71 |
+
+**Result: the outcome counts do not move; what changes is what the session leaves behind.** Every named skill
+loaded when asked (the receipt in 6 of 6, the close-out in 3 of 3, the decision skill in 3 of 3, read from the
+transcripts). The nine tasks were built to be passable without any skill, and they are: the counts match the
+uninvoked arm. The invoked arm is the only one that left a handoff, an overview and a re-derived pin after the
+close-out, and a decision record and a named source after the migration, which is what the skills are for. It
+cost $32.78 for the four tasks against $29.30 uninvoked and $22.16 absent: 12% over carrying the skills unused,
+48% over not having them.
+
+**One thing this run could not measure.** The side-buddy skill (`/redman`) is marked so the model cannot invoke
+it; only a person typing it can. A prompt that says "turn on /redman" therefore does nothing, and five of the six
+sessions asked to said so in their first line. Its effect when a person types it is still unmeasured here.
+
+**Caveats.** Three runs per cell on one model at one effort; the baselines are from the same day but a few hours
+earlier; the close-out's "handoff written" row is what the ceremony is defined to do, so it measures compliance,
+not benefit; one scorer check was corrected during scoring (it read the whole pin for the old next action and
+failed a pin that kept it visibly marked superseded), every earlier configuration was rescored and none moved.
+
 ### The design, as settled before the run
 
 The honest gap above is that nothing here pairs a task done *with* the skills against the same task done *without*
