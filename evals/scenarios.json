@@ -298,7 +298,7 @@
     [
      "final_matches",
      3,
-     "(?m)^ELI5 v4\\s*$"
+     "(?m)^ELI5 v5\\s*$"
     ],
     [
      "final_matches",
@@ -418,7 +418,7 @@
     [
      "final_matches",
      3,
-     "(?m)^ELI5 v4\\s*$"
+     "(?m)^ELI5 v5\\s*$"
     ],
     [
      "final_matches",
@@ -696,7 +696,7 @@
     [
      "final_matches",
      2,
-     "(?m)^ELI5 v4\\s*$"
+     "(?m)^ELI5 v5\\s*$"
     ],
     [
      "final_matches",

@@ -27,7 +27,9 @@ figure, a gap, a gate that cannot look). Diagnose it enough to size it:
   instead (§ The ledger); it is sized the same way, counts in N, and the receipt names the ledger it went to (both
   paths if a turn filed to both).
 - **Big** (blocks the main task, touches production, data, doctrine or a high-blast-radius file, or overturns the
-  premise): file it **and ask the user one line**: *found X while doing Y, big because Z, now or later?* **Default is
+  premise): **file the row first, then ask the user one line**: *found X while doing Y, big because Z, now or later?*
+  The receipt's `Redman:` line names the ledger the row went to, so a big finding is never only a question in chat:
+  every finding, big or small, is a row. **Default is
   later**; a finding the user already ruled later is not re-asked.
 
 **3. The budget.** Sizing a side finding gets **one pass**: at most three reads or read-only commands, three reading
@@ -42,8 +44,8 @@ and in the same turn add a row to the project's greenman ledger (`greenman/SKILL
 `greenman/REFERENCE.md`; the `G-` file too at M or L): `ruled by the user <date>: <the user's words>`, with why the advice
 differed. With greenman also on, it is one pushback per suggestion between the two skills. Say where you recorded it, and never raise it again without new evidence.
 
-**5. How it surfaces.** The eli5 receipt carries `Redman:` every turn (`off` · `NA` · `filed N small → <ledger path>` · a
-big finding with *now or later?* · a deep run's state; format in `eli5/SKILL.md`), and `Greenman:` directly under it. Nothing filed is `NA`, never `filed 0 small`. Never a
+**5. How it surfaces.** The eli5 receipt carries `Redman:` every turn (`off` · `NA` · `filed N small → <ledger path>` ·
+`big: <finding> → <ledger path> — now or later?` · a deep run's state; format in `eli5/SKILL.md`), and `Greenman:` directly under it. Nothing filed is `NA`, never `filed 0 small`. Never a
 second block, never a list of small findings. Without eli5 the same line closes the turn.
 
 ## The ledger — the project's own, in the project's tree

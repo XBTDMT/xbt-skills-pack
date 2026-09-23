@@ -17,25 +17,35 @@ the escape valves: use them instead of overstating or stalling silently.
 
 ## The block
 
-End the turn with this, verbatim in shape. The title is a bare line reading exactly `ELI5 v4` —
+End the turn with this, verbatim in shape. The title is a bare line reading exactly `ELI5 v5` —
 no heading marks, no bold, no emoji (it stays greppable across transcripts). The number is the block's version: it
-changes whenever a line is added or reworded. Receipts before v3 were titled plain `ELI5`; v3 added the version,
-v4 the deep-run, mixed-turn and ruling forms of the Redman and Greenman lines.
+changes whenever a line is added, moved or reworded. Receipts before v3 were titled plain `ELI5`; v3 added the version,
+v4 the deep-run, mixed-turn and ruling forms of the Redman and Greenman lines; v5 (2026-09-22, the user's order) groups
+the lines into four parts separated by blank lines, moves Fail beside Proof and Next beside Need from you, and closes
+with one sentence.
 
 ```
-ELI5 v4
+ELI5 v5
 - Did:
 - Why:
 - Result: worked / failed / unclear
 - Proof:
-- Next:
-- Fail: what broke + durable fix (omit if worked)
+- Fail: what broke + durable fix (only when Result is failed or unclear)
 - Files:
-- Redman: off | NA | filed N small → <ledger path> | <big finding, why big — now or later?> | deep run <path>: <state>
+
+- Redman: off | NA | filed N small → <ledger path> | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
 - Greenman: NA | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected | G-<n> (L): awaiting you — <question> | ruled by the user → <ledger path>
-- Need from you: <one question | none>
+
+- Next:
+- Need from you: <one question, and how it serves the goal | none>
+
 - Goal: <macro id · micro id> — <one line> · goal changed: no | yes, <old goal → new goal>
+- In one sentence:
 ```
+
+The four parts read in order: what happened (Did to Files), what the watchdogs saw (Redman, Greenman), what comes
+next (Next, Need from you), and the goal with the one-sentence close. The blank lines are part of the shape: they
+are real empty lines, never a lone dash, which renders as an empty bullet.
 
 ## What goes on each line
 
@@ -43,16 +53,20 @@ One line each, ~15 words, plain English. Short but precise and useful — a line
 pasted into any turn's block is worthless.
 
 - **Did** — what you actually did this turn. Concrete verb + object, not a category ("ran the 41 ingest tests", not "testing work").
-- **Why** — the reason it was needed. Do not restate Did.
+- **Why** — the reason the action was needed: the defect it fixes, the goal it serves, or the mechanism it relies on.
+  **"You asked" is never a Why.** the user's instruction can trail the reason in brackets when it matters ("the connector's
+  coordinates were stale (and you flagged it)"), but a Why that is only "the user said so" reads as obedience, not
+  understanding, and the user asked for the reason (2026-09-22). Do not restate Did.
 - **Result** — exactly one of `worked` / `failed` / `unclear`. `unclear` is a real answer; prefer it over a hopeful `worked`.
 - **Proof** — the specific evidence: command + the key output line, `file:line`, test counts, a URL, a screenshot path. If you did not verify it, write `none — not verified`. Never cite output you did not see.
-- **Next** — the single next action, or `nothing — waiting on you`.
-- **Fail** — only when Result is `failed` or `unclear`: what broke, plus a *durable* fix (a mechanism, not "remember to…"). Omit the whole line when it worked.
+- **Fail** — only when Result is `failed` or `unclear`: what broke, plus a *durable* fix (a mechanism, not "remember to…"). It sits directly under Proof so the failure and its evidence are read together. Omit the whole line when it worked.
 - **Files** — paths created/edited/deleted this turn, comma-separated, or `none`.
 - **Redman** — `off` when neither the `/redman` mode nor a deep run is active this turn; `NA` when it is on and nothing came up;
   `filed N small → <ledger path>` when only small findings were filed, N at least 1 (never list them here — they are on disk with
-  enough to pick up cold); a big finding, why it is big, and *now or later?* when one came up (the same ask goes in
-  Need from you), followed by `+N small → <ledger path>` if small ones were filed too; `deep run <path>: paused, N for
+  enough to pick up cold); `big: <finding> → <ledger path> — now or later?` when a big one came up: it is **filed first,
+  as a row, and the line names the ledger it went to** (a big finding that reaches the user only as a question was never
+  recorded; every finding, big or small, is a row), then asked (the same ask goes in Need from you), followed by
+  `+N small → <ledger path>` if small ones were filed too; `deep run <path>: paused, N for
   you` · `converged` · `NOT CONVERGED, N open` for a `/redman <path>` run. A turn that filed to the project's ledger
   and the pack's side ledger names both paths. Nothing filed is `NA`, never `filed 0 small`. Always present, so a
   missing line can never be mistaken for "nothing found".
@@ -62,12 +76,20 @@ pasted into any turn's block is worthless.
   and acted on; `G-<n> (L): awaiting you — <the question>` when a large one stopped for the user (the same question goes
   in Need from you); `ruled by the user → <ledger path>` (with `G-<n>` at M or L) when the user overruled a pushback and
   the ruling was recorded. Several decisions in one turn: the highest-depth one, then `+N more → <ledger path>`.
+- **Next** — the single next action, or `nothing — waiting on you`.
 - **Need from you** — at most **one** question, or `none`. If two things need deciding, ask the one that blocks, and put the other in Next.
+  **The question connects to the Goal line**: it says in a few words how answering it serves the goal ("push the chart
+  fix now? — it is the last open item of R-16"). The two legitimate off-goal questions are a permission refusal and a
+  big redman finding; those say plainly that they are outside the goal, so an interruption is never dressed up as
+  progress.
 - **Goal** — a goal lives on the roadmap, so name it: the macro id (a sprint or roadmap row, e.g. `Sprint 49` or
   `R-12`) and the micro id (the row or sub-item this turn serves), then the goal in one line, then `goal changed: no`
   unless the session's actual GOAL moved (not the code — a code change is never a goal change), in which case
   `yes, <old goal → new goal>`. `none · none` when the work serves no roadmap
   item yet, which is itself a thing to notice.
+- **In one sentence** — the last line: what changed for the user, in one plain sentence a stranger could act on
+  ("The public charts are fixed and pushed; nothing is waiting on you."). It is the so-what, not a second Did: it
+  never repeats the Did line's verbs, and it names the state the user is now in.
 
 ## When it applies
 
