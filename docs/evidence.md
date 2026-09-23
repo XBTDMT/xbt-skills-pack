@@ -94,9 +94,10 @@ worth reading: a suite that has never failed has not been shown to measure anyth
 
 ## 2. The doctrine layer, with and without
 
-The optional layer in `doctrine/` was measured against running bare. **8 configurations × 9 held-out tasks,
-74 transcript-verified Claude Code sessions**, one fresh session per task per configuration, on two of the author's
-own repositories. The nine tasks: a dependency migration, a bug fix from a report, a code review of a diff with
+The optional layer in `doctrine/` was measured against running bare. **Eight model-and-effort configurations, each
+run bare and with the layer, on nine held-out tasks: 144 fresh Claude Code sessions** (90 on 3 September 2026, 54 on
+22 September for Claude Opus 5.5), one fresh session per task per configuration, on two of the author's own
+repositories. The nine tasks: a dependency migration, a bug fix from a report, a code review of a diff with
 five planted defects and two decoys, a recall task over a large file, a feature with tests, a close-out ritual
 against a project's own documents, a fix that required naming the upstream source, a hardening pass, and a
 whole-repository audit. Outcomes were scored by a script (tests passing, defects found, diff size, files and lines
