@@ -215,7 +215,7 @@ measurable difference on some or all of the four tasks.
 ## Reproducing what ships here
 
 ```sh
-python3 -m unittest discover -s tests   # 95 unit tests, no API cost
+python3 -m unittest discover -s tests   # 97 unit tests, no API cost
 python3 evals/run.py --dry-run          # 16 scenarios, 29 graded sessions, 101 checks — runs nothing
 python3 evals/run.py --quick            # 11 real sessions, about $9
 python3 evals/run.py                    # the full set, about $33

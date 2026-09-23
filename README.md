@@ -107,8 +107,8 @@ hallucination at the token level. The full method, every run, and what is still 
 | `skills/closeout/` | `/closeout`: prove what closed, update every doc, carry findings and decisions into the plan, write the handoff and overview, audit, commit. Holds `UPDATING.md` (the steps both doc skills share) and `closeout.py` (the deterministic helper: `facts`, `memory`, `worklist`, `tree`, `stamp`, `audit`, `link-audit`, `install-gate`). |
 | `skills/project-update/` | `/project-update`: nothing has closed and work goes on; make every doc, figure, overview and memory entry match the project as it is now. |
 | `skills/axiom-macos/`, `skills/axiom-swiftui/` | Apple-platform references that switch on by themselves. Trimmed copies of [charleswiltgen/axiom](https://github.com/charleswiltgen/axiom) (MIT); each folder's `SOURCE.md` lists what was trimmed. |
-| `doctrine/` *(optional, off by default)* | `gate.py`, a SessionStart hook that injects `opus-layer.md` or `fable-layer.md` depending on the session's model; `SEATS.md` on which seat to use when; `desktop-architect.md` for a Claude Desktop project. Measured above — read `docs/evidence.md` first. |
-| `powershell/cc.ps1` *(optional)* | The `cc` launcher on Windows: `cc`, `cc opus`, `cc plain`. The everyday seat runs Fable 5.1; set `$CcEngineerModel` if your plan has no Fable. |
+| `doctrine/` *(optional, off by default)* | `gate.py`, a SessionStart hook that injects the layer for the session's model: `opus-5-5-layer.md` for Claude Opus 5.5 (measured for it on 22 September 2026), `fable-layer.md` for Fable, `opus-layer.md` for anything else; `SEATS.md` on which seat to use when; `desktop-architect.md` for a Claude Desktop project. Measured above — read `docs/evidence.md` first. |
+| `powershell/cc.ps1` *(optional)* | The `cc` launcher on Windows: `cc`, `cc opus`, `cc plain`. The everyday seat runs Fable 5.1 (set `$CcEngineerModel` if your plan has no Fable); the reviewer seat runs Claude Opus 5.5 at high effort. |
 | `plugins.json` *(optional)* | A starting set of plugins that work well with the pack. |
 | `templates/CLAUDE.md` | A starting point for your personal `~/.claude/CLAUDE.md`, written only if you don't have one. |
 
@@ -229,7 +229,7 @@ Everything above ships in this repository, including the behaviour suite, so the
 rather than to take on trust:
 
 ```sh
-python3 -m unittest discover -s tests   # 95 unit tests; no API cost; CI runs them on Linux, macOS and Windows
+python3 -m unittest discover -s tests   # 97 unit tests; no API cost; CI runs them on Linux, macOS and Windows
 python3 evals/run.py --dry-run          # what would run: 16 scenarios, 29 graded sessions, 101 checks
 python3 evals/run.py --quick            # 11 real sessions, about $9
 python3 evals/run.py                    # the full set, about $33
