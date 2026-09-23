@@ -56,6 +56,8 @@ model.**
 
 ![Correctness against cost for nine tasks, each configuration with the layer and without it](docs/measurements.svg)
 
+Every configuration measured so far, Claude Opus 5.5 included, is on one chart in [`docs/all-configurations.svg`](docs/all-configurations.svg).
+
 The Sonnet row is not a typo, and it is why the doctrine ships **off by default**: there the layer improved how the
 session *reported* its work and made its *results* slightly worse. The Opus max row is the other warning — the
 layer's standing opt-in to agents let it spawn eighteen of them and doubled the bill for one point.

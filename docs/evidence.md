@@ -137,6 +137,26 @@ configuration was rescored; the figures on this page and in `doctrine-v2.svg` ar
 corrected scorer every configuration registers that defect, and none of them, with or without the doctrine, calls
 it a defect rather than an inconsistency, which the scorer does not measure.
 
+### 22 September 2026: Claude Opus 5.5, and every configuration on one chart
+
+Opus 5.5 shipped on 22 September and became Claude Code's default Opus. The same nine tasks ran on it nine ways —
+bare, with the Opus 5 layer above, and with a short layer written for it that day from the three misses every bare
+run shared — at medium, high and max effort, one session per task, plus a repeat of the two seats that mattered.
+
+| Effort | Bare | Opus 5 layer | Layer written for 5.5 | Cost, bare / Opus 5 layer / 5.5 layer |
+|---|---|---|---|---|
+| medium (its default) | 93 | 95 | 96 | $10.30 / $11.03 / $11.54 |
+| high | 95 | 96 | 98 | $14.94 / $13.32 / $13.98 |
+| max | 92 | 90 | 96 | $47.28 / $87.80 / $51.86 |
+
+Bare Opus 5.5 lands where bare Opus 5 did and reaches 40 of 50 audit files without spawning anything. The Opus 5
+layer helps at medium and high and hurts at max, where its delegation rule fires (17 agents, $58 on the audit). The
+layer written for 5.5 fixes the shared misses at every effort with no agents, and repeated at 96 (high) and 95
+(medium). It ships in `doctrine/opus-5-5-layer.md` and the gate injects it for Opus 5.5. Effort barely matters on
+this model. All nineteen configurations measured so far, Fable and Opus 5 included, on one chart:
+
+![Every configuration measured: cost against correctness on nine tasks, with a zoom on the cheap end](all-configurations.svg)
+
 ### What the benchmark does not show
 
 - **It is the author's own benchmark**, on the author's repositories, with the author's scorer. It has not been

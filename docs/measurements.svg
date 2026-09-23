@@ -58,13 +58,13 @@
     <line class="link" x1="351" y1="485" x2="366" y2="205"/>
     <circle cx="351" cy="485" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
     <circle cx="366" cy="205" r="7.5" fill="var(--fable)" stroke="var(--bg)" stroke-width="2"/>
-    <text class="name" x="330" y="489" text-anchor="end">Fable 5.1 low <tspan class="delta">90 → 98</tspan></text>
+    <text class="name" x="348" y="200" text-anchor="end">Fable 5.1 low <tspan class="delta">90 → 98</tspan></text>
 
     <!-- Fable 5.1 medium: bare 93 @21.25 -> layer 97 @21.70 (rescored 2026-09-22) -->
     <line class="link" x1="378" y1="380" x2="384" y2="240"/>
     <circle cx="378" cy="380" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
     <circle cx="384" cy="240" r="7.5" fill="var(--fable)" stroke="var(--bg)" stroke-width="2"/>
-    <text class="name" x="345" y="384" text-anchor="end">Fable 5.1 medium <tspan class="delta">93 → 97</tspan></text>
+    <text class="name" x="366" y="258" text-anchor="end">Fable 5.1 medium <tspan class="delta">93 → 97</tspan></text>
 
     <!-- Opus 5 high: bare 92 @25.17 -> doctrine 97 @27.41 -->
     <line class="link" x1="422" y1="410" x2="448" y2="235"/>
