@@ -52,7 +52,7 @@
 
   <g>
     <!-- engineer seat: Fable 5.1 low, v1 86.5 @6.46 -> v2 96.4 @6.51 (rescored 2026-09-22) -->
-    <line class="link" x1="256" y1="648" x2="269" y2="368"/>
+    <line class="link" x1="256" y1="513" x2="269" y2="236"/>
     <circle cx="256" cy="513" r="8" fill="var(--bg)" stroke="var(--fable)" stroke-width="2.5"/>
     <circle cx="269" cy="236" r="8" fill="var(--fable)"/>
     <text class="name" x="289" y="364">Engineer seat — Fable 5.1, low</text>

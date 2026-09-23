@@ -48,7 +48,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 | | |
 |---|---|
 | **The skills** | 16 scenarios · 29 graded sessions · 101 checks · last full run **29/29** (Fable 5.1 and Opus 5) · the 13 Opus scenarios **13/13** on Claude Opus 5.5 (22 September 2026) · four real defects caught before release |
-| **The doctrine layer** *(optional)* | 9 held-out tasks · 74 fresh sessions · measured **with it and without it** |
+| **The doctrine layer** *(optional)* | 9 held-out tasks · 8 configurations, Claude Opus 5.5 included · measured **with it and without it** |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
 and match, files that must be unchanged, what reached git, commands that must not appear. **No model judges another
