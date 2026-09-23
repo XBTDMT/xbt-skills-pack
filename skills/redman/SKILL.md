@@ -26,6 +26,9 @@ figure, a gap, a gate that cannot look). Diagnose it enough to size it:
   A finding about **the skills pack itself** (a skill misfired, a rule was unclear) goes in the pack's side ledger
   instead (§ The ledger); it is sized the same way, counts in N, and the receipt names the ledger it went to (both
   paths if a turn filed to both).
+  **When the task's own instruction forbids edits** (a review or an audit that says "do not edit anything"), the
+  instruction wins over this rule: no row is written, the finding goes in the report, and the receipt reads
+  `held N — no edits allowed`. Filing a row into a repo the user said not to touch is an edit.
 - **Big** (blocks the main task, touches production, data, doctrine or a high-blast-radius file, or overturns the
   premise): **file the row first, then ask the user one line**: *found X while doing Y, big because Z, now or later?*
   The receipt's `Redman:` line names the ledger the row went to, so a big finding is never only a question in chat:

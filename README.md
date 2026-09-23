@@ -47,7 +47,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 
 | | |
 |---|---|
-| **The skills** | 16 scenarios · 29 graded sessions · 101 checks · last full run **29/29** (Fable 5.1 and Opus 5) · the 13 Opus scenarios **13/13** on Claude Opus 5.5 (22 September 2026) · four real defects caught before release |
+| **The skills** | 17 scenarios · 31 graded sessions · 106 checks · last full run **29/29** (Fable 5.1 and Opus 5, before the seventeenth) · the 13 Opus scenarios **13/13** on Claude Opus 5.5 and the new scenario **2/2** (22 September 2026) · four real defects caught before release |
 | **The doctrine layer** *(optional)* | 9 held-out tasks · 8 configurations, Claude Opus 5.5 included · measured **with it and without it** |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
@@ -235,7 +235,7 @@ rather than to take on trust:
 
 ```sh
 python3 -m unittest discover -s tests   # 97 unit tests; no API cost; CI runs them on Linux, macOS and Windows
-python3 evals/run.py --dry-run          # what would run: 16 scenarios, 29 graded sessions, 101 checks
+python3 evals/run.py --dry-run          # what would run: 17 scenarios, 31 graded sessions, 106 checks
 python3 evals/run.py --quick            # 11 real sessions, about $9
 python3 evals/run.py                    # the full set, about $33
 ```

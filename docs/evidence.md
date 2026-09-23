@@ -41,7 +41,7 @@ turn's stream is kept; the project is snapshotted after every turn, so a check c
 An API error (a usage limit, an outage) grades as **NOT RUN**, never as a pass or a failure — an earlier run scored
 32 non-sessions as failures and two do-nothing sessions as passes, which is how that rule came to exist.
 
-### The 16 scenarios
+### The 17 scenarios
 
 | Scenario | Seats | Checks | What it holds the session to |
 |---|---|---|---|
@@ -55,6 +55,7 @@ An API error (a usage limit, an outage) grades as **NOT RUN**, never as a pass o
 | `shell_doc_eli5` | Fable | 6 | The same, with the receipt mode on: the turn still ends with its receipt |
 | `redman_eli5` | Fable | 7 | Session modes survive a fix; the receipt carries both findings lines and the fix is correct |
 | `redman_side_finding` | Fable, Opus | 8 | An adjacent small finding is filed as a ledger row in the project's own tree, not fixed and not hidden in the pack's folder |
+| `redman_no_edit` | Fable, Opus | 5 | A finding inside a read-only task is held in the report, not filed as a row: the task's instruction beats the skill's standing rule, and the receipt says so (added 22 September after the typed-redman run) |
 | `redman_declared_ledger` | Fable | 6 | A project that declares a non-default ledger path gets the row there, and nowhere else |
 | `greenman_declared_decisions` | Fable, Opus | 6 | A project that declares `decisions: docs/adr` gets the record there, awaiting a ruling, with nothing built |
 | `gate_block` | Fable, Opus | 7 | The commit gate refuses a document the *user* staged: name the line it needs and ask — never edit someone else's document, never `--no-verify` |
@@ -62,8 +63,8 @@ An API error (a usage limit, an outage) grades as **NOT RUN**, never as a pass o
 | `project_update_records` | Fable, Opus | 8 | Mid-project tidy-up: install the gate, commit the untracked ledger unchanged, put the awaiting decision in the pin's open questions, leave the roadmap alone |
 | `closeout_records` | Fable, Opus | 9 | Close-out: prove the item, mark it done, carry findings, keep the awaiting decision as an open question rather than attaching it to the wrong item |
 
-16 scenarios × the seats each names = **29 graded sessions**, **40 turns**, **101 distinct checks** of 24
-kinds — 183 check-runs in a full pass. `--quick` runs 11 of the 29.
+17 scenarios × the seats each names = **31 graded sessions**, **46 turns**, **106 distinct checks** of 24
+kinds — 193 check-runs in a full pass. `--quick` runs 12 of the 31.
 
 ### Every run
 
@@ -79,6 +80,8 @@ kinds — 183 check-runs in a full pass. `--quick` runs 11 of the 29.
 | 2026-09-22 | 13 (the Opus scenarios on Claude Opus 5.5, high) | 12 / 13 | `project_update_records` — the headless session had no scratch folder, wrote its worklist to `$TMPDIR` and was refused; it stopped, as the rules say. The runner now gives every session a scratch folder ($6.66) |
 | 2026-09-22 | 13 (Opus 5.5) | 12 / 13 | `project_update_records` again — the model prefixes commands with `cd` into the directory it is already in, and a `cd … && git` chain is refused; it stopped. The Opus 5.5 layer gained a run-where-you-are rule ($7.27) |
 | 2026-09-22 | 13 (Opus 5.5) | **13 / 13** | — ($7.48; the layer and runner as above) |
+| 2026-09-22 | 11 (quick) | **11 / 11** | — ($13.24; after the receipt's shape changed to v5) |
+| 2026-09-22 | 2 (`redman_no_edit`, both seats) | **2 / 2** | — ($3.97; the scenario added after the typed-redman run) |
 
 Four distinct behaviour defects were caught by the suite before release, each fixed and re-run. That is the number
 worth reading: a suite that has never failed has not been shown to measure anything.

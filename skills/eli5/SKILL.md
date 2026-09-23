@@ -33,7 +33,7 @@ ELI5 v5
 - Fail: what broke + durable fix (only when Result is failed or unclear)
 - Files:
 
-- Redman: off | NA | filed N small → <ledger path> | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
+- Redman: off | NA | filed N small → <ledger path> | held N — no edits allowed | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
 - Greenman: NA | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected | G-<n> (L): awaiting you — <question> | ruled by the user → <ledger path>
 
 - Next:
@@ -63,7 +63,8 @@ pasted into any turn's block is worthless.
 - **Files** — paths created/edited/deleted this turn, comma-separated, or `none`.
 - **Redman** — `off` when neither the `/redman` mode nor a deep run is active this turn; `NA` when it is on and nothing came up;
   `filed N small → <ledger path>` when only small findings were filed, N at least 1 (never list them here — they are on disk with
-  enough to pick up cold); `big: <finding> → <ledger path> — now or later?` when a big one came up: it is **filed first,
+  enough to pick up cold); `held N — no edits allowed` when findings came up but the task forbade edits, so they are in
+  the report and not in a ledger; `big: <finding> → <ledger path> — now or later?` when a big one came up: it is **filed first,
   as a row, and the line names the ledger it went to** (a big finding that reaches the user only as a question was never
   recorded; every finding, big or small, is a row), then asked (the same ask goes in Need from you), followed by
   `+N small → <ledger path>` if small ones were filed too; `deep run <path>: paused, N for
