@@ -46,7 +46,8 @@ class Gate(unittest.TestCase):
         layer = Path(self.cfg.name) / "opus-5-5-layer.md"
         layer.write_text("# Working notes (injected: this session runs Claude Opus 5.5)\n\nbody\n", encoding="utf-8")
         _, out, _ = run(json.dumps({"model": "claude-opus-5-5"}), DOCTRINE_LAYER=str(layer), **self.env)
-        self.assertTrue(out.startswith("# Working notes (injected: this session runs Claude Opus 5.5)\n"), out.splitlines()[0])
+        # compare the first line, not the newline after it: Windows writes \r\n (CI went red on exactly this, 2026-09-22)
+        self.assertEqual(out.splitlines()[0], "# Working notes (injected: this session runs Claude Opus 5.5)")
 
     def test_sonnet_gets_the_opus_layer_naming_sonnet(self):
         _, out, _ = run(json.dumps({"model": "claude-sonnet-5"}), **self.env)
