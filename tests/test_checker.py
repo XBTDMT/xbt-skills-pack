@@ -42,11 +42,11 @@ LEDGER_HEAD = "| date | kind | item | size | state | where |\n|---|---|---|---|-
 
 def git(root, *args, check=True):
     return subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", *args],
-                          capture_output=True, text=True, check=check)
+                          capture_output=True, encoding="utf-8", check=check)
 
 
 def cli(*args, cwd=None, env=None):
-    return subprocess.run([sys.executable, str(CLOSEOUT), *map(str, args)], capture_output=True, text=True, cwd=cwd,
+    return subprocess.run([sys.executable, str(CLOSEOUT), *map(str, args)], capture_output=True, encoding="utf-8", cwd=cwd,
                           env=env)
 
 
@@ -342,7 +342,7 @@ class MapRead(Base):
         self.assertEqual(closeout.project_root(doc.parent), self.root)
         if ZSH:
             payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": str(doc)}})
-            r = subprocess.run([ZSH, str(HOOK_SH)], input=payload, capture_output=True, text=True, cwd=self.tmp)
+            r = subprocess.run([ZSH, str(HOOK_SH)], input=payload, capture_output=True, encoding="utf-8", cwd=self.tmp)
             self.assertEqual(r.returncode, 2, r.stderr)
             self.assertIn("MISSING", r.stderr)
 

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2197" width="470" height="1721.0" role="img" aria-labelledby="mnt mnd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2138" width="470" height="1674.8" role="img" aria-labelledby="mnt mnd">
 <title id="mnt">Does a doctrine page help? Ten configurations, nine tasks each, run with a page and without one</title>
 <desc id="mnd">Rows, one per configuration, for 10 configurations on the nine-task set: each row places the run without a page (hollow dot) and with one (filled dot) on a correctness axis, and gives the gap, the verdict and the costs without and with the page. Opus 5 high: 92 at $25.17 without a page, 97 at $27.41 with one (+4.9, better). Opus 5 max: 91 at $36.99 without a page, 94 at $83.75 with one (+3.1, better, just past the 3-point rule, agents 0 → 18). Fable 5.1 low: 90 at $18.85 without a page, 98 at $20.17 with one (+8.2, better). Fable 5.1 medium: 93 at $21.25 without a page, 97 at $21.70 with one (+3.5, better, just past the 3-point rule). Sonnet 5 max: 90 at $32.75 without a page, 87 at $38.86 with one (−2.8, level within noise, agents 1 → 7). Opus 5.5 medium: 93 at $10.30 without a page, 96 at $11.54 with one (+3.2, better, just past the 3-point rule). Opus 5.5 high: 95 at $14.94 without a page, 98 at $13.98 with one (+3.0, level within noise). Opus 5.5 max: 92 at $47.28 without a page, 96 at $51.86 with one (+3.3, better, just past the 3-point rule). Sonnet 5.5 high: 92 at $5.19 without a page, 96 at $8.38 with one (+3.4, better, just past the 3-point rule). Sonnet 5.5 max: 89 at $31.78 without a page, 97 at $37.96 with one (+8.0, better). Three setups ran twice; each gap uses the run shown: Opus 5.5 high with a page 97.6 (96.4 later the same day); Sonnet 5.5 high and max without a page 92.4 and 88.7 (first passes 93.4 and 92.9, on the correctness-and-cost chart). Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise; gaps come from the unrounded means. One fresh session per task. The setups run twice side by side are on the page-revisions chart. A gap over 3 and under 4 is just past the noise rule. How the pairs ran: Sonnet 5.5 high and max ran without and with a page side by side, task by task; Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium and Opus 5.5 medium, high and max on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 4.2: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 88.7 (on 5 October), 4.2 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October (its first pass, without a page and on the Opus 5 page, is on the correctness-and-cost chart). The pages that ship since 7 October were measured only on the held-out set. Correctness is the harness script's count inside each repo; no judge enters it.</desc>
 <style>
@@ -12,10 +12,10 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 .h{font-size:26px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:23.5px;font-weight:700;} .sub{font-size:21.4px;font-weight:400;fill:var(--muted);} .name{font-size:22.5px;font-weight:650;} .delta{font-size:21.4px;font-weight:400;fill:var(--muted);} .note{font-size:21.4px;font-weight:400;fill:var(--muted);} .tick{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:21.4px;font-weight:400;} .num{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:21.4px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:21.4px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:21.4px;font-weight:650;} .small{font-size:21.4px;font-weight:400;fill:var(--muted);} .th{font-size:22px;font-weight:650;} .thm{font-size:21.4px;font-weight:400;fill:var(--muted);} .td{font-size:21.4px;font-weight:400;} .tdn{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
 </style>
-<rect class="bg" x="0" y="0" width="600" height="2197" rx="14"/>
+<rect class="bg" x="0" y="0" width="600" height="2138" rx="14"/>
 <text class="h" x="30.0" y="44.0">Does a doctrine page help? Ten</text>
-<text class="h" x="30.0" y="79.9">configurations, nine tasks each,</text>
-<text class="h" x="30.0" y="115.8">run with a page and without one</text>
+<text class="h" x="30.0" y="79.9">configurations, nine tasks each, run with a</text>
+<text class="h" x="30.0" y="115.8">page and without one</text>
 <text class="axlabel" x="30.0" y="165.8">correctness, per configuration</text>
 <text class="tick" x="42.0" y="195.8" text-anchor="middle">84</text>
 <text class="tick" x="171.0" y="195.8" text-anchor="middle">88</text>
@@ -171,19 +171,17 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="legend" x="62.0" y="1713.4">Sonnet 5</text>
 <circle cx="191.5" cy="1706.4" r="9.0" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="208.5" y="1713.4">Sonnet 5.5</text>
-<text class="note" x="30.0" y="1751.4">A configuration is one model at one effort.</text>
-<text class="note" x="30.0" y="1780.9">Each row shows it without a page (hollow) and</text>
-<text class="note" x="30.0" y="1810.4">with one (filled) on a correctness axis, right is</text>
-<text class="note" x="30.0" y="1839.9">better, and gives the gap, the verdict and the</text>
-<text class="note" x="30.0" y="1869.4">costs of the nine tasks at the metered rate (and</text>
-<text class="note" x="30.0" y="1898.9">agents, where a run spawned any). Three</text>
-<text class="note" x="30.0" y="1928.4">setups ran twice; each gap uses the run</text>
-<text class="note" x="30.0" y="1957.9">shown: Opus 5.5 high with a page 97.6 (96.4</text>
-<text class="note" x="30.0" y="1987.4">later the same day); Sonnet 5.5 high and max</text>
-<text class="note" x="30.0" y="2016.9">without a page 92.4 and 88.7 (first passes 93.4</text>
-<text class="note" x="30.0" y="2046.4">and 92.9, on the correctness-and-cost chart).</text>
-<text class="note" x="30.0" y="2078.9">Noise: one setup run twice side by side moved</text>
-<text class="note" x="30.0" y="2108.4">by up to 2.7 points, so a gap of 3 points or less</text>
-<text class="note" x="30.0" y="2137.9">is level within noise; gaps come from the</text>
-<text class="note" x="30.0" y="2167.4">unrounded means.</text>
+<text class="note" x="30.0" y="1751.4">A configuration is one model at one effort. Each row</text>
+<text class="note" x="30.0" y="1780.9">shows it without a page (hollow) and with one (filled) on</text>
+<text class="note" x="30.0" y="1810.4">a correctness axis, right is better, and gives the gap, the</text>
+<text class="note" x="30.0" y="1839.9">verdict and the costs of the nine tasks at the metered</text>
+<text class="note" x="30.0" y="1869.4">rate (and agents, where a run spawned any). Three</text>
+<text class="note" x="30.0" y="1898.9">setups ran twice; each gap uses the run shown:</text>
+<text class="note" x="30.0" y="1928.4">Opus 5.5 high with a page 97.6 (96.4 later the same</text>
+<text class="note" x="30.0" y="1957.9">day); Sonnet 5.5 high and max without a page 92.4 and</text>
+<text class="note" x="30.0" y="1987.4">88.7 (first passes 93.4 and 92.9, on the</text>
+<text class="note" x="30.0" y="2016.9">correctness-and-cost chart).</text>
+<text class="note" x="30.0" y="2049.4">Noise: one setup run twice side by side moved by up to</text>
+<text class="note" x="30.0" y="2078.9">2.7 points, so a gap of 3 points or less is level within</text>
+<text class="note" x="30.0" y="2108.4">noise; gaps come from the unrounded means.</text>
 </svg>

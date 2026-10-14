@@ -38,7 +38,7 @@ LEVEL_RE = re.compile(r"doc-guardrails: (MISSING|BROKEN) — (\S+?): (.*)")
 
 def git(root, *args, check=True):
     return subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", *args],
-                          capture_output=True, text=True, check=check)
+                          capture_output=True, encoding="utf-8", check=check)
 
 
 def reason_class(msg):
@@ -87,7 +87,7 @@ class Row:
 
     def hook(self):
         payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": str(self.doc)}})
-        r = subprocess.run([ZSH, str(HOOK_SH)], input=payload, capture_output=True, text=True, cwd=self.root)
+        r = subprocess.run([ZSH, str(HOOK_SH)], input=payload, capture_output=True, encoding="utf-8", cwd=self.root)
         m = LEVEL_RE.search(r.stderr) if r.returncode == 2 else None
         return verdict(m.group(1), m.group(3)) if m else "SILENT"
 
@@ -118,13 +118,13 @@ class Row:
         git(self.root, "add", self.rel)
         env = dict(os.environ, CLOSEOUT_PY=str(CLOSEOUT), DOC_GUARDRAILS_STATE=str(self.tmp / "state"))
         r = subprocess.run([sys.executable, str(CLOSEOUT), "link-audit", str(self.root), "--staged"],
-                           capture_output=True, text=True, env=env)
+                           capture_output=True, encoding="utf-8", env=env)
         found = [m for m in LEVEL_RE.finditer(r.stdout) if m.group(2) == self.rel]
         return verdict(found[0].group(1), found[0].group(3)) if found else "SILENT"
 
     def sweep(self):
         r = subprocess.run([sys.executable, str(CLOSEOUT), "link-audit", str(self.root), "--no-inventory"],
-                           capture_output=True, text=True)
+                           capture_output=True, encoding="utf-8")
         for line in r.stdout.splitlines():
             m = re.match(r"^(\S+(?: \S+)?)\s+(\S+)  (.*)$", line)
             if m and m.group(2) == self.rel:
@@ -142,12 +142,12 @@ def gate_commit(root, tmp):
     """Install the gate and commit a staged unlinked spec through it: the gate's verdict for the spec, as the commit's
     output shows it, or SILENT when the commit never reached the gate."""
     env = dict(os.environ, CLOSEOUT_PY=str(CLOSEOUT), DOC_GUARDRAILS_STATE=str(Path(tmp) / "state"))
-    subprocess.run([sys.executable, str(CLOSEOUT), "install-gate", str(root)], capture_output=True, text=True, env=env)
+    subprocess.run([sys.executable, str(CLOSEOUT), "install-gate", str(root)], capture_output=True, encoding="utf-8", env=env)
     spec = Path(root) / "knowledge" / "02-spec-gate.md"
     spec.write_text("# gate spec\n", encoding="utf-8")
     git(root, "add", "knowledge/02-spec-gate.md")
     r = subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"],
-                       capture_output=True, text=True, env=env)
+                       capture_output=True, encoding="utf-8", env=env)
     found = [m for m in LEVEL_RE.finditer(r.stdout + r.stderr) if m.group(2) == "knowledge/02-spec-gate.md"]
     return found[0].group(1) if found else "SILENT"
 

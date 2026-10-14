@@ -16,6 +16,15 @@ param([switch]$WithDoctrine, [switch]$WithPlugins, [switch]$SkipPlugins, [switch
 $ErrorActionPreference = 'Stop'
 $pack = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+# Started as `powershell ...` from a PowerShell 7 window (Windows Terminal's default), Windows PowerShell inherits
+# PowerShell 7's module folders in PSModulePath, loads their Microsoft.PowerShell.Security, cannot, and is then left
+# with no Get-ExecutionPolicy. Windows PowerShell keeps only its own folders, its own modules' folder ($PSHOME\Modules)
+# among them; PowerShell 7 itself is left as it is.
+if ($PSVersionTable.PSVersion.Major -le 5) {
+    $own = @(($env:PSModulePath -split ';') | Where-Object { $_ -and $_ -notmatch '[\\/]PowerShell[\\/]' })
+    $env:PSModulePath = (@($own) + @(Join-Path $PSHOME 'Modules') | Select-Object -Unique) -join ';'
+}
+
 function Find-Python {
     # `python` can be the Microsoft Store stub, which opens the Store instead of running anything, so every
     # candidate has to actually print a version before it counts.

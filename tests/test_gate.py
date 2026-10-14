@@ -47,8 +47,16 @@ class Gate(unittest.TestCase):
         layer = Path(self.cfg.name) / "opus-5-5-layer.md"
         layer.write_text("# Working notes (injected: this session runs Claude Opus 5.5)\n\nbody\n", encoding="utf-8")
         _, out, _ = run(json.dumps({"model": "claude-opus-5-5"}), DOCTRINE_LAYER=str(layer), **self.env)
-        # compare the first line, not the newline after it: Windows writes \r\n (CI went red on exactly this, 2026-09-22)
-        self.assertEqual(out.splitlines()[0], "# Working notes (injected: this session runs Claude Opus 5.5)")
+        self.assertEqual(out, "# Working notes (injected: this session runs Claude Opus 5.5)\n\nbody\n")
+
+    def test_a_layer_saved_with_crlf_is_injected_with_lf(self):
+        # A Windows checkout (git's core.autocrlf) or editor saves a layer with CRLF; the session gets the text as
+        # measured, LF throughout, on every platform. The known-bad is the file's bytes passed through as they are.
+        layer = Path(self.cfg.name) / "crlf-layer.md"
+        layer.write_bytes(b"# Working notes (injected: this session runs Claude Opus 5.5)\r\n\r\nbody \xe2\x80\x94 two\r\n")
+        code, out, _ = run(json.dumps({"model": "claude-fable-5-1"}), DOCTRINE_LAYER=str(layer), **self.env)
+        self.assertEqual((code, out), (0, "# Working notes (injected: this session runs Claude Fable 5.1)\n\nbody \u2014 two\n"))
+        self.assertIn(b"\r\n", layer.read_bytes())
 
     def test_sonnet_gets_the_opus_layer_naming_sonnet(self):
         _, out, _ = run(json.dumps({"model": "claude-sonnet-5"}), **self.env)
@@ -120,13 +128,13 @@ class Gate(unittest.TestCase):
     def test_the_opus_alias_is_the_opus_5_5_layer(self):
         _, out, _ = run(json.dumps({"model": "opus"}), **self.env)
         self.assertEqual(first(out), "# Working notes (injected: this session runs Claude Opus 5.5)")
-        self.assertEqual(out.split("\n", 1)[1], (GATE.parent / "opus-5-5-layer.md").read_bytes().decode("utf-8").split("\n", 1)[1])
+        self.assertEqual(out.split("\n", 1)[1], (GATE.parent / "opus-5-5-layer.md").read_text(encoding="utf-8").split("\n", 1)[1])
 
     def test_an_undetected_model_gets_the_5_5_layer_and_says_so(self):
         code, out, _ = run("{}", **self.env)
         self.assertEqual(code, 0)
         self.assertEqual(first(out), "# Working notes (injected: this session runs an undetected model)")
-        self.assertEqual(out.split("\n", 1)[1], (GATE.parent / "opus-5-5-layer.md").read_bytes().decode("utf-8").split("\n", 1)[1])
+        self.assertEqual(out.split("\n", 1)[1], (GATE.parent / "opus-5-5-layer.md").read_text(encoding="utf-8").split("\n", 1)[1])
 
     def test_mythos_is_named_mythos(self):
         _, table, _ = run(args=["--table"], **self.env)

@@ -27,8 +27,8 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="592.0" x2="592.0" y1="227.2" y2="1314.8"/>
 <line class="grid" x1="562.0" x2="562.0" y1="227.2" y2="1314.8"/>
 <text class="h" x="50.0" y="52.0">The held-out set: eight tasks no doctrine page was written from</text>
-<text class="sub" x="50.0" y="84.0">Correctness and cost for every setup that ran them, one fresh session per task, 6–7 October 2026. Hollow: the page it</text>
-<text class="sub" x="50.0" y="108.1">was set against, or without a page; filled: the newer page of a same-day pair, or alone.</text>
+<text class="sub" x="50.0" y="84.0">Correctness and cost for every setup that ran them, one fresh session per task, 6–7 October 2026. Hollow: the page it was set against, or</text>
+<text class="sub" x="50.0" y="108.1">without a page; filled: the newer page of a same-day pair, or alone.</text>
 <text class="sub" x="50.0" y="135.2">By the pre-registered rule a gap of 5 points or less is noise; twelve of the fifteen runs scored 97.9, shown as 98.</text>
 <text class="axlabel" x="562.0" y="191.2">correctness</text>
 <text class="axlabel" x="790.0" y="191.2">score, gap</text>
@@ -153,6 +153,6 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="legend" x="620.3" y="1421.6">Fable 5.1</text>
 <circle cx="731.9" cy="1416.2" r="6.5" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="746.4" y="1421.6">Sonnet 5.5</text>
-<text class="note" x="50.0" y="1453.6">Seat tags: the seat that has run that setup since 7 October, except cc, which runs Opus 5.5 medium on the 7 October page,</text>
-<text class="note" x="50.0" y="1476.4">measured here only on the 29 September page.</text>
+<text class="note" x="50.0" y="1453.6">Seat tags: the seat that has run that setup since 7 October, except cc, which runs Opus 5.5 medium on the 7 October page, measured here</text>
+<text class="note" x="50.0" y="1476.4">only on the 29 September page.</text>
 </svg>

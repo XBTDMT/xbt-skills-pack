@@ -84,10 +84,20 @@ def session_dirs(proj, config_dir):
     return [str(d)]
 
 
+def rule_path(d, pathmod=os.path):
+    """A folder as Claude Code's permission rules spell an absolute path: `//` and the path in POSIX form. On Windows
+    the rules match paths normalised to POSIX form, `C:\\Data\\me` as `/c/Data/me` (the permissions docs), so a rule
+    written with the drive and backslashes never matches; on macOS and Linux the path as it is."""
+    drive, rest = pathmod.splitdrive(d)
+    if pathmod.sep == "\\" and drive.endswith(":"):
+        return "//" + drive[0].lower() + rest.replace("\\", "/")
+    return "/" + d
+
+
 def permission_flags(tools, dirs):
     """The allow-list, one deny list (git push, and Write and Edit inside the skill folders), and the skill folders
     as readable directories. One --disallowedTools flag, so no deny can be dropped by a second."""
-    deny = ["Bash(git push:*)", *(f"{tool}(/{d}/**)" for d in dirs for tool in ("Write", "Edit"))]
+    deny = ["Bash(git push:*)", *(f"{tool}({rule_path(d)}/**)" for d in dirs for tool in ("Write", "Edit"))]
     return ["--allowedTools", *tools, "--disallowedTools", *deny, *(["--add-dir", *dirs] if dirs else [])]
 
 
@@ -1239,8 +1249,15 @@ def launcher_form(entry):
 
 
 def is_runner_form(hook):
+    """R-22's runner: a shell string `<python> <…/evals/hook_log.py> --event <E> --script <S> -- <the entry>`, read
+    word by word, so a quoted runner path (a Windows path, or any path with a space, is quoted for the shell) is
+    still the runner."""
     command = hook.get("command", "")
-    return not hook.get("args") and "hook_log.py --event " in command and " -- " in command
+    if hook.get("args") or " -- " not in command:
+        return False
+    words = _words(command.split(" -- ", 1)[0])
+    return any(re.split(r"[\\/]", w)[-1] == "hook_log.py" and words[i + 1:i + 2] == ["--event"]
+               for i, w in enumerate(words))
 
 
 INTERPRETERS = re.compile(r"(?:python[0-9.]*|py|sh|bash|zsh)(?:\.exe)?", re.I)
@@ -1312,18 +1329,36 @@ def _as_on_disk(folder, name):
     return name
 
 
+def _plain(path, pathmod=os.path):
+    """`path` without Windows' extended-length prefix (\\\\?\\C:\\x is C:\\x, \\\\?\\UNC\\s\\x is \\\\s\\x): realpath keeps
+    it on a path through a link whose target does not exist yet (a fresh machine's <config>\\doctrine), which would
+    put that path on a drive of its own. Unchanged on macOS and Linux."""
+    if pathmod.sep != "\\":
+        return path
+    if path.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + path[8:]
+    return path[4:] if path.startswith("\\\\?\\") else path
+
+
+def _realpath(path, pathmod=os.path):
+    """The real path, as _plain spells it: os.path.realpath for this machine's paths; `pathmod`'s own realpath for a
+    test's (ntpath's is its normpath off Windows; a test may pass one that follows links of its own)."""
+    return _plain(pathmod.realpath(path), pathmod)
+
+
 def _contained(path, root, pathmod=os.path):
     """The part of `path` under `root`, "/"-joined and spelled as on disk ("" for the root itself), or None when it
     lies outside. By file identity on each ancestor, never by string prefix (so <tmp>/pack-r28/x is not under
     <tmp>/pack), and never a case-sensitive compare (a case-folding disk's <tmp>/PACK is <tmp>/pack): walking up from
-    the path's real path, the first ancestor that `os.path.samefile`s the root. A path on another drive is not
-    contained, decided before any file is touched; a root that does not exist (a fresh machine's doctrine folder) is
-    compared by equal normcase components; where the root exists, an ancestor that does not is skipped. `pathmod`
-    lets a test pass `ntpath`. Not run.py's `_under(snap, path)`, the snapshot filter."""
-    if pathmod.normcase(pathmod.splitdrive(path)[0]) != pathmod.normcase(pathmod.splitdrive(root)[0]):
+    the path's real path, the first ancestor that `os.path.samefile`s the root. The drives are compared on the real
+    paths, never on the paths as written: a link can cross drives (the sealed folder's skills/eli5 on C: is a link
+    into a pack on D:), and a path whose real path is on another drive is not contained, decided before any ancestor
+    is compared; a root that does not exist (a fresh machine's doctrine folder) is compared by equal normcase
+    components; where the root exists, an ancestor that does not is skipped. `pathmod` lets a test pass `ntpath` or
+    its own. Not run.py's `_under(snap, path)`, the snapshot filter."""
+    p, r = _realpath(path, pathmod), _realpath(root, pathmod)
+    if pathmod.normcase(pathmod.splitdrive(p)[0]) != pathmod.normcase(pathmod.splitdrive(r)[0]):
         return None
-    real = pathmod.realpath if pathmod is os.path else pathmod.normpath
-    p, r = real(path), real(root)
     on_disk = pathmod is os.path and os.path.exists(r)
     want = _components(r, pathmod)
     cur, tail = p, []
@@ -1350,7 +1385,7 @@ def _contained(path, root, pathmod=os.path):
 def _doctrine_root(claude_dir):
     """<claude_dir>/doctrine resolved as far as it exists: the live chain on this machine, the unresolved path on a
     fresh one (CI, the empty-HOME run), so an entry naming it keys ("doctrine", <file>) on both legs."""
-    return os.path.realpath(os.path.join(str(claude_dir), "doctrine"))
+    return _realpath(os.path.join(str(claude_dir), "doctrine"))
 
 
 def sealed_roots(config_dir):
@@ -3045,9 +3080,8 @@ def harvest_case(case_dir, name, out_dir):
     entry = {"id": name, "source": None, "scenario": rec["scenario"], "seat": rec["seat"], "turns": turns,
              "snapshots": rec["snapshots"], "files": files, "baseline_tests": rec.get("baseline_tests"), "fails": []}
     text = json.dumps(entry, ensure_ascii=False)
-    for form in sorted({str(case_dir), str(case_dir.resolve()), os.path.realpath(case_dir)}, key=len, reverse=True):
-        text = text.replace(form, "<case>")
-    entry = json.loads(text.replace(str(Path.home()), "<home>"))
+    text = json_path_re({str(case_dir), str(case_dir.resolve()), os.path.realpath(case_dir)}).sub("<case>", text)
+    entry = json.loads(json_path_re({str(Path.home())}).sub("<home>", text))
     parts = case_dir.resolve().parts
     entry["source"] = "/".join(parts[-3:]) if len(parts) >= 3 else case_dir.name
     with tempfile.TemporaryDirectory() as tmp:
@@ -3058,6 +3092,17 @@ def harvest_case(case_dir, name, out_dir):
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"{name}.json").write_text(json.dumps(entry, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     return entry
+
+
+def json_path_re(forms, pathmod=os.path):
+    """A pattern for a folder, in any of its spellings `forms` (as given, resolved, real), inside JSON text: each
+    separator either "/" or a JSON-escaped backslash, so a Windows path (C:\\\\Users\\\\me in the JSON) and one a session
+    wrote with forward slashes or a mix of both (C:\\\\Users\\\\me/proj) are found as surely as a POSIX one; without
+    regard to case where the file system folds it (Windows)."""
+    sep = r"(?:\\\\|/)"
+    alts = [sep.join(re.escape(json.dumps(part)[1:-1]) for part in re.split(r"[\\/]", form))
+            for form in sorted(set(forms), key=len, reverse=True) if form]
+    return re.compile("|".join(alts) or r"(?!)", re.I if pathmod.normcase("A") == "a" else 0)
 
 
 def _kinds(check):

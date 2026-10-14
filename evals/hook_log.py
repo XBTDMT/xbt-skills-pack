@@ -32,11 +32,27 @@ def parse(argv):
     return opts["--event"], opts["--script"], command
 
 
+LOCK_AT = 1 << 30   # the byte the Windows writers lock (1 GiB in: past any hook log, inside a 32-bit offset)
+
+
 def append(path, record):
-    """One line, one write, O_APPEND: two hooks finishing together never interleave their lines."""
-    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    """One line, one write, O_APPEND: two hooks finishing together never interleave their lines. On Windows the
+    descriptor is opened binary (text mode would write \\r\\n), and the write holds a lock on one byte past any line:
+    Windows' O_APPEND is a seek to the end and then a write, so two writers could write at one offset and lose a line."""
+    data = (json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0), 0o644)
     try:
-        os.write(fd, (json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8"))
+        if os.name != "nt":
+            os.write(fd, data)
+            return
+        import msvcrt
+        os.lseek(fd, LOCK_AT, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+        try:
+            os.write(fd, data)
+        finally:
+            os.lseek(fd, LOCK_AT, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
     finally:
         os.close(fd)
 

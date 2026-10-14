@@ -21,7 +21,7 @@ SENTENCE = "A document someone else wrote is not edited to get past this check"
 
 
 def sh(cwd, *args):
-    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
+    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, encoding="utf-8").stdout
 
 
 def ts(epoch):
@@ -464,11 +464,11 @@ class Roots(Session):
         env = {**os.environ, "DOC_GUARDRAILS_STATE": str(self.state), "CLOSEOUT_CONFIG_DIRS": str(self.cfg)}
         payload = {"session_id": "s1", "cwd": str(self.main), "stop_hook_active": False,
                    "transcript_path": str(self.transcript)}
-        r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload), capture_output=True, text=True,
+        r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload), capture_output=True, encoding="utf-8",
                            env=env, cwd=self.main, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(json.loads(r.stdout)["decision"], "block")
-        r = subprocess.run([sys.executable, str(HOOK)], input="not json", capture_output=True, text=True, env=env)
+        r = subprocess.run([sys.executable, str(HOOK)], input="not json", capture_output=True, encoding="utf-8", env=env)
         self.assertEqual((r.returncode, r.stdout), (0, ""))  # a malformed payload never breaks the session
 
 

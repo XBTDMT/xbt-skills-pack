@@ -555,7 +555,8 @@ def check(payload, states=None, now=None, temp_dirs=None, config_dirs=None, budg
         return rel if len(roots) == 1 or root == roots[0] else f"{root}/{rel}"
 
     for root in roots:
-        if time.monotonic() - started > budget:
+        if time.monotonic() - started >= budget:   # >=: a budget spent to the tick (Windows' clock moves in ~16 ms
+            # steps, so two reads in one tick differ by 0) is spent; with >, a budget of 0 still checked a root
             unchecked.append(str(root))
             continue
         ctx = closeout.link_context(root)

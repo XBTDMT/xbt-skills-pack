@@ -114,6 +114,12 @@ def git(folder, *args):
     return out if code == 0 else ""
 
 
+def native_path(p):
+    """A path git printed (`worktree list` gives C:/Data/... on Windows) spelled with this platform's separator, as
+    every other path the pack prints is; unchanged on macOS and Linux."""
+    return os.path.normpath(p) if p else p
+
+
 def git_bytes(folder, *args):
     """git's stdout exactly as git wrote it. A diff that is going back into `git apply` must never be decoded and
     re-encoded: text mode translates the line endings (on Windows every LF becomes CRLF), and the patch no longer
@@ -375,7 +381,7 @@ def facts(folder):
         else:
             g["upstream"] = None
             g["remotes"] = git(root, "remote").split()
-        g["worktrees"] = [l[9:] for l in git(root, "worktree", "list", "--porcelain").splitlines()
+        g["worktrees"] = [native_path(l[9:]) for l in git(root, "worktree", "list", "--porcelain").splitlines()
                           if l.startswith("worktree ")]
         g["stashes"] = len(git(root, "stash", "list").splitlines())
         g["recent"] = git(root, "log", "-10", "--format=%h %cs %s").splitlines()
@@ -2807,7 +2813,7 @@ def lane_checkouts(root, glob):
     out, path = [], None
     for line in git(root, "worktree", "list", "--porcelain").splitlines():
         if line.startswith("worktree "):
-            path = line[9:]
+            path = native_path(line[9:])
         elif line.startswith("branch ") and path:
             branch = line[7:].replace("refs/heads/", "", 1)
             if kind_match(branch, [glob]):
@@ -2994,7 +3000,7 @@ def _probe(root, *args, ok=(0,)):
 def worktrees(root):
     """Every worktree of the repository (`git worktree list --porcelain`), as paths."""
     r = _probe(root, "worktree", "list", "--porcelain")
-    return [line[9:] for line in r.stdout.splitlines() if line.startswith("worktree ")]
+    return [native_path(line[9:]) for line in r.stdout.splitlines() if line.startswith("worktree ")]
 
 
 def path_within(p, roots, pathmod=os.path):

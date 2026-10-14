@@ -19,8 +19,16 @@ import closeout  # noqa: E402
 closeout.config_dirs = lambda: []  # never read the real memory from a test
 
 
+def remove_tree(path):
+    """shutil.rmtree, also on Windows, where git's object files are read-only and os.unlink refuses them (WinError 5)."""
+    for p in Path(path).rglob("*"):
+        if p.is_file() and not p.is_symlink():
+            os.chmod(p, 0o600)
+    __import__("shutil").rmtree(path)
+
+
 def sh(cwd, *args):
-    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, encoding="utf-8").stdout.strip()
 
 
 class Repo:
@@ -619,7 +627,7 @@ class Audit(Base):
         return state
 
     def needs_config_hooks(self):
-        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.dir, capture_output=True, text=True)
+        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.dir, capture_output=True, encoding="utf-8")
         if r.returncode == 129 or "unknown subcommand" in r.stderr:
             self.skipTest("git <2.54 on PATH: config hooks unsupported")
 
@@ -632,7 +640,7 @@ class Audit(Base):
         closeout.install_gate(self.dir)
         closeout.install_gate(self.dir)  # twice: still one registration
         values = subprocess.run(["git", "-C", str(self.dir), "config", "--get-all", "hook.doc-guardrails.command"],
-                                capture_output=True, text=True).stdout.splitlines()
+                                capture_output=True, encoding="utf-8").stdout.splitlines()
         self.assertEqual(values, [closeout.GATE_LAUNCHER])
         self.assertEqual((hooks / "pre-commit").read_text(encoding="utf-8"), "#!/bin/sh\necho theirs\n")
         self.assertEqual(len(list(state.glob("gates/*/registered.json"))), 1)   # the record lands in the temp state
@@ -640,13 +648,13 @@ class Audit(Base):
         self.r.write("knowledge/02-SPEC-new.md", "# new\nno line\n")
         sh(self.dir, "git", "add", "-A")
         env = {**os.environ, "CLOSEOUT_PY": str(Path(closeout.__file__).resolve()), "CLOSEOUT_PYTHON": sys.executable}
-        r = subprocess.run(["git", "commit", "-qm", "report only"], cwd=self.dir, capture_output=True, text=True, env=env)
+        r = subprocess.run(["git", "commit", "-qm", "report only"], cwd=self.dir, capture_output=True, encoding="utf-8", env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("MISSING", r.stdout + r.stderr)
         self.r.write("CLAUDE.md", "# x\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: block\n")
         self.r.write("knowledge/02-SPEC-two.md", "# two\nno line\n")
         sh(self.dir, "git", "add", "-A")
-        r = subprocess.run(["git", "commit", "-qm", "blocked"], cwd=self.dir, capture_output=True, text=True, env=env)
+        r = subprocess.run(["git", "commit", "-qm", "blocked"], cwd=self.dir, capture_output=True, encoding="utf-8", env=env)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("knowledge/02-SPEC-two.md", r.stdout + r.stderr)
 
@@ -655,32 +663,32 @@ class Audit(Base):
         self.gate_state_folder()
         closeout.install_gate(self.dir)
         value = subprocess.run(["git", "-C", str(self.dir), "config", "--get", "hook.doc-guardrails.command"],
-                               capture_output=True, text=True).stdout
+                               capture_output=True, encoding="utf-8").stdout
         self.assertNotIn(Path(sys.executable).as_posix(), value)                  # no interpreter baked in
         self.assertNotIn(Path(closeout.__file__).absolute().as_posix(), value)    # no copy of the pack baked in
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
         self.r.write("knowledge/02-SPEC-new.md", "# new\nno line\n")
         sh(self.dir, "git", "add", "-A")
         bare = {**os.environ, "HOME": str(self.dir), "CLOSEOUT_PY": str(self.dir / "missing.py")}
-        r = subprocess.run(["git", "commit", "-qm", "report, helper missing"], cwd=self.dir, capture_output=True, text=True, env=bare)
+        r = subprocess.run(["git", "commit", "-qm", "report, helper missing"], cwd=self.dir, capture_output=True, encoding="utf-8", env=bare)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("gate skipped", r.stdout + r.stderr)
         self.r.write("CLAUDE.md", "# x\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: block\n")
         self.r.write("knowledge/02-SPEC-two.md", "# two\n")
         sh(self.dir, "git", "add", "-A")
-        r = subprocess.run(["git", "commit", "-qm", "block, helper missing"], cwd=self.dir, capture_output=True, text=True, env=bare)
+        r = subprocess.run(["git", "commit", "-qm", "block, helper missing"], cwd=self.dir, capture_output=True, encoding="utf-8", env=bare)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("cannot run", r.stdout + r.stderr)
         import shutil
         r = subprocess.run([shutil.which("git"), "commit", "-qm", "block, no python on PATH"], cwd=self.dir,
-                           capture_output=True, text=True,
+                           capture_output=True, encoding="utf-8",
                            env={**os.environ, "PATH": str(self.dir / "nonexistent"), "HOME": str(self.dir)})
         # an empty or useless PATH (git still prepends its own exec-path): the launcher falls back to /usr/bin:/bin
         # to read the mode, so a `guardrails: block` project is refused, never passed as "gate skipped"
         self.assertNotEqual(r.returncode, 0, r.stderr)
         self.assertIn("commit refused", r.stdout + r.stderr)
         r = subprocess.run([shutil.which("git"), "commit", "-qm", "block, empty PATH"], cwd=self.dir,
-                           capture_output=True, text=True, env={**os.environ, "PATH": "", "HOME": str(self.dir)})
+                           capture_output=True, encoding="utf-8", env={**os.environ, "PATH": "", "HOME": str(self.dir)})
         self.assertNotEqual(r.returncode, 0, r.stderr)
         self.assertIn("commit refused", r.stdout + r.stderr)
 
@@ -820,7 +828,7 @@ class CommitGate(unittest.TestCase):
 
     def keys(self, root):
         return subprocess.run(["git", "-C", str(root), "config", "--get-regexp", r"^hook\.doc-guardrails"],
-                              capture_output=True, text=True).returncode
+                              capture_output=True, encoding="utf-8").returncode
 
     def test_the_safety_half_alone_writes_no_hook_file_it_does_not_own(self):
         main, lane = self.managed_repo()
@@ -836,13 +844,15 @@ class CommitGate(unittest.TestCase):
         # main's map opts in, and the hook at core.hooksPath is the project's: no hook file in either tree is written
         (main / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\ngate: config-hook\n",
                                         encoding="utf-8")
-        hook = main / "scripts" / "git-hooks" / "pre-commit"
-        text = hook.read_bytes()
+        hook, lane_hook = main / "scripts" / "git-hooks" / "pre-commit", lane / "scripts" / "git-hooks" / "pre-commit"
+        # each tree's own bytes: the lane's checkout may carry other line endings (core.autocrlf, Git for Windows'
+        # default, checks the file out with CRLF), so the two copies are each compared with themselves
+        text, lane_text = hook.read_bytes(), lane_hook.read_bytes()
         with contextlib.redirect_stdout(io.StringIO()):
             closeout.main(["install-gate", str(main)])
             closeout.main(["install-gate", str(lane)])
         self.assertEqual(hook.read_bytes(), text)
-        self.assertFalse((lane / "scripts" / "git-hooks" / "pre-commit").read_bytes() != text)
+        self.assertEqual(lane_hook.read_bytes(), lane_text)
 
     def test_hooks_managed_by_project(self):
         main, lane = self.managed_repo()
@@ -897,8 +907,10 @@ class CommitGate(unittest.TestCase):
             self.skipTest("the temp folder's file system does not fold case: the case-folded path is not the same folder")
         sh(main, "git", "config", "core.hooksPath", str(folded))
         self.assertEqual(closeout.hooks_managed_by_project(main), str(folded))
-        # known-bad: commonpath finds the folded path in no worktree
-        self.assertNotEqual(os.path.commonpath([os.path.realpath(str(folded)), str(main)]), str(main))
+        # known-bad: commonpath finds the folded path in no worktree. Only where realpath keeps the case it was given
+        # (macOS): Windows' realpath answers with the case on disk, so there commonpath is not wrong to begin with
+        if os.path.realpath(str(folded)) == str(folded):
+            self.assertNotEqual(os.path.commonpath([os.path.realpath(str(folded)), str(main)]), str(main))
 
     # ---- commit 2: the config hook, the launcher, the heartbeat, facts, the registrations and the hold
 
@@ -909,20 +921,29 @@ class CommitGate(unittest.TestCase):
                 "DOC_GUARDRAILS_STATE": str(self.tmp / "state"), **extra}
 
     def config_hooks(self):
-        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.tmp, capture_output=True, text=True)
+        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.tmp, capture_output=True, encoding="utf-8")
         if r.returncode == 129 or "unknown subcommand" in r.stderr:
             self.skipTest("git <2.54 on PATH: config hooks unsupported")
 
     def shim(self):
-        """A git on PATH that has no config hooks (`hook list` answers 129), everything else passed through."""
-        real = subprocess.run(["git", "--exec-path"], capture_output=True, text=True).stdout.strip()
-        git_bin = __import__("shutil").which("git")
+        """A git that has no config hooks (`hook list` answers 129), everything else passed through: a `git` script
+        first on PATH, which git's own hooks find (git runs them with its sh, on Windows too) and so does every git the
+        helper starts on macOS and Linux. Windows starts a program by CreateProcess, which finds git.exe and never an
+        extensionless script; there the helper's one question to the shim, probe_config_hooks, is answered as the
+        shim answers it."""
+        shutil = __import__("shutil")
+        git_bin = shutil.which("git")
         bindir = self.tmp / "shim"
         bindir.mkdir(exist_ok=True)
         (bindir / "git").write_text('#!/bin/sh\ncase " $* " in *" hook list "*) echo "error: unknown subcommand: list" '
-                                    f'>&2; exit 129;; esac\nexec "{git_bin}" "$@"\n', encoding="utf-8")
+                                    f'>&2; exit 129;; esac\nexec "{Path(git_bin).as_posix()}" "$@"\n', encoding="utf-8")
         (bindir / "git").chmod(0o755)
-        return mock.patch.dict(os.environ, {"PATH": f"{bindir}{os.pathsep}{os.environ['PATH']}"})
+        path = f"{bindir}{os.pathsep}{os.environ['PATH']}"
+        stack = contextlib.ExitStack()
+        stack.enter_context(mock.patch.dict(os.environ, {"PATH": path}))
+        if not os.path.samefile(shutil.which("git", path=path), bindir / "git"):
+            stack.enter_context(mock.patch.object(closeout, "probe_config_hooks", lambda root: False))
+        return stack
 
     def plain_repo(self, name="p", claude_md="# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"):
         root = self.tmp / name
@@ -944,7 +965,7 @@ class CommitGate(unittest.TestCase):
         (root / "knowledge" / name).write_text("# x\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(root), "add", f"knowledge/{name}"], check=True)
         return subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", name,
-                               *flags], capture_output=True, text=True, env=env or self.env())
+                               *flags], capture_output=True, encoding="utf-8", env=env or self.env())
 
     def heartbeats(self):
         return [json.loads(p.read_text(encoding="utf-8")) for p in sorted((self.tmp / "state" / "gates").glob("*/*-*.json"))]
@@ -1053,7 +1074,7 @@ class CommitGate(unittest.TestCase):
                        env=self.env())
         copy.unlink()
         value = subprocess.run(["git", "-C", str(root), "config", "--get", "hook.doc-guardrails.command"],
-                               capture_output=True, text=True).stdout
+                               capture_output=True, encoding="utf-8").stdout
         self.assertNotIn(str(copy), value)
         self.assertNotIn(sys.executable, value)
         cfg = self.tmp / "cfg"
@@ -1083,7 +1104,7 @@ class CommitGate(unittest.TestCase):
         self.install(root)
         self.install(root)
         values = subprocess.run(["git", "-C", str(root), "config", "--get-all", "hook.doc-guardrails.command"],
-                                capture_output=True, text=True).stdout.splitlines()
+                                capture_output=True, encoding="utf-8").stdout.splitlines()
         self.assertEqual(len(values), 1)
         self.assertEqual(hook.read_bytes(), b"#!/bin/sh\r\necho theirs\r\necho after\r\n")
 
@@ -1116,7 +1137,7 @@ class CommitGate(unittest.TestCase):
         root, _ = self.plain_repo()
         code, out = self.install(root)
         self.assertEqual(code, 0)
-        self.assertRegex(out.splitlines()[0], r"^commit gate: runs as a git config hook \(git [0-9.]+; every worktree: 1\)$")
+        self.assertRegex(out.splitlines()[0], r"^commit gate: runs as a git config hook \(git \d+\.\d+\S*; every worktree: 1\)$")   # 2.55.0.windows.5 too
         self.assertEqual(out.splitlines()[1], "last ran: never")
         code, out = self.install(root)
         self.assertIn("already registered", out.splitlines()[0])
@@ -1166,7 +1187,7 @@ class CommitGate(unittest.TestCase):
         self.assertEqual((code, out.splitlines()[0]), (0, "commit gate: declined by the repository "
                                                           "(hook.doc-guardrails.enabled=false in local config)"))
         keys = subprocess.run(["git", "-C", str(root), "config", "--show-scope", "--get-regexp", r"^hook\."],
-                              capture_output=True, text=True).stdout.splitlines()
+                              capture_output=True, encoding="utf-8").stdout.splitlines()
         self.assertEqual(keys, ["local\thook.doc-guardrails.enabled false"])
         self.assertEqual(hook.read_text(encoding="utf-8"), "#!/bin/sh\necho mine\n")
         self.assertEqual(self.gate(root)["form"], "declined")
@@ -1256,7 +1277,7 @@ class CommitGate(unittest.TestCase):
         self.unset(b)
         self.assertEqual(self.registrations()[0], 0)
         d = self.registered("d")
-        __import__("shutil").rmtree(d)
+        remove_tree(d)
         code, lines = self.registrations()
         self.assertEqual(code, 0)
         self.assertTrue(any(l.startswith("gone") for l in lines), lines)
@@ -1587,10 +1608,10 @@ class MemoryReport(Base):
         env = {**os.environ, "CLOSEOUT_CONFIG_DIRS": str(self.cfg)}
         cmd = [sys.executable, str(Path(closeout.__file__).resolve()), "memory", str(self.proj),
                "--backup", str(self.dir / "scratch")]
-        r = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        r = subprocess.run(cmd, capture_output=True, encoding="utf-8", env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual([b["kind"] for b in json.loads(r.stdout)["backups"]], ["own"])
-        again = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        again = subprocess.run(cmd, capture_output=True, encoding="utf-8", env=env)
         self.assertEqual((again.returncode, again.stdout), (1, ""))
         self.assertIn("never writes over another", again.stderr)
 

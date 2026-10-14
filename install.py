@@ -275,7 +275,9 @@ def last_line(text):
 # the script runs in this process as its own __main__, with its own arguments, folder, stdin, stdout, stderr and exit
 # code. Only when XBT_EVAL_HOOK_LOG names a file (only the evals set it) does the launcher read stdin first and hash
 # what the script prints, then append one JSON line {event, script, exit, stdout_sha256, t} to that file in one
-# O_APPEND write; a line it cannot write costs one stderr line and changes nothing else.
+# O_APPEND write; a line it cannot write costs one stderr line and changes nothing else. On Windows the descriptor is
+# opened binary (text mode would write \r\n) and the write holds a lock on one byte 1 GiB in: Windows' O_APPEND is a
+# seek to the end and then a write, so two hooks finishing together could write at one offset and lose a line.
 LAUNCHER = r"""import os, runpy, sys
 script = sys.argv[1] if len(sys.argv) > 1 else ""
 if not os.path.isfile(script):
@@ -329,9 +331,16 @@ t = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="millisecond
 line = json.dumps({"event": event if isinstance(event, str) else "", "script": os.path.realpath(script),
                    "exit": code, "stdout_sha256": sha.hexdigest(), "t": t}, ensure_ascii=False) + "\n"
 try:
-    fd = os.open(log, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    fd = os.open(log, os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0), 0o644)
     try:
+        if os.name == "nt":
+            import msvcrt
+            os.lseek(fd, 1 << 30, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
         os.write(fd, line.encode("utf-8"))
+        if os.name == "nt":
+            os.lseek(fd, 1 << 30, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
     finally:
         os.close(fd)
 except OSError as e:

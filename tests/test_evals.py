@@ -9,6 +9,7 @@ import itertools
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,24 @@ SHAPES = Path(__file__).resolve().parent.parent / "evals" / "known" / "shapes"
 COSTS = Path(__file__).resolve().parent.parent / "evals" / "known" / "costs"
 REAL = Path(__file__).resolve().parent.parent / "evals" / "known" / "real"
 SPEC = json.loads((Path(__file__).resolve().parent.parent / "evals" / "scenarios.json").read_text(encoding="utf-8"))
+# A fake claude that really runs is a batch file on Windows: an extensionless script is no program there (CreateProcess
+# answers WinError 193), and a PATH lookup finds only the PATHEXT names, as npm's claude.cmd is found.
+CLI_EXT = ".cmd" if os.name == "nt" else ""
+
+
+def write_fake_cli(path, version, lines=()):
+    """A fake claude at `path` (+ CLI_EXT): `--version` prints `<version> (Claude Code)`, anything else prints `lines`,
+    one per line. A shell script on macOS and Linux; a batch file on Windows. Returns its path."""
+    path = Path(str(path) + CLI_EXT)
+    if os.name == "nt":
+        body = ('@echo off\r\nif "%~1"=="--version" goto version\r\n' + "".join(f"echo {l}\r\n" for l in lines)
+                + f"exit /b 0\r\n:version\r\necho {version} (Claude Code)\r\n")
+    else:
+        body = (f'#!/bin/sh\nif [ "$1" = "--version" ]; then echo "{version} (Claude Code)"; exit 0; fi\n'
+                + "".join(f"echo '{l}'\n" for l in lines))
+    path.write_bytes(body.encode("utf-8"))
+    path.chmod(0o755)
+    return path
 
 
 def stream(skills=(), bash=(), final="done", cost=0.5, sid="s1"):
@@ -530,9 +549,11 @@ class HookLog(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.tmp = Path(tmp.name)
         self.script = self.tmp / "fixture_hook.py"
+        # bytes, not text mode: a fixture hook that wrote through sys.stdout would print the console's code page and
+        # \r\n on Windows, so "byte for byte" would be checked on bytes no hook of the pack writes
         self.script.write_text("import sys\ndata = sys.stdin.read()\n"
-                               "sys.stdout.write('seen ' + str(len(data)) + ' — done\\n')\n"
-                               "sys.stderr.write('a warning\\n')\nsys.exit(2)\n", encoding="utf-8")
+                               "sys.stdout.buffer.write(('seen ' + str(len(data)) + ' — done\\n').encode('utf-8'))\n"
+                               "sys.stderr.buffer.write(b'a warning\\n')\nsys.exit(2)\n", encoding="utf-8")
 
     def run_hook(self, cmd, log=None, stdin=b'{"hook_event_name": "Stop"}', extra_env=None):
         env = {k: v for k, v in os.environ.items() if k != "XBT_EVAL_HOOK_LOG"}
@@ -2004,8 +2025,11 @@ class SealedBuilder(unittest.TestCase):
         self.assertEqual(gate["args"][:2], ["-c", evals.installer_module().LAUNCHER])   # the installer's gate (R-26 § 5.9)
         self.assertTrue(evals.launcher_form(self.settings()["hooks"]["Stop"][0]["hooks"][0]))   # R-26: the turn check too
         post = self.settings()["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
-        self.assertIn("evals/hook_log.py --event PostToolUse --script ", post)
-        self.assertTrue(post.endswith("doc-guardrails/hook.sh"))                 # the entry's own command stays last
+        words = shlex.split(post)                   # as the shell reads it (sh; Git Bash on Windows): paths are quoted
+        at = next(i for i, w in enumerate(words) if re.split(r"[\\/]", w)[-1] == "hook_log.py")
+        self.assertEqual(re.split(r"[\\/]", words[at])[-2:], ["evals", "hook_log.py"])
+        self.assertEqual(words[at + 1:at + 4], ["--event", "PostToolUse", "--script"])
+        self.assertEqual(re.split(r"[\\/]", words[-1])[-2:], ["doc-guardrails", "hook.sh"])   # the entry's own command stays last
 
     def test_the_builder_links_the_skills_in_either_layout(self):
         for public in (False, True):
@@ -2283,7 +2307,8 @@ class BatchBinary(unittest.TestCase):
         self.bin.mkdir()
         for v in ("2.1.281", "2.1.282"):
             self.fake(self.versions / v, v)
-        (self.bin / "claude").symlink_to(self.versions / "2.1.281")
+        self.claude = self.bin / ("claude" + CLI_EXT)
+        self.claude.symlink_to(self.versions / ("2.1.281" + CLI_EXT))
         self.config = self.tmp / "sealed"
         evals.build_sealed(self.config)
         self.scenarios = [{"id": "c1", "turns": ["SMALL"], "seats": ["fable"], "checks": []},
@@ -2291,13 +2316,10 @@ class BatchBinary(unittest.TestCase):
                           {"id": "c3", "turns": ["SMALL"], "seats": ["fable"], "checks": []}]
 
     def fake(self, path, version):
-        path.write_text("#!/bin/sh\n"
-                        f'if [ "$1" = "--version" ]; then echo "{version} (Claude Code)"; exit 0; fi\n'
-                        f"echo '{{\"type\": \"system\", \"subtype\": \"init\", \"session_id\": \"s1\", "
-                        f"\"claude_code_version\": \"{version}\"}}'\n"
-                        "echo '{\"type\": \"result\", \"result\": \"done\", \"total_cost_usd\": 0.1, \"session_id\": \"s1\"}'\n",
-                        encoding="utf-8")
-        path.chmod(0o755)
+        """`path` is the fake's name without CLI_EXT."""
+        write_fake_cli(path, version, [
+            json.dumps({"type": "system", "subtype": "init", "session_id": "s1", "claude_code_version": version}),
+            json.dumps({"type": "result", "result": "done", "total_cost_usd": 0.1, "session_id": "s1"})])
 
     def batch(self, after_case2_turn1=None):
         """Run the three cases one at a time; `after_case2_turn1` acts right after case 2's first turn."""
@@ -2312,7 +2334,7 @@ class BatchBinary(unittest.TestCase):
             elif cmd and str(cmd[0]).startswith(str(self.versions)):
                 calls.append({"cmd": list(map(str, cmd)), "env": kw.get("env"), "stdout": r.stdout})
             return r
-        cli = os.path.realpath(str(self.bin / "claude"))
+        cli = os.path.realpath(str(self.claude))
         with mock.patch.object(evals.subprocess, "run", recording):
             grades, changed = evals.run_batch([(s, "fable") for s in self.scenarios], SPEC, self.tmp / "out",
                                               self.config, cli, evals.cli_version_of(cli), parallel=1)
@@ -2322,11 +2344,11 @@ class BatchBinary(unittest.TestCase):
         return [c for c in calls if "-p" in c["cmd"]]
 
     def test_a_batch_runs_on_the_binary_it_started_with(self):
-        swap = lambda: ((self.bin / "claude").unlink(), (self.bin / "claude").symlink_to(self.versions / "2.1.282"))
+        swap = lambda: (self.claude.unlink(), self.claude.symlink_to(self.versions / ("2.1.282" + CLI_EXT)))
         grades, changed, calls = self.batch(swap)
         self.assertIsNone(changed)
         self.assertEqual(len(self.launches(calls)), 4)                  # 1 + 2 + 1 turns, all launched
-        resolved = os.path.realpath(self.versions / "2.1.281")
+        resolved = os.path.realpath(self.versions / ("2.1.281" + CLI_EXT))
         for c in calls:
             self.assertEqual(c["cmd"][0], resolved)
             self.assertEqual(c["env"]["DISABLE_AUTOUPDATER"], "1")
@@ -2336,14 +2358,15 @@ class BatchBinary(unittest.TestCase):
             self.assertEqual(json.loads(rec.read_text())["env"]["cli_path"], resolved)
         self.assertNotIn("DISABLE_AUTOUPDATER", (self.config / "settings.json").read_text(encoding="utf-8"))
         # known-bad: launching by the name `claude` after the swap runs the other version
-        by_name = subprocess.run(["claude", "--version"], capture_output=True, text=True,
-                                 env=dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ['PATH']}"))
+        by_name = subprocess.run([shutil.which("claude", path=str(self.bin)), "--version"], capture_output=True,
+                                 text=True)
         self.assertTrue(by_name.stdout.startswith("2.1.282"))
 
     def test_a_changed_binary_stops_the_batch(self):
-        resolved = self.versions / "2.1.281"
-        for action, new in ((lambda: self.fake(resolved, "2.1.282"), "2.1.282"), (lambda: resolved.unlink(), "missing")):
-            self.fake(resolved, "2.1.281")                                # each round starts on 2.1.281
+        name = self.versions / "2.1.281"
+        resolved = Path(str(name) + CLI_EXT)
+        for action, new in ((lambda: self.fake(name, "2.1.282"), "2.1.282"), (lambda: resolved.unlink(), "missing")):
+            self.fake(name, "2.1.281")                                    # each round starts on 2.1.281
             shutil.rmtree(self.tmp / "out", ignore_errors=True)
             grades, changed, calls = self.batch(action)
             self.assertEqual(changed, ("2.1.281", new))
@@ -2358,7 +2381,7 @@ class BatchBinary(unittest.TestCase):
             self.assertIn(f"not completed: CLI 2.1.281 → {new} before turn 2", buf.getvalue())
             self.assertIn("not launched: CLI changed", buf.getvalue())
         # known-bad: reading the version once per batch would have run case 2's turn 2 on the replaced file
-        self.fake(resolved, "2.1.282")
+        self.fake(name, "2.1.282")
         self.assertEqual(evals.cli_version_of(str(resolved)), "2.1.282")
 
     def test_no_claude_on_path_launches_nothing(self):
@@ -2393,8 +2416,7 @@ class Modes(unittest.TestCase):
         self.addCleanup(p.stop)
         self.bin = self.tmp / "bin"
         self.bin.mkdir()
-        (self.bin / "claude").write_text('#!/bin/sh\necho "2.1.281 (Claude Code)"\n', encoding="utf-8")
-        (self.bin / "claude").chmod(0o755)
+        write_fake_cli(self.bin / "claude", "2.1.281")
         self.config = self.tmp / "sealed"
 
     def main(self, *argv, selftest=0, preflight=(0, "")):
@@ -2833,6 +2855,77 @@ class RealFailures(unittest.TestCase):
         self.assertNotIn("session_id", json.dumps(entry["turns"]))
 
 
+class WindowsShapes(unittest.TestCase):
+    """The Windows shapes the CI's Windows legs met (2026-10-14), simulated with ntpath so every platform runs them."""
+
+    @staticmethod
+    def ntpath_with(links):
+        """ntpath, with a realpath that follows `links` ({link: target}) as Windows' realpath would."""
+        import ntpath
+        import types
+
+        def realpath(p):
+            p = ntpath.normpath(p)
+            for link, target in links.items():
+                if p.lower() == link.lower() or p.lower().startswith(link.lower() + "\\"):
+                    return target + p[len(link):]
+            return p
+        return types.SimpleNamespace(**{n: getattr(ntpath, n) for n in (
+            "splitdrive", "normcase", "normpath", "dirname", "basename", "join", "sep", "altsep")}, realpath=realpath)
+
+    def test_a_link_into_another_drive_is_contained_where_it_lands(self):
+        # the sealed folder's skills\eli5 on C: is a link into the pack's checkout on D: (the CI's own layout)
+        nt = self.ntpath_with({r"C:\Temp\sealed\skills\eli5": r"D:\a\pack\skills\eli5"})
+        self.assertEqual(evals._contained(r"C:\Temp\sealed\skills\eli5\skill_fresh.py", r"D:\a\pack", pathmod=nt),
+                         "skills/eli5/skill_fresh.py")
+        self.assertIsNone(evals._contained(r"C:\Temp\sealed\skills\other\x.py", r"D:\a\pack", pathmod=nt))
+        # known-bad: the drives of the paths as written differ, which refused it before any link was read
+        self.assertNotEqual(nt.splitdrive(r"C:\Temp\sealed\skills\eli5\skill_fresh.py")[0], nt.splitdrive(r"D:\a\pack")[0])
+
+    def test_a_root_through_a_link_to_a_missing_folder_keeps_its_drive(self):
+        # Windows' realpath keeps \\?\ on a path through a link whose target does not exist yet (<config>\doctrine
+        # on a machine with no ~/.claude/doctrine): the root and the script must still compare on one drive
+        nt = self.ntpath_with({r"C:\T\sealed\doctrine": "\\\\?\\C:\\Users\\me\\.claude\\doctrine"})
+        root = evals._realpath(r"C:\T\sealed\doctrine", nt)
+        self.assertEqual(root, r"C:\Users\me\.claude\doctrine")
+        self.assertEqual(evals._contained(r"C:\T\sealed\doctrine\gate.py", r"C:\T\sealed\doctrine", pathmod=nt),
+                         "gate.py")
+        self.assertEqual(evals._plain("\\\\?\\UNC\\srv\\share\\x", nt), r"\\srv\share\x")
+        import posixpath
+        self.assertEqual(evals._plain("/a/b", posixpath), "/a/b")
+        # known-bad: with the prefix kept, the root's drive is \\?\C:, never the script's C:
+        self.assertNotEqual(nt.splitdrive("\\\\?\\C:\\Users\\me\\.claude\\doctrine")[0], "C:")
+
+    def test_a_quoted_runner_is_still_the_runner(self):
+        py, runner = r"C:\Python\python.exe", r"D:\a\pack\evals\hook_log.py"
+        script = r"C:\Temp\sealed\skills\doc-guardrails\hook.sh"
+        hook = {"type": "command", "command": f"{shlex.quote(py)} {shlex.quote(runner)} --event PostToolUse --script "
+                                              f"{shlex.quote(script)} -- {shlex.quote(script)}"}
+        self.assertTrue(evals.is_runner_form(hook))
+        self.assertTrue(evals.is_logged(hook))
+        self.assertEqual(evals.settings_script(hook), script)
+        self.assertFalse(evals.is_runner_form({"command": f"{shlex.quote(py)} {shlex.quote(script)} -- x"}))
+        self.assertFalse(evals.is_runner_form({"command": "python3 /p/hook_log.py.bak --event Stop -- x"}))
+        # known-bad: the substring test, which a closing quote after the runner's path defeats
+        self.assertNotIn("hook_log.py --event ", hook["command"])
+
+    def test_a_case_path_in_json_is_found_whatever_its_separators(self):
+        case = r"C:\Users\RUNNER~1\Temp\tmpab\r\case"
+        text = json.dumps({"final": case.replace("\\tmpab\\", "\\tmpab/").replace("\\case", "/case") + "/project/x.md",
+                           "out": case + "\\project\\y.md"})
+        got = json.loads(evals.json_path_re({case}).sub("<case>", text))
+        self.assertEqual(got, {"final": "<case>/project/x.md", "out": "<case>\\project\\y.md"})
+        self.assertNotIn(case, text)                       # known-bad: the raw path is never in the JSON text
+        self.assertEqual(evals.json_path_re({"/home/u/r/case"}).sub("<case>", '"/home/u/r/case/x"'), '"<case>/x"')
+        self.assertEqual(evals.json_path_re(set()).sub("<case>", '"a"'), '"a"')
+
+    def test_a_permission_rule_names_a_windows_folder_in_posix_form(self):
+        import ntpath
+        import posixpath
+        self.assertEqual(evals.rule_path(r"C:\Data\me\.claude-evals\skills", ntpath), "//c/Data/me/.claude-evals/skills")
+        self.assertEqual(evals.rule_path("/home/me/.claude-evals/skills", posixpath), "//home/me/.claude-evals/skills")
+
+
 class Permissions(unittest.TestCase):
     def test_one_deny_list_keeps_git_push_and_makes_the_skill_folders_read_only(self):
         flags = evals.permission_flags(["Read", "Bash(ls:*)"], ["/a/skills", "/pack"])
@@ -2849,7 +2942,11 @@ class Permissions(unittest.TestCase):
             config, proj = Path(tmp) / "sealed", Path(tmp) / "my_proj"
             proj.mkdir()
             dirs = evals.session_dirs(proj, config)
-            name = "-" + str(proj.resolve()).strip("/").replace("/", "-").replace("_", "-").replace(".", "-")
+            # Claude Code's projects/ name: the working directory with every non-alphanumeric character as "-", so
+            # /home/me/my_proj is -home-me-my-proj and C:\\Data\\my_proj is C--Data-my-proj
+            name = str(proj.resolve())
+            for ch in "/\\:_.":
+                name = name.replace(ch, "-")
             self.assertEqual([Path(d) for d in dirs], [config / "projects" / name])
             self.assertTrue(all(Path(d).is_dir() for d in dirs))
 
@@ -2926,7 +3023,10 @@ class Isolation(unittest.TestCase):
         for d in add_dirs:
             self.assertTrue(self.allowed(d, case), d)
         for pattern in deny[1:]:                                           # after `Bash(git push:*)`
-            self.assertTrue(self.allowed(re.sub(r"^\w+\(/|/\*\*\)$", "", pattern), case), pattern)
+            ruled = re.sub(r"^\w+\(/|/\*\*\)$", "", pattern)               # the rule's path: /x/y; /c/x/y on Windows
+            if os.name == "nt":
+                ruled = re.sub(r"^/([a-z])/", lambda m: m.group(1).upper() + ":\\", ruled)
+            self.assertTrue(self.allowed(ruled, case), pattern)
         self.assertEqual(env["CLAUDE_CONFIG_DIR"], str(self.config))
         self.assertEqual(env["DOC_GUARDRAILS_STATE"], str(case / "state"))
         self.assertIn("--strict-mcp-config", cmd)
@@ -3490,8 +3590,7 @@ class RunLog(unittest.TestCase):
             self.assertEqual([(s["id"], st) for s, st in cases], [("refusal", "fable")])
             return [dict(self.case(out, "refusal-fable", [("2.1.283", 0.1)]), results=[])], None
         (self.tmp / "bin").mkdir()
-        (self.tmp / "bin" / "claude").write_text('#!/bin/sh\necho "2.1.283 (Claude Code)"\n', encoding="utf-8")
-        (self.tmp / "bin" / "claude").chmod(0o755)
+        write_fake_cli(self.tmp / "bin" / "claude", "2.1.283")
         import selftest as st
         with mock.patch.object(evals, "RUNS_FILE", self.runs), mock.patch.object(evals, "run_batch", batch), \
                 mock.patch.object(evals, "preflight", lambda *a, **k: (0, "")), \

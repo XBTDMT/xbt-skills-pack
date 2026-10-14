@@ -14,9 +14,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 </style>
 <rect class="bg" x="0" y="0" width="1200" height="2144" rx="14"/>
 <text class="h" x="50.0" y="52.0">The page revisions on the nine-task set, each beside the page it would replace</text>
-<text class="sub" x="50.0" y="84.0">Hollow ring: the page in use (or without a page); filled dot: the revised page, drawn over the ring where the two meet;</text>
-<text class="sub" x="50.0" y="108.1">two ticks on a dashed line: one setup run twice side by side. Each pair ran side by side, task by task, on the same day</text>
-<text class="sub" x="50.0" y="132.2">or days: 29–30 September and 5 October 2026.</text>
+<text class="sub" x="50.0" y="84.0">Hollow ring: the page in use (or without a page); filled dot: the revised page, drawn over the ring where the two meet; two</text>
+<text class="sub" x="50.0" y="108.1">ticks on a dashed line: one setup run twice side by side. Each pair ran side by side, task by task, on the same day or days:</text>
+<text class="sub" x="50.0" y="132.2">29–30 September and 5 October 2026.</text>
 <line class="grid" x1="651.4" x2="651.4" y1="214.2" y2="1944.8"/>
 <line class="grid" x1="554.3" x2="554.3" y1="214.2" y2="1944.8"/>
 <line class="grid" x1="457.1" x2="457.1" y1="214.2" y2="1944.8"/>

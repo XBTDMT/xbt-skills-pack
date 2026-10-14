@@ -450,6 +450,10 @@ class BranchIds(Fixture):
         self.assertIsNone(self.check(self.cites_in(["G-A64"]), cwd=side))       # from any worktree of the repository
 
     def test_read_only_and_cached_by_commit(self):
+        # this process's memo is keyed by commit, and a commit names its tree: an earlier test that built this same
+        # fixture within the same second made the same commits, so its memo would answer these heads without a git
+        # call (ubuntu's 3.9 leg, 2026-10-14; reproduced with GIT_AUTHOR_DATE and GIT_COMMITTER_DATE held fixed)
+        closeout._BRANCH_IDS.clear()
         main, lane, side = self.repo()
         before = snapshot(main, lane, side)
         calls, real = [], subprocess.run

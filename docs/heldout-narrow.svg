@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2890" width="470" height="2263.8" role="img" aria-labelledby="hnt hnd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2831" width="470" height="2217.6" role="img" aria-labelledby="hnt hnd">
 <title id="hnt">The held-out set: eight tasks no doctrine page was written from</title>
 <desc id="hnd">Rows of 15 runs on the eight tasks of the held-out set: each row places its runs on a correctness axis and gives the gap and the cost in figures. 7 October: the pages that ship since then, against the 29 September pages: Fable 5.1 low on the Fable page of 7 October (the cc fable seat): 94 at $11.33 (−4.2 against its control). Fable 5.1 low on the Fable page of 29 September: 98 at $11.95. Opus 5.5 high on the Opus 5.5 page of 7 October (the cc opus seat): 98 at $7.40 (±0.0 against its control). Opus 5.5 high on the Opus 5.5 page of 29 September: 98 at $7.01. 6 October: the 29 September pages against the pages before them: Fable 5.1 low on the Fable page of 29 September: 98 at $12.36 (±0.0 against its control). Fable 5.1 low on the Fable page of 15 September: 98 at $12.56. Opus 5.5 high on the Opus 5.5 page of 29 September: 98 at $8.14 (±0.0 against its control). Opus 5.5 high on the revised Opus 5.5 page of 22 September: 98 at $7.92. Opus 5.5 medium on the Opus 5.5 page of 29 September (the cc seat runs it on the 7 October page): 97 at $6.15. 6 October: Sonnet 5.5 with the Opus 5.5 page and without one: Sonnet 5.5 high on the Opus 5.5 page of 29 September, two runs: 97.9 at $4.68 and 97.9 at $4.48 (±0.0 against its control). Sonnet 5.5 high without a page, two runs (the cc sonnet seat): 97.9 at $4.72 and 97.9 at $4.02. Sonnet 5.5 max on the Opus 5.5 page of 29 September: 98 at $38.67 (+1.7 against its control). Sonnet 5.5 max without a page: 96 at $37.84. Correctness and cost for every setup that ran them, one fresh session per task, 6–7 October 2026. Hollow: the page it was set against, or without a page; filled: the newer page of a same-day pair, or alone. By the pre-registered rule a gap of 5 points or less is noise; twelve of the fifteen runs scored 97.9, shown as 98. Seat tags: the seat that has run that setup since 7 October, except cc, which runs Opus 5.5 medium on the 7 October page, measured here only on the 29 September page. The set is near its ceiling: the twelve runs at 97.9 each missed the same three checks on the one-unpushed task, so cost is what separates most setups. The pages were written from misses on the nine-task set; these eight tasks come from two other repos, built by agents that never read a page. Prose answers (the sessions-claim, review-decoys and audit-recall tasks) are judged blind; where the judge's verdict differs from the script's own count, the script alone reads: Opus 5.5 high on the Opus 5.5 page of 7 October, run 7 October: 92 (sessions-claim, review-decoys); Opus 5.5 high on the Opus 5.5 page of 29 September, run 7 October: 94 (sessions-claim); Sonnet 5.5 max without a page, run 6 October: 90 (review-decoys). Sonnet 5.5 high ran twice per setup (the recheck).</desc>
 <style>
@@ -12,9 +12,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 .h{font-size:26px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:23.5px;font-weight:700;} .sub{font-size:21.4px;font-weight:400;fill:var(--muted);} .name{font-size:22.5px;font-weight:650;} .delta{font-size:21.4px;font-weight:400;fill:var(--muted);} .note{font-size:21.4px;font-weight:400;fill:var(--muted);} .tick{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:21.4px;font-weight:400;} .num{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:21.4px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:21.4px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:21.4px;font-weight:650;} .small{font-size:21.4px;font-weight:400;fill:var(--muted);} .th{font-size:22px;font-weight:650;} .thm{font-size:21.4px;font-weight:400;fill:var(--muted);} .td{font-size:21.4px;font-weight:400;} .tdn{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
 </style>
-<rect class="bg" x="0" y="0" width="600" height="2890" rx="14"/>
-<text class="h" x="30.0" y="46.0">The held-out set: eight tasks no</text>
-<text class="h" x="30.0" y="81.9">doctrine page was written from</text>
+<rect class="bg" x="0" y="0" width="600" height="2831" rx="14"/>
+<text class="h" x="30.0" y="46.0">The held-out set: eight tasks no doctrine</text>
+<text class="h" x="30.0" y="81.9">page was written from</text>
 <text class="axlabel" x="30.0" y="135.9">correctness</text>
 <text class="tick" x="44.0" y="167.9" text-anchor="middle">86</text>
 <text class="tick" x="190.3" y="167.9" text-anchor="middle">90</text>
@@ -177,17 +177,15 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="legend" x="209.9" y="2456.2">Fable 5.1</text>
 <circle cx="343.5" cy="2449.2" r="9.0" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="360.5" y="2456.2">Sonnet 5.5</text>
-<text class="note" x="30.0" y="2500.2">Correctness and cost for every setup that ran</text>
-<text class="note" x="30.0" y="2529.7">them, one fresh session per task, 6–7 October</text>
-<text class="note" x="30.0" y="2559.2">2026. Hollow: the page it was set against, or</text>
-<text class="note" x="30.0" y="2588.7">without a page; filled: the newer page of a</text>
-<text class="note" x="30.0" y="2618.2">same-day pair, or alone.</text>
-<text class="note" x="30.0" y="2650.7">By the pre-registered rule a gap of 5 points or</text>
-<text class="note" x="30.0" y="2680.2">less is noise; twelve of the fifteen runs scored</text>
-<text class="note" x="30.0" y="2709.7">97.9, shown as 98.</text>
-<text class="note" x="30.0" y="2742.2">Seat tags: the seat that has run that</text>
-<text class="note" x="30.0" y="2771.7">setup since 7 October, except cc, which</text>
-<text class="note" x="30.0" y="2801.2">runs Opus 5.5 medium on the 7 October</text>
-<text class="note" x="30.0" y="2830.7">page, measured here only on the</text>
-<text class="note" x="30.0" y="2860.2">29 September page.</text>
+<text class="note" x="30.0" y="2500.2">Correctness and cost for every setup that ran them, one</text>
+<text class="note" x="30.0" y="2529.7">fresh session per task, 6–7 October 2026. Hollow: the</text>
+<text class="note" x="30.0" y="2559.2">page it was set against, or without a page; filled: the</text>
+<text class="note" x="30.0" y="2588.7">newer page of a same-day pair, or alone.</text>
+<text class="note" x="30.0" y="2621.2">By the pre-registered rule a gap of 5 points or less</text>
+<text class="note" x="30.0" y="2650.7">is noise; twelve of the fifteen runs scored 97.9,</text>
+<text class="note" x="30.0" y="2680.2">shown as 98.</text>
+<text class="note" x="30.0" y="2712.7">Seat tags: the seat that has run that setup since</text>
+<text class="note" x="30.0" y="2742.2">7 October, except cc, which runs Opus 5.5 medium on</text>
+<text class="note" x="30.0" y="2771.7">the 7 October page, measured here only on the</text>
+<text class="note" x="30.0" y="2801.2">29 September page.</text>
 </svg>

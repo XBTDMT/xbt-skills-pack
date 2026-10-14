@@ -27,7 +27,7 @@ class Hook(unittest.TestCase):
 
     def run_hook(self, path, env=None):
         payload = json.dumps({"tool_input": {"file_path": str(path)}})
-        r = subprocess.run([str(HOOK)], input=payload, capture_output=True, text=True,
+        r = subprocess.run([str(HOOK)], input=payload, capture_output=True, encoding="utf-8",
                            env={**os.environ, **(env or {})})
         return r.returncode, r.stdout + r.stderr
 
@@ -59,7 +59,7 @@ class Hook(unittest.TestCase):
         doc.write_text("# spec\n", encoding="utf-8")
         payload = json.dumps({"tool_input": {"file_path": str(doc)}})
         r = subprocess.run([str(cfg / "skills" / "doc-guardrails" / "hook.sh")], input=payload, capture_output=True,
-                           text=True, env={**os.environ, "CLAUDE_CONFIG_DIR": str(cfg)})
+                           encoding="utf-8", env={**os.environ, "CLAUDE_CONFIG_DIR": str(cfg)})
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertIn("04-spec.md", r.stderr)
 

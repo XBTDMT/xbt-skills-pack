@@ -229,17 +229,19 @@ def table():
 
 def render_bytes(data, name):
     """The layer's bytes with its first line's model replaced by `name`; a first line that does not parse is passed
-    through unchanged. Every other byte is the file's own."""
+    through unchanged. Every other byte is the file's own, with LF line endings: a layer checked out with CRLF (git's
+    core.autocrlf, the Windows default) or saved so by an editor injects the same text as the one measured, as
+    identify() and layer_files() already read it."""
+    data = data.replace(b"\r\n", b"\n")
     head, sep, rest = data.partition(b"\n")
     try:
         line = head.decode("utf-8")
     except UnicodeDecodeError:
         return data
-    cr = "\r" if line.endswith("\r") else ""
-    m = HEADER_RE.match(line[:-1] if cr else line)
+    m = HEADER_RE.match(line)
     if not m:
         return data
-    return (m.group(1) + name + m.group(3) + cr).encode("utf-8") + sep + rest
+    return (m.group(1) + name + m.group(3)).encode("utf-8") + sep + rest
 
 
 def hook(stdin_bytes, out, err):
@@ -278,16 +280,33 @@ class _Digest:
         return self.stream.write(data)
 
 
+LOG_LOCK_AT = 1 << 30   # the byte the Windows log writers lock (1 GiB in: past any hook log, inside a 32-bit offset)
+
+
 def log_line(path, event, script, code, digest):
-    """One line appended to the case hook log in one O_APPEND write; a failure costs one stderr line, never the hook."""
+    """One line appended to the case hook log in one O_APPEND write (on Windows, under a lock: see below); a failure
+    costs one stderr line, never the hook."""
     import datetime
     t = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
     line = json.dumps({"event": event, "script": os.path.realpath(script), "exit": code, "stdout_sha256": digest,
                        "t": t}, ensure_ascii=False) + "\n"
     try:
-        fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+        # O_BINARY (Windows only): a descriptor opened without it is in text mode there, and every \n is written as \r\n
+        fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0), 0o644)
         try:
-            os.write(fd, line.encode("utf-8"))
+            if os.name == "nt":
+                # Windows' O_APPEND is a seek to the end and then a write, not one step: two hooks finishing together
+                # can write at one offset and lose a line. A lock on one byte far past any line serialises the writers.
+                import msvcrt
+                os.lseek(fd, LOG_LOCK_AT, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+                try:
+                    os.write(fd, line.encode("utf-8"))
+                finally:
+                    os.lseek(fd, LOG_LOCK_AT, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            else:
+                os.write(fd, line.encode("utf-8"))
         finally:
             os.close(fd)
     except OSError as e:
