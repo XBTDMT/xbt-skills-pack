@@ -585,7 +585,7 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->519<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+As this tree ships: <!-- fig:tests.public -->523<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
 <!-- fig:run.quick.cost -->$10.43<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its

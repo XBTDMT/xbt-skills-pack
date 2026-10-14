@@ -523,7 +523,7 @@ def parse_transcript(case_dir):
                 text = _content_text(content)
                 if d.get("isMeta"):
                     m, name = BASE_DIR_RE.match(text), pending.pop(d.get("promptId"), None)
-                    if m and name and m.group(1).rstrip("/").endswith("/skills/" + name):
+                    if m and name and _slashed(m.group(1)).rstrip("/").endswith("/skills/" + name):
                         events.append({"kind": "typed", "name": name})
                 elif isinstance(content, str) or (isinstance(content, list) and not any(
                         isinstance(c, dict) and c.get("type") == "tool_result" for c in content)):
@@ -782,6 +782,13 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
 
 # ------------------------------------------------------------------------------------------------ checks
 
+def _slashed(path):
+    """A path a transcript or a hook log records, with "/" for every separator: Claude Code on Windows records
+    C:\\proj\\shelf\\report.py, and every suffix the checks name ("shelf/report.py", "eli5/skill_fresh.py") is
+    "/"-joined, as the snapshot's keys are."""
+    return str(path).replace("\\", "/")
+
+
 def _under(snap, path):
     """The snapshot's entries at `path` or inside it; "" or "." is the whole tree (W-27: `"".rstrip("/") + "/"` is
     "/", which no relative key starts with, so `["no_new_code", ""]` saw nothing and passed every run)."""
@@ -792,7 +799,11 @@ def _under(snap, path):
 
 
 def _files(proj, pattern):
-    return [p for p in sorted(proj.glob(pattern)) if p.is_file()]
+    """The project's files matching the glob, as the snapshot sees the project: never under .git or __pycache__ (a
+    violation that removes "**/*" removes the work tree, not git's read-only objects, which Windows refuses to
+    unlink)."""
+    return [p for p in sorted(proj.glob(pattern))
+            if p.is_file() and not IGNORED_PARTS.intersection(p.relative_to(proj).parts)]
 
 
 # A registry entry: `fn(args, ctx, snap) -> (passed, detail)`, and `violate(args, run) -> run'`, which builds a run
@@ -985,7 +996,8 @@ def _edited_by_tool(args, ctx, snap):  # the session itself changed the file wit
     elif len(args) != 1:
         raise ValueError(f"malformed edited_by_tool: {len(args)} arguments")
     turns = ctx["record"]["turns"]
-    hits = [w for n, tn in enumerate(turns, 1) if not only or n == only for w in tn["writes"] if w.endswith(args[0])]
+    hits = [w for n, tn in enumerate(turns, 1) if not only or n == only for w in tn["writes"]
+            if _slashed(w).endswith(args[0])]
     scope = f" on turn {only}" if only else ""
     return bool(hits), f"edited by the session{scope}: {len(hits)} write(s)" if hits else f"not edited with Write/Edit{scope}"
 
@@ -1354,12 +1366,25 @@ def _contained(path, root, pathmod=os.path):
     paths, never on the paths as written: a link can cross drives (the sealed folder's skills/eli5 on C: is a link
     into a pack on D:), and a path whose real path is on another drive is not contained, decided before any ancestor
     is compared; a root that does not exist (a fresh machine's doctrine folder) is compared by equal normcase
-    components; where the root exists, an ancestor that does not is skipped. `pathmod` lets a test pass `ntpath` or
-    its own. Not run.py's `_under(snap, path)`, the snapshot filter."""
+    components, first on the real paths, then on the paths as written: with no file to identify, a path through a
+    link to nowhere has no real path to trust (on the CI's Windows legs realpath put <config>\\doctrine\\gate.py outside
+    <config>\\doctrine when the link's target was missing); where the root exists, an ancestor that does not is
+    skipped. `pathmod` lets a test pass `ntpath` or its own. Not run.py's `_under(snap, path)`, the snapshot
+    filter."""
     p, r = _realpath(path, pathmod), _realpath(root, pathmod)
+    on_disk = pathmod is os.path and os.path.exists(r)
+    rel = _walk_up(p, r, on_disk, pathmod)
+    if rel is None and not on_disk:
+        lexical = os.path.abspath if pathmod is os.path else pathmod.normpath
+        rel = _walk_up(_plain(lexical(path), pathmod), _plain(lexical(root), pathmod), False, pathmod)
+    return rel
+
+
+def _walk_up(p, r, on_disk, pathmod):
+    """_contained's walk: the part of `p` under `r` (both real or both as written), or None; another drive is None
+    before any ancestor is compared."""
     if pathmod.normcase(pathmod.splitdrive(p)[0]) != pathmod.normcase(pathmod.splitdrive(r)[0]):
         return None
-    on_disk = pathmod is os.path and os.path.exists(r)
     want = _components(r, pathmod)
     cur, tail = p, []
     while True:
@@ -1383,9 +1408,12 @@ def _contained(path, root, pathmod=os.path):
 
 
 def _doctrine_root(claude_dir):
-    """<claude_dir>/doctrine resolved as far as it exists: the live chain on this machine, the unresolved path on a
-    fresh one (CI, the empty-HOME run), so an entry naming it keys ("doctrine", <file>) on both legs."""
-    return _realpath(os.path.join(str(claude_dir), "doctrine"))
+    """<claude_dir>/doctrine: its real path where it resolves to a folder (the live chain on this machine); the path
+    itself where it does not (a fresh machine, CI, the empty-HOME run: no folder, or a link to one not there yet), so
+    an entry naming it keys ("doctrine", <file>) on both legs and _contained compares the two as written."""
+    path = os.path.abspath(os.path.join(str(claude_dir), "doctrine"))
+    real = _realpath(path)
+    return real if os.path.isdir(real) else path
 
 
 def sealed_roots(config_dir):
@@ -1952,8 +1980,9 @@ def hook_text(output):
 
 def ends_with_script(command, suffix):
     """The suffix rule (§5.3), for arg-less entries: the command is the script, or ends with `/<suffix>` or
-    ` <suffix>`; an argument after the script means it is not that entry."""
-    command = (command or "").strip()
+    ` <suffix>`; an argument after the script means it is not that entry. Separators are read as "/" (a Windows
+    path records `\\`), and a quote closing the command's last word is no part of it."""
+    command = _slashed((command or "").strip()).rstrip("'\"")
     return command == suffix or command.endswith("/" + suffix) or command.endswith(" " + suffix)
 
 
@@ -2151,7 +2180,7 @@ def _read_file(args, ctx, snap):
     target = rest[0].lstrip("/")
     turns = [only] if only else range(1, len(ctx["record"]["turns"]) + 1)
     for n in turns:
-        if any(p.endswith("/" + target) for p in full_reads(ctx["case_dir"], n)):
+        if any(_slashed(p).endswith("/" + target) for p in full_reads(ctx["case_dir"], n)):
             return True, f"turn {n} read {target} in full"
     return False, f"no full Read of {target}" + (f" on turn {only}" if only else "")
 
@@ -2302,7 +2331,7 @@ def _v_changed(args, run, turn):   # restore the base: drop every op that touche
 def _v_drop_writes(args, run, turn):
     run = json.loads(json.dumps(run))
     for t in run["turns"]:
-        keep = [w for w in t.get("writes") or [] if not w.endswith(args[0])]
+        keep = [w for w in t.get("writes") or [] if not _slashed(w).endswith(args[0])]
         t["writes"] = keep
     return run   # when nothing matched, the run already fails the check as it is
 

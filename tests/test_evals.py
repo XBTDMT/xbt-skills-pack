@@ -2245,7 +2245,7 @@ class Preflight(unittest.TestCase):
         plain = json.loads(json.dumps(settings))
         stop = plain["hooks"]["Stop"][0]["hooks"][0]                     # the launcher's form since R-26 (G-34 point 1)
         plain["hooks"]["Stop"][0]["hooks"][0] = {"type": "command", "timeout": stop.get("timeout"),
-                                                 "command": f"/usr/bin/python3 {evals.settings_script(stop)}"}
+                                                 "command": f"/usr/bin/python3 {shlex.quote(evals.settings_script(stop))}"}
         (self.config / "settings.json").write_text(json.dumps(plain))
         code, message, fake = self.preflight()
         self.assertEqual(code, 2)
@@ -2257,7 +2257,10 @@ class Preflight(unittest.TestCase):
         link = self.tmp / "brief-link.py"
         link.symlink_to(target)
         dangling = json.loads(json.dumps(settings))
-        dangling["hooks"]["PreToolUse"] = [{"hooks": [evals.wrap_hook("PreToolUse", {"command": f"/usr/bin/python3 {link}"})]}]
+        # a shell string names its path quoted, as the sealed builder writes one (a Windows path's backslashes are
+        # escapes to the shell, so unquoted they would never reach the hook)
+        dangling["hooks"]["PreToolUse"] = [{"hooks": [evals.wrap_hook("PreToolUse", {
+            "command": f"/usr/bin/python3 {shlex.quote(str(link))}"})]}]
         (self.config / "settings.json").write_text(json.dumps(dangling))
         code, message, _ = self.preflight()
         self.assertEqual((code, message), (2, f"hook entry PreToolUse {link} does not resolve — no session launched"))
@@ -2895,6 +2898,64 @@ class WindowsShapes(unittest.TestCase):
         self.assertEqual(evals._plain("/a/b", posixpath), "/a/b")
         # known-bad: with the prefix kept, the root's drive is \\?\C:, never the script's C:
         self.assertNotEqual(nt.splitdrive("\\\\?\\C:\\Users\\me\\.claude\\doctrine")[0], "C:")
+
+    def test_a_root_through_a_link_to_nowhere_is_compared_as_written(self):
+        # on the CI's Windows legs realpath answered a path through a link to a folder not there yet, and that link,
+        # inconsistently (simulated here by an 8.3 short name expanded in one only); with no folder to identify, the
+        # paths as written decide: <config>\doctrine\gate.py is under <config>\doctrine
+        import ntpath
+        import types
+        short, long_ = r"C:\Users\RUNNER~1\T\sealed", r"C:\Users\runneradmin\T\sealed"
+
+        def realpath(p):
+            p = ntpath.normpath(p)
+            return p.replace(short, long_) if p.lower().endswith("gate.py") else p
+        nt = types.SimpleNamespace(**{n: getattr(ntpath, n) for n in (
+            "splitdrive", "normcase", "normpath", "dirname", "basename", "join", "sep", "altsep")}, realpath=realpath)
+        script, root = short + r"\doctrine\gate.py", short + r"\doctrine"
+        self.assertEqual(evals._contained(script, root, pathmod=nt), "gate.py")
+        self.assertIsNone(evals._contained(short + r"\doctrine-old\gate.py", root, pathmod=nt))
+        # known-bad: the real paths alone, which disagree
+        self.assertIsNone(evals._walk_up(realpath(script), realpath(root), False, nt))
+
+    def test_the_doctrine_root_of_a_link_to_nowhere_is_the_link(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = Path(tmp) / "sealed"
+            cfg.mkdir()
+            self.assertEqual(evals._doctrine_root(cfg), os.path.abspath(cfg / "doctrine"))        # no folder at all
+            try:
+                (cfg / "doctrine").symlink_to(Path(tmp) / "home" / ".claude" / "doctrine", target_is_directory=True)
+            except (OSError, NotImplementedError) as e:
+                self.skipTest(f"symlinks are refused here ({e})")
+            self.assertEqual(evals._doctrine_root(cfg), os.path.abspath(cfg / "doctrine"))        # a link to nowhere
+            self.assertEqual(evals._contained(str(cfg / "doctrine" / "gate.py"), evals._doctrine_root(cfg)), "gate.py")
+            (Path(tmp) / "home" / ".claude" / "doctrine").mkdir(parents=True)
+            self.assertEqual(evals._doctrine_root(cfg), os.path.realpath(Path(tmp) / "home" / ".claude" / "doctrine"))
+
+    def test_recorded_windows_paths_meet_the_slash_suffixes(self):
+        # the SessionStart entry allowed on resume is told from the loader by the suffix rule, on a Windows path too:
+        # with "/" alone, both stayed starts, no loader was found and every known run failed to build
+        entries = [("SessionStart", "", r"C:\cfg\doctrine\gate.py", "gate.py"),
+                   ("SessionStart", "resume", r"D:\a\pack\skills\eli5\skill_fresh.py", "skill_fresh.py"),
+                   ("Stop", "", r"D:\a\pack\skills\doc-guardrails\turn_check.py", "turn_check.py")]
+        _, (loader, starts) = evals.case_hooks({"record": {"hooks": [list(e) for e in entries]}})
+        self.assertEqual((loader, starts), (entries[0], [entries[0]]))
+        self.assertTrue(evals.ends_with_script(r"'C:\cfg\skills\doc-guardrails\hook.sh'", "doc-guardrails/hook.sh"))
+        self.assertFalse(evals.ends_with_script(r"C:\cfg\skills\doc-guardrails\hook.sh --x", "doc-guardrails/hook.sh"))
+        self.assertEqual(evals._slashed(r"C:\proj\shelf\report.py"), "C:/proj/shelf/report.py")
+
+    def test_a_glob_of_the_project_never_reaches_into_git(self):
+        # git's objects are read-only, and Windows refuses to unlink them: a violation removing "**/*" (the files a
+        # check sees, as the snapshot does) stopped there; the checks never read .git either
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = Path(tmp)
+            (proj / ".git" / "objects").mkdir(parents=True)
+            (proj / ".git" / "objects" / "ab").write_text("x", encoding="utf-8")
+            (proj / "__pycache__").mkdir()
+            (proj / "__pycache__" / "m.pyc").write_text("x", encoding="utf-8")
+            (proj / "a.md").write_text("x", encoding="utf-8")
+            self.assertEqual(evals._files(proj, "**/*"), [proj / "a.md"])
+            self.assertEqual(sorted(evals.snapshot(proj)), ["a.md"])
 
     def test_a_quoted_runner_is_still_the_runner(self):
         py, runner = r"C:\Python\python.exe", r"D:\a\pack\evals\hook_log.py"
