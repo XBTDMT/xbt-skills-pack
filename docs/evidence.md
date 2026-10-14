@@ -152,6 +152,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-10-09 | 49 | 48 / 49 | Opus 5.5 22/22, Fable 26/27; full_flow_two_lane passes with main's ledger untouched; full_flow on Fable failed on its /project-update receipt: Result worked beside a Fail line for refused memory writes; eli5 never said what Result is when an owed step is refused, and the live receipt check held only a missing block; eli5 now says it (unclear or failed) and the live check holds a block that breaks its shape, with the evals' own function |
 | 2026-10-11 | 49 | **49 / 49** | Opus 5.5 22/22, Fable 27/27: the complete pass, in fresh sessions on the pack as it ships; full_flow passes with its /project-update receipt in shape, and the live receipt check ran 91 times across the 49 sessions without holding one |
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set on the pack as it ships, on the reviewed Claude Code 2.1.295 put first on PATH for the batch (the local CLI had moved to 2.1.299): every case passes, closeout_records among them, whose run table now matches each failure by scenario and seat |
+| 2026-10-14 | 19 (quick) | **19 / 19** | the quick set after the three Windows fix rounds, on the pack as it ships (main 19a39a5), on the reviewed Claude Code 2.1.295 first on PATH: every case passes, so the shipped skill and loader changes those rounds made are measured |
 
 plus 62 targeted runs (`--only`), 70/102 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -586,7 +587,7 @@ check as unreviewed, never a pass, so its results are not comparable with the ru
 lists are reviewed into `evals/sealed.json`.
 
 As this tree ships: <!-- fig:tests.public -->523<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.43<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
+<!-- fig:run.quick.cost -->$10.17<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its
 snapshot after every turn (`record.json`), with the run's `grades.json` beside them. Nothing is uploaded anywhere.
