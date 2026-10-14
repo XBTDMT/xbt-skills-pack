@@ -1,0 +1,78 @@
+{
+ "skills": [
+  "axiom-macos",
+  "axiom-swiftui",
+  "closeout",
+  "doc-guardrails",
+  "eli5",
+  "greenman",
+  "project-update",
+  "redman"
+ ],
+ "installer": {
+  "doctrine": true,
+  "doc_check": true,
+  "skill_checks": true
+ },
+ "extra_hooks": {
+  "PostToolUse": [
+   {
+    "matcher": "Write|Edit",
+    "command": "<CONFIG>/skills/doc-guardrails/hook.sh",
+    "timeout": 15,
+    "reason": "the per-write hook is a zsh script the installer leaves to the user (public README, \"The per-write hook\"); permanent"
+   }
+  ]
+ },
+ "live_pending": [],
+ "session_start_allowed": [
+  {
+   "name": "skill freshness notice",
+   "command": "eli5/skill_fresh.py",
+   "matcher": "resume",
+   "text_re": "^skill freshness"
+  }
+ ],
+ "probe_hooks": {
+  "UserPromptSubmit": [
+   {
+    "command": "/usr/bin/python3 <PACK>/evals/probes/prompt_hook.py",
+    "timeout": 5
+   }
+  ]
+ },
+ "settings": {
+  "syncClaudeAiPlugins": false,
+  "syncClaudeAiSkills": false,
+  "disableClaudeAiConnectors": true
+ },
+ "bundled_skills": [
+  "batch",
+  "claude-api",
+  "code-review",
+  "dataviz",
+  "debug",
+  "deep-research",
+  "design",
+  "design-sync",
+  "doctor",
+  "fewer-permission-prompts",
+  "loop",
+  "plugin-authoring",
+  "run",
+  "run-skill-generator",
+  "schedule",
+  "simplify",
+  "update-config",
+  "verify",
+  "workflow-authoring"
+ ],
+ "builtin_plugins": [
+  "agents-md@builtin",
+  "telemetry@builtin",
+  "cc-plugin-agents-md@builtin",
+  "cc-plugin-telemetry@builtin",
+  "cc-plugin-plugin-authoring@builtin"
+ ],
+ "cli_version": "2.1.295"
+}

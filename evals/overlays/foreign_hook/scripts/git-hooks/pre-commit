@@ -1,0 +1,5 @@
+#!/bin/sh
+# The project's own pre-commit (tracked, core.hooksPath=scripts/git-hooks): it lints staged Python and nothing else,
+# so it exits before anything appended below it can run whenever no .py file is staged.
+git diff --cached --name-only | grep -q '\.py$' || exit 0
+python3 -m py_compile $(git diff --cached --name-only | grep '\.py$')

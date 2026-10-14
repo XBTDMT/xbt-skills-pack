@@ -1,13 +1,16 @@
 """Tests for closeout/closeout.py. Run: python3 -m unittest discover -s tests (Python 3.9 or newer)."""
+import git_quiet  # noqa: F401  (first: git's background upkeep off for every fixture; tests/git_quiet.py)
 import contextlib
 import datetime
 import io
+import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "closeout"))
@@ -267,6 +270,11 @@ class Hunks(Base):
             closeout.stage_hunks(self.dir / "a.md", [2])
 
 
+# A root HANDOFF.md is a declared handoff (R-29 § 5.4): the fixtures whose subject is something else carry the section
+# its check reads, empty of open items as their project is.
+OPEN_ITEMS = "\n## Open items\n- none open\n"
+
+
 class Audit(Base):
     def setUp(self):
         super().setUp()
@@ -277,23 +285,60 @@ class Audit(Base):
     def levels(self, found, level):
         return [f for f in found if f[0] == level]
 
-    def test_someone_elses_staged_file_fails(self):
+    def test_audit_reports_anothers_staged_file_as_one_warning(self):
         self.r.write("other.md", "theirs")
         self.r.write("HANDOFF.md", "mine")
         sh(self.dir, "git", "add", "other.md", "HANDOFF.md")
-        fails = self.levels(closeout.audit(self.dir, ["HANDOFF.md"]), "FAIL")
-        self.assertEqual([f[1] for f in fails], ["other.md"])
+        found = closeout.audit(self.dir, ["HANDOFF.md"])
+        self.assertEqual(self.levels(found, "FAIL"), [])
+        (staged,) = [f for f in found if f[1] == "staged"]
+        self.assertEqual(staged[0], "WARN")
+        self.assertIn("1 staged file(s) this close-out did not write: other.md", staged[2])
+        self.assertNotIn("restore", staged[2])
+        self.assertNotIn("unstage", staged[2])
+
+    def broken_roadmap(self):
+        self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 see `src/gone.py`\n")
+        self.r.commit("roadmap", "knowledge/00-ROADMAP.md")
+
+    def test_audit_reports_a_pre_existing_broken_citation_without_failing(self):
+        self.broken_roadmap()
+        self.r.write("HANDOFF.md", "fine\n")
+        found = closeout.audit(self.dir, ["HANDOFF.md"])
+        self.assertEqual(self.levels(found, "FAIL"), [])
+        (pre,) = self.levels(found, "PRE-EXISTING")
+        self.assertEqual(pre[1], "knowledge/00-ROADMAP.md:2")
+        self.assertIn("linking NO FILE: src/gone.py (reported, not this pass's)", pre[2])
+
+    def test_audit_fails_on_a_broken_citation_this_pass_added(self):
+        self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
+        self.r.commit("roadmap", "knowledge/00-ROADMAP.md")
+        self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n- R-2 see `src/gone.py`\n")
+        fails = self.levels(closeout.audit(self.dir, ["knowledge/00-ROADMAP.md"]), "FAIL")
+        self.assertEqual([f[1] for f in fails], ["knowledge/00-ROADMAP.md:3"])
+
+    def test_audit_roadmap_line_pre_existing_versus_fresh(self):
+        self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
+        self.r.write("knowledge/02-spec-a.md", "# a\nroadmap: R-9\n")
+        self.r.commit("base", "knowledge")
+        self.r.write("knowledge/02-spec-a.md", "# a\nroadmap: R-9\n\nmore text\n")   # the old line kept
+        found = closeout.audit(self.dir, ["knowledge/02-spec-a.md"])
+        self.assertEqual(self.levels(found, "FAIL"), [])
+        self.assertEqual([f[1] for f in self.levels(found, "PRE-EXISTING")], ["knowledge/02-spec-a.md"])
+        self.r.write("knowledge/02-spec-b.md", "# b\nroadmap: R-8\n")                 # written by this pass
+        fails = self.levels(closeout.audit(self.dir, ["knowledge/02-spec-b.md"]), "FAIL")
+        self.assertEqual([f[1] for f in fails], ["knowledge/02-spec-b.md"])
 
     def test_paths_that_exist_pass_and_missing_ones_warn(self):
         self.r.write("HANDOFF.md", "Run `python3 src/app.py --x` then read `app.py` and `src/gone.py:12`; "
                                    "see [ok](src/app.py) and [bad](nope.md); `git log a..HEAD`; `https://x.y/z`; "
-                                   "`stats/*.json`; `origin/<name>`.\n")
+                                   "`stats/*.json`; `origin/<name>`.\n" + OPEN_ITEMS)
         warns = self.levels(closeout.audit(self.dir, ["HANDOFF.md"]), "WARN")
         self.assertEqual(sorted(w[2] for w in warns), ["link target 'nope.md' not found", "path `src/gone.py` not found"])
 
     def test_a_citation_with_an_anchor_checks_the_path_not_the_anchor(self):
         # LINKING.md cites documents as path plus anchor; the anchor is link-audit's to check, the path is audit's
-        self.r.write("HANDOFF.md", "see `src/app.py#§4.2 Layout` and `src/gone.py#Top`\n")
+        self.r.write("HANDOFF.md", "see `src/app.py#§4.2 Layout` and `src/gone.py#Top`\n" + OPEN_ITEMS)
         warns = self.levels(closeout.audit(self.dir, ["HANDOFF.md"]), "WARN")
         self.assertEqual([w[2] for w in warns], ["path `src/gone.py` not found"])
 
@@ -319,7 +364,7 @@ class Audit(Base):
         self.r.write("src/My Tool.app/x", "")
         self.r.write("HANDOFF.md", "Run `/directory-update`; `src/app.py::TestCase`; `rm -rf \"src/My Tool.app\"`; "
                                    "branch `rt/L1-app`; `~/no_such_top_dir_xyz/b`; `journal/YYYY-MM-DD.json`; `.html`; "
-                                   f"`71259 {self.dir}/src/My Tool.app/x`.\n")
+                                   f"`71259 {self.dir}/src/My Tool.app/x`.\n" + OPEN_ITEMS)
         self.assertEqual(closeout.audit(self.dir, ["HANDOFF.md"]), [])
 
     def test_html_without_charset_fails_and_code_paths_are_checked(self):
@@ -350,9 +395,9 @@ class Audit(Base):
         self.r.write("knowledge/00-CURRENT.md", "# pin\nnothing\n")
         fails = self.levels(closeout.audit(self.dir, ["knowledge/00-CURRENT.md"], "knowledge/00-CURRENT.md"), "FAIL")
         self.assertEqual(len(fails), 2)
-        today = datetime.date.today().isoformat()
-        self.r.write("knowledge/00-CURRENT.md", f"# pin\nupdated: {today}\n\n## Next action\nship\n")
-        self.assertEqual(closeout.audit(self.dir, ["knowledge/00-CURRENT.md"], "knowledge/00-CURRENT.md"), [])
+        self.r.write("knowledge/00-CURRENT.md", "# pin\nupdated: 2026-09-23\n\n## Next action\nship\n")
+        self.assertEqual(closeout.audit(self.dir, ["knowledge/00-CURRENT.md"], "knowledge/00-CURRENT.md",
+                                        today="2026-09-23"), [])
 
     def test_link_audit_table_roadmap(self):
         self.r.write("knowledge/00-PROJECT-ROADMAP.md", "| 1 | a [spec `knowledge/02-SPEC-a.md#§2 Scope`] |\n"
@@ -395,24 +440,63 @@ class Audit(Base):
     def test_link_audit_writes_the_unlinked_inventory_and_audit_reports_linking(self):
         self.r.write("knowledge/00-PROJECT-ROADMAP.md", "| 1 | a [spec `knowledge/02-SPEC-gone.md`] |\n")
         self.r.write("knowledge/02-SPEC-e.md", "# The e spec\nno line\n")
-        found, counts = closeout.link_audit(self.dir)
-        inv = self.dir / "knowledge" / f"UNLINKED-{datetime.date.today().isoformat()}.md"  # the project's own tree
+        found, counts = closeout.link_audit(self.dir, today="2026-09-23")
+        inv = self.dir / "knowledge" / "UNLINKED-2026-09-23.md"  # the project's own tree
         self.assertTrue(inv.is_file())
         text = inv.read_text(encoding="utf-8")
         self.assertIn("| `knowledge/02-SPEC-e.md` | The e spec |", text)
         self.assertIn("roadmap: none —", text)
         levels = closeout.audit(self.dir, ["knowledge/02-SPEC-e.md"])
         warns = [m for l, w, m in levels if l == "WARN" and w == "linking"]
-        fails = [m for l, w, m in levels if l == "FAIL" and "linking" in m]
+        # the roadmap's broken citation is not on a line this pass wrote: reported, never a failure of this pass
+        pre = [m for l, w, m in levels if l == "PRE-EXISTING" and "linking" in m]
         self.assertEqual(len(warns), 1)
-        self.assertEqual(len(fails), 1)
+        self.assertEqual([l for l, w, m in levels if l == "FAIL"], [])
+        self.assertEqual(len(pre), 1)
+        self.assertIn("NO FILE", pre[0])
+        fails = [m for l, w, m in closeout.audit(self.dir, ["knowledge/00-PROJECT-ROADMAP.md"]) if l == "FAIL"]
+        self.assertEqual(len(fails), 1)   # the roadmap is new, so every line of it is this pass's
         self.assertIn("NO FILE", fails[0])
         self.r.write("knowledge/02-SPEC-e.md", "# The e spec\nroadmap: 1\n")
         self.r.write("knowledge/00-PROJECT-ROADMAP.md", "| 1 | a [spec `knowledge/02-SPEC-e.md`] |\n")
-        closeout.link_audit(self.dir)
+        closeout.link_audit(self.dir, today="2026-09-23")
         self.assertFalse(inv.exists())  # empty backlog → no file
-        closeout.link_audit(self.dir)
+        closeout.link_audit(self.dir, today="2026-09-23")
         self.assertFalse(inv.exists())  # and a clean project never grows one
+
+    def crossing_midnight(self):
+        """`datetime.date` whose today() is 2026-09-23 on its first call and 2026-09-24 from then on: a test that
+        reads the clock apart from the code under test fails when the day turns between the two reads (W-34)."""
+        real, calls = datetime.date, []
+
+        class Crossing(real):
+            @classmethod
+            def today(cls):
+                calls.append(1)
+                return cls(2026, 9, 23 if len(calls) == 1 else 24)
+        return mock.patch("datetime.date", Crossing)
+
+    def test_audit_and_link_audit_take_today(self):
+        pin = "knowledge/00-CURRENT.md"
+        # the pin: the old form reads the clock, then audit reads it again, a day later
+        with self.crossing_midnight():
+            today = datetime.date.today().isoformat()
+            self.r.write(pin, f"# pin\nupdated: {today}\n\n## Next action\nship\n")
+            old = closeout.audit(self.dir, [pin], pin)
+        self.assertEqual([m for _, _, m in old], ["updated: 2026-09-23 is not today"])   # the known-bad: it fails
+        with self.crossing_midnight():
+            self.r.write(pin, "# pin\nupdated: 2026-09-23\n\n## Next action\nship\n")
+            self.assertEqual(closeout.audit(self.dir, [pin], pin, today="2026-09-23"), [])
+        # the inventory: link_audit reads the clock, then the old form reads it again to name the file
+        self.r.write("knowledge/00-PROJECT-ROADMAP.md", "| 1 | a |\n")
+        self.r.write("knowledge/02-SPEC-e.md", "# The e spec\nno line\n")
+        with self.crossing_midnight():
+            closeout.link_audit(self.dir)
+            old_inv = self.dir / "knowledge" / f"UNLINKED-{datetime.date.today().isoformat()}.md"
+        self.assertFalse(old_inv.is_file())                                                 # the known-bad: it fails
+        with self.crossing_midnight():
+            closeout.link_audit(self.dir, today="2026-09-23")
+        self.assertTrue((self.dir / "knowledge" / "UNLINKED-2026-09-23.md").is_file())
 
     def test_an_inventory_left_in_the_pack_folder_moves_back_to_the_projects_tree(self):
         self.r.write("knowledge/00-PROJECT-ROADMAP.md", "| 1 | a |\n")
@@ -441,10 +525,12 @@ class Audit(Base):
         self.r.write("CLAUDE.md", "# x\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"
                                   "ledgers: knowledge/audit/redman/LEDGER.md\ndecisions: knowledge/audit/decisions\n")
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
-        self.r.write("knowledge/redman/LEDGER.md", "| d | k | i | small | filed | w |\n| d | k | i | small | closed — x | w |\n")
-        self.r.write("knowledge/audit/redman/LEDGER.md", "| d | k | i | big | asked · later | w |\n")
-        self.r.write("xbt-skills-pack/redman/LEDGER.md", "| d | k | i | small | filed | w |\n")  # an older layout, still read
-        self.r.write("xbt-skills-pack/LEDGER.md", "| d | k | i | small | filed | w |\n")  # the pack's side ledger: not the project's
+        # each ledger carries its header row: a ledger is read by its `state` column, never by position
+        head = "| date | kind | item | size | state | where |\n|---|---|---|---|---|---|\n"
+        self.r.write("knowledge/redman/LEDGER.md", head + "| d | k | i | small | filed | w |\n| d | k | i | small | closed — x | w |\n")
+        self.r.write("knowledge/audit/redman/LEDGER.md", head + "| d | k | i | big | asked · later | w |\n")
+        self.r.write("xbt-skills-pack/redman/LEDGER.md", head + "| d | k | i | small | filed | w |\n")  # an older layout, still read
+        self.r.write("xbt-skills-pack/LEDGER.md", head + "| d | k | i | small | filed | w |\n")  # the pack's side ledger: not the project's
         self.r.write("knowledge/decisions/G-1-a.md", "# G-1\nroadmap: none — test\nstatus: decided\n")
         self.r.write("knowledge/audit/decisions/G-2-b.md", "# G-2\nroadmap: none — test\nstatus: awaiting the user\n")
         self.r.write("knowledge/decisions/G-3-c.md", "# G-3\nroadmap: none — test\n"
@@ -456,8 +542,9 @@ class Audit(Base):
         self.assertEqual(f["redman"]["ledgers"], ["knowledge/audit/redman/LEDGER.md", "knowledge/redman/LEDGER.md",
                                                   "xbt-skills-pack/redman/LEDGER.md"])
         self.assertEqual(f["pack_side_ledger"], {"path": "xbt-skills-pack/LEDGER.md", "open_rows": 1})
-        self.assertEqual(f["greenman"], {"decisions": 3, "awaiting_ruling": ["knowledge/audit/decisions/G-2-b.md"],
-                                         "real_fix_owed": ["knowledge/decisions/G-3-c.md"]})
+        self.assertEqual({k: f["greenman"][k] for k in ("decisions", "awaiting_ruling", "real_fix_owed")},
+                         {"decisions": 3, "awaiting_ruling": ["knowledge/audit/decisions/G-2-b.md"],
+                          "real_fix_owed": ["knowledge/decisions/G-3-c.md"]})
         self.assertIn("knowledge/audit/redman/LEDGER.md", f["untracked_records"])
         self.assertNotIn("knowledge/redman/LEDGER.md", f["untracked_records"])
         warns = [m for l, w, m in closeout.audit(self.dir, []) if l == "WARN" and w == "records"]
@@ -517,23 +604,42 @@ class Audit(Base):
         with contextlib.redirect_stdout(out):
             self.assertEqual(closeout.main(["link-audit", str(self.dir), "--staged"]), 1)
         self.assertIn("A document someone else wrote", out.getvalue())
+        self.assertIn("a generator's or a script's output is the session's", out.getvalue())   # G-54
         self.assertIn("Never --no-verify", out.getvalue())
         self.r.write("CLAUDE.md", "# x\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: off\n")
         self.assertEqual(closeout.link_check_staged(self.dir), ([], "off"))
 
-    def test_install_gate_adds_one_marked_block_keeps_a_foreign_hook_and_gates_real_commits(self):
+    def gate_state_folder(self):
+        """A temporary state folder for install_gate's registration record (never the live one)."""
+        state = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(state, ignore_errors=True))
+        p = mock.patch.dict(os.environ, {"DOC_GUARDRAILS_STATE": str(state)})
+        p.start()
+        self.addCleanup(p.stop)
+        return state
+
+    def needs_config_hooks(self):
+        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.dir, capture_output=True, text=True)
+        if r.returncode == 129 or "unknown subcommand" in r.stderr:
+            self.skipTest("git <2.54 on PATH: config hooks unsupported")
+
+    def test_install_gate_registers_once_keeps_a_foreign_hook_and_gates_real_commits(self):
+        self.needs_config_hooks()
+        state = self.gate_state_folder()
         hooks = self.dir / ".git" / "hooks"
         hooks.mkdir(parents=True, exist_ok=True)
         (hooks / "pre-commit").write_text("#!/bin/sh\necho theirs\n", encoding="utf-8")
         closeout.install_gate(self.dir)
-        closeout.install_gate(self.dir)  # twice: still one block
-        text = (hooks / "pre-commit").read_text(encoding="utf-8")
-        self.assertIn("echo theirs", text)
-        self.assertEqual(text.count(closeout.GATE_BEGIN), 1)
+        closeout.install_gate(self.dir)  # twice: still one registration
+        values = subprocess.run(["git", "-C", str(self.dir), "config", "--get-all", "hook.doc-guardrails.command"],
+                                capture_output=True, text=True).stdout.splitlines()
+        self.assertEqual(values, [closeout.GATE_LAUNCHER])
+        self.assertEqual((hooks / "pre-commit").read_text(encoding="utf-8"), "#!/bin/sh\necho theirs\n")
+        self.assertEqual(len(list(state.glob("gates/*/registered.json"))), 1)   # the record lands in the temp state
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
         self.r.write("knowledge/02-SPEC-new.md", "# new\nno line\n")
         sh(self.dir, "git", "add", "-A")
-        env = {**os.environ, "CLOSEOUT_PY": str(Path(closeout.__file__).resolve())}
+        env = {**os.environ, "CLOSEOUT_PY": str(Path(closeout.__file__).resolve()), "CLOSEOUT_PYTHON": sys.executable}
         r = subprocess.run(["git", "commit", "-qm", "report only"], cwd=self.dir, capture_output=True, text=True, env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("MISSING", r.stdout + r.stderr)
@@ -544,16 +650,17 @@ class Audit(Base):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("knowledge/02-SPEC-two.md", r.stdout + r.stderr)
 
-    def test_the_gate_names_its_interpreter_and_helper_and_fails_safe_when_it_cannot_run(self):
-        hook = closeout.install_gate(self.dir)
-        text = hook.read_text(encoding="utf-8")
-        self.assertIn(Path(sys.executable).as_posix(), text)                       # no python3 on PATH needed
-        self.assertIn(Path(closeout.__file__).absolute().as_posix(), text)        # no ~/.claude/skills needed
+    def test_the_gate_finds_its_helper_at_run_time_and_fails_safe_when_it_cannot_run(self):
+        self.needs_config_hooks()
+        self.gate_state_folder()
+        closeout.install_gate(self.dir)
+        value = subprocess.run(["git", "-C", str(self.dir), "config", "--get", "hook.doc-guardrails.command"],
+                               capture_output=True, text=True).stdout
+        self.assertNotIn(Path(sys.executable).as_posix(), value)                  # no interpreter baked in
+        self.assertNotIn(Path(closeout.__file__).absolute().as_posix(), value)    # no copy of the pack baked in
         self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
         self.r.write("knowledge/02-SPEC-new.md", "# new\nno line\n")
         sh(self.dir, "git", "add", "-A")
-        # The environment as it is, with the helper pointed at a file that is not there: a literal POSIX PATH would
-        # hide git on Windows and fail the test for the wrong reason.
         bare = {**os.environ, "HOME": str(self.dir), "CLOSEOUT_PY": str(self.dir / "missing.py")}
         r = subprocess.run(["git", "commit", "-qm", "report, helper missing"], cwd=self.dir, capture_output=True, text=True, env=bare)
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -565,22 +672,34 @@ class Audit(Base):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("cannot run", r.stdout + r.stderr)
         import shutil
-        r = subprocess.run([shutil.which("git"), "commit", "-qm", "block, gate runs from its recorded paths"], cwd=self.dir,
+        r = subprocess.run([shutil.which("git"), "commit", "-qm", "block, no python on PATH"], cwd=self.dir,
                            capture_output=True, text=True,
                            env={**os.environ, "PATH": str(self.dir / "nonexistent"), "HOME": str(self.dir)})
-        self.assertNotEqual(r.returncode, 0)
-        self.assertIn("knowledge/02-SPEC-two.md", r.stdout + r.stderr)             # refused by the real check, not by a crash
+        # an empty or useless PATH (git still prepends its own exec-path): the launcher falls back to /usr/bin:/bin
+        # to read the mode, so a `guardrails: block` project is refused, never passed as "gate skipped"
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("commit refused", r.stdout + r.stderr)
+        r = subprocess.run([shutil.which("git"), "commit", "-qm", "block, empty PATH"], cwd=self.dir,
+                           capture_output=True, text=True, env={**os.environ, "PATH": "", "HOME": str(self.dir)})
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("commit refused", r.stdout + r.stderr)
 
-    def test_install_gate_refuses_a_folder_without_git_and_flags_a_hook_inside_the_tree(self):
+    def test_install_gate_refuses_a_folder_without_git_and_never_edits_a_hook_inside_the_tree(self):
+        self.gate_state_folder()
         plain = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: __import__("shutil").rmtree(plain, ignore_errors=True))
         with self.assertRaises(ValueError):
             closeout.install_gate(plain)
         self.assertEqual(list(plain.iterdir()), [])  # no stray pre-commit file
         self.assertEqual(closeout.main(["install-gate", str(plain)]), 2)
-        self.assertFalse(closeout.hook_in_tree(self.dir, closeout.install_gate(self.dir)))
+        self.assertFalse(closeout.hook_in_tree(self.dir, self.dir / ".git" / "hooks" / "pre-commit"))
+        # a hooks folder in the tree is not the pack's: nothing is written there (W-5), whichever route registers
         sh(self.dir, "git", "config", "core.hooksPath", ".husky")
-        self.assertTrue(closeout.hook_in_tree(self.dir, closeout.install_gate(self.dir)))
+        state = closeout.install_gate(self.dir)
+        self.assertEqual(state.hook, None)
+        self.assertIn(state.code, (0, 3))
+        self.assertFalse((self.dir / ".husky" / "pre-commit").exists())
+        self.assertTrue(closeout.hook_in_tree(self.dir, self.dir / ".husky" / "pre-commit"))
 
     def test_only_the_leading_id_list_counts_so_numbers_in_the_reason_are_not_ids(self):
         self.assertEqual(closeout.cited_ids("954, 968 — merged 2026-09-14 in a018f, see 9270", "table rows"), ["954", "968"])
@@ -619,18 +738,18 @@ class Audit(Base):
         self.assertEqual(counts["OK"], 1)
 
     def test_cli_exit_code(self):
-        self.r.write("HANDOFF.md", "fine\n")
+        self.r.write("HANDOFF.md", "fine\n" + OPEN_ITEMS)
         cwd = os.getcwd()
         out = io.StringIO()  # keep the audit's report off the test run's own output, so its last line is the verdict
         try:
             os.chdir(self.dir)
             with contextlib.redirect_stdout(out):
                 self.assertEqual(closeout.main(["audit", "--changed", "HANDOFF.md"]), 0)
-                self.r.write("HANDOFF.md", "<<<<<<< x\n")
+                self.r.write("HANDOFF.md", "<<<<<<< x\n" + OPEN_ITEMS)
                 self.assertEqual(closeout.main(["audit", "--changed", "HANDOFF.md"]), 1)
         finally:
             os.chdir(cwd)
-        self.assertIn("audit: 1 fail, 0 warn", out.getvalue())
+        self.assertIn("audit: 1 fail, 0 pre-existing broken, 0 warn", out.getvalue())
 
     def test_open_worklist_items_fail(self):
         wl = self.r.write("wl.md", "- [x] README.md:2 — 235 tests → unchanged (swift test)\n"
@@ -650,12 +769,670 @@ class Audit(Base):
 
 
     def test_baseline_warns_only_when_asked(self):
-        self.r.write("HANDOFF.md", "fine\n")
+        self.r.write("HANDOFF.md", "fine\n" + OPEN_ITEMS)
         self.assertEqual(closeout.audit(self.dir, ["HANDOFF.md"]), [])
         warns = self.levels(closeout.audit(self.dir, ["HANDOFF.md"], check_baseline=True), "WARN")
         self.assertEqual([w[1] for w in warns],
                          ["baseline:readme", "baseline:claude_md", "baseline:pin", "baseline:overview", "baseline:roadmap",
                           "baseline:brain"])
+
+
+class CommitGate(unittest.TestCase):
+    """The commit gate's installer never writes a hook file the pack does not own, and registers nothing where the
+    project keeps its hooks in a folder it tracks until its doc map opts in (`gate: config-hook`)."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name).resolve()
+        p = mock.patch.dict(os.environ, {"DOC_GUARDRAILS_STATE": str(self.tmp / "state")})
+        p.start()
+        self.addCleanup(p.stop)
+
+    def managed_repo(self, hooks_path="absolute", gate_line=False):
+        """A project that commits `scripts/git-hooks/pre-commit` and points core.hooksPath at it (main worktree `as`),
+        with a linked worktree `as_lane` on its own branch."""
+        main = self.tmp / "as"
+        main.mkdir()
+        r = Repo(main)
+        r.write("scripts/git-hooks/pre-commit", "#!/bin/sh\ngit diff --cached --name-only | grep -q '\\.py$' || exit 0\n")
+        (main / "scripts/git-hooks/pre-commit").chmod(0o755)
+        r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n" + ("gate: config-hook\n" if gate_line else ""))
+        r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
+        r.commit("base", "scripts", "CLAUDE.md", "knowledge")
+        value = str(main / "scripts" / "git-hooks") if hooks_path == "absolute" else "scripts/git-hooks"
+        sh(main, "git", "config", "core.hooksPath", value)
+        sh(main, "git", "worktree", "add", "-q", "-b", "lane", str(self.tmp / "as_lane"))
+        return main, self.tmp / "as_lane"
+
+    def everything(self, *roots):
+        """Every file in the trees, the common config and git's own hooks folder, with its bytes."""
+        out = {}
+        for root in roots:
+            for f in sorted(Path(root).rglob("*")):
+                if f.is_file() and ".git" not in f.relative_to(root).parts[:1]:
+                    out[str(f)] = f.read_bytes()
+        common = Path(roots[0]) / ".git"
+        out["config"] = (common / "config").read_bytes()
+        for f in sorted((common / "hooks").glob("*")) if (common / "hooks").is_dir() else []:
+            out[str(f)] = f.read_bytes()
+        return out
+
+    def keys(self, root):
+        return subprocess.run(["git", "-C", str(root), "config", "--get-regexp", r"^hook\.doc-guardrails"],
+                              capture_output=True, text=True).returncode
+
+    def test_the_safety_half_alone_writes_no_hook_file_it_does_not_own(self):
+        main, lane = self.managed_repo()
+        before = self.everything(main, lane)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = closeout.main(["install-gate", str(lane)])
+        self.assertEqual(code, 0, out.getvalue())
+        self.assertTrue(out.getvalue().startswith("commit gate: hooks managed by the project: see its doc map ("),
+                        out.getvalue())
+        self.assertEqual(self.everything(main, lane), before)
+        self.assertEqual(self.keys(main), 1)
+        # main's map opts in, and the hook at core.hooksPath is the project's: no hook file in either tree is written
+        (main / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\ngate: config-hook\n",
+                                        encoding="utf-8")
+        hook = main / "scripts" / "git-hooks" / "pre-commit"
+        text = hook.read_bytes()
+        with contextlib.redirect_stdout(io.StringIO()):
+            closeout.main(["install-gate", str(main)])
+            closeout.main(["install-gate", str(lane)])
+        self.assertEqual(hook.read_bytes(), text)
+        self.assertFalse((lane / "scripts" / "git-hooks" / "pre-commit").read_bytes() != text)
+
+    def test_hooks_managed_by_project(self):
+        main, lane = self.managed_repo()
+        self.assertEqual(closeout.hooks_managed_by_project(main), str(main / "scripts" / "git-hooks"))
+        self.assertEqual(closeout.hooks_managed_by_project(lane), str(main / "scripts" / "git-hooks"))
+        sh(main, "git", "config", "core.hooksPath", "scripts/git-hooks")
+        self.assertEqual(closeout.hooks_managed_by_project(main), "scripts/git-hooks")
+        for value in ("untracked-hooks", str(self.tmp / "elsewhere"), ".git/hooks"):
+            (main / "untracked-hooks").mkdir(exist_ok=True)
+            (self.tmp / "elsewhere").mkdir(exist_ok=True)
+            sh(main, "git", "config", "core.hooksPath", value)
+            self.assertIsNone(closeout.hooks_managed_by_project(main), value)
+        sh(main, "git", "config", "--unset", "core.hooksPath")
+        self.assertIsNone(closeout.hooks_managed_by_project(main))
+
+    def test_containment_is_by_file_identity_never_a_string_prefix(self):
+        main, lane = self.managed_repo()
+        # a sibling folder outside every worktree, sharing main's path as a string prefix
+        (self.tmp / "as_hooks").mkdir()
+        (self.tmp / "as_hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+        sh(main, "git", "config", "core.hooksPath", str(self.tmp / "as_hooks"))
+        self.assertIsNone(closeout.hooks_managed_by_project(main))
+        # a tracked folder in the sibling linked worktree: attributed to the lane, whose ls-files lists it
+        (lane / "lhooks").mkdir()
+        (lane / "lhooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+        sh(lane, "git", "add", "lhooks")
+        sh(lane, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "lane hooks")
+        sh(main, "git", "config", "core.hooksPath", str(lane / "lhooks"))
+        self.assertEqual(closeout.hooks_managed_by_project(main), str(lane / "lhooks"))
+        self.assertEqual(closeout.path_within(str(lane / "lhooks"), [str(main), str(lane)])[0], str(lane))
+        self.assertTrue(str(lane / "lhooks").startswith(str(main)))   # the string-prefix rule would say main's
+        # a worktree nested in main's tree: the deepest match
+        sh(main, "git", "worktree", "add", "-q", "-b", "nested", str(main / ".wt" / "nested"))
+        nested = main / ".wt" / "nested"
+        (nested / "nh").mkdir()
+        (nested / "nh" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+        sh(nested, "git", "add", "nh")
+        sh(nested, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "nested hooks")
+        sh(main, "git", "config", "core.hooksPath", str(nested / "nh"))
+        self.assertEqual(closeout.hooks_managed_by_project(main), str(nested / "nh"))
+        self.assertEqual(closeout.path_within(str(nested / "nh"), [str(main), str(lane), str(nested)])[0], str(nested))
+        # a second drive, simulated with ntpath: not contained, and nothing raises
+        import ntpath
+        self.assertIsNone(closeout.path_within("D:\\hooks", ["C:\\repo"], pathmod=ntpath))
+        with self.assertRaises(ValueError):
+            ntpath.commonpath(["D:\\hooks", "C:\\repo"])   # the known-bad: commonpath raises across drives
+
+    def test_a_case_folded_hooks_path_is_the_worktree_it_names(self):
+        main, _ = self.managed_repo()
+        folded = Path(str(main).replace("/as", "/AS")) / "Scripts" / "Git-Hooks"
+        if not (folded.exists() and os.path.samefile(folded, main / "scripts" / "git-hooks")):
+            self.skipTest("the temp folder's file system does not fold case: the case-folded path is not the same folder")
+        sh(main, "git", "config", "core.hooksPath", str(folded))
+        self.assertEqual(closeout.hooks_managed_by_project(main), str(folded))
+        # known-bad: commonpath finds the folded path in no worktree
+        self.assertNotEqual(os.path.commonpath([os.path.realpath(str(folded)), str(main)]), str(main))
+
+    # ---- commit 2: the config hook, the launcher, the heartbeat, facts, the registrations and the hold
+
+    HELPER = str(Path(closeout.__file__).resolve())
+
+    def env(self, **extra):
+        return {**os.environ, "CLOSEOUT_PY": self.HELPER, "CLOSEOUT_PYTHON": sys.executable,
+                "DOC_GUARDRAILS_STATE": str(self.tmp / "state"), **extra}
+
+    def config_hooks(self):
+        r = subprocess.run(["git", "hook", "list", "pre-commit"], cwd=self.tmp, capture_output=True, text=True)
+        if r.returncode == 129 or "unknown subcommand" in r.stderr:
+            self.skipTest("git <2.54 on PATH: config hooks unsupported")
+
+    def shim(self):
+        """A git on PATH that has no config hooks (`hook list` answers 129), everything else passed through."""
+        real = subprocess.run(["git", "--exec-path"], capture_output=True, text=True).stdout.strip()
+        git_bin = __import__("shutil").which("git")
+        bindir = self.tmp / "shim"
+        bindir.mkdir(exist_ok=True)
+        (bindir / "git").write_text('#!/bin/sh\ncase " $* " in *" hook list "*) echo "error: unknown subcommand: list" '
+                                    f'>&2; exit 129;; esac\nexec "{git_bin}" "$@"\n', encoding="utf-8")
+        (bindir / "git").chmod(0o755)
+        return mock.patch.dict(os.environ, {"PATH": f"{bindir}{os.pathsep}{os.environ['PATH']}"})
+
+    def plain_repo(self, name="p", claude_md="# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"):
+        root = self.tmp / name
+        root.mkdir()
+        r = Repo(root)
+        r.write("CLAUDE.md", claude_md)
+        r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
+        r.commit("base", "CLAUDE.md", "knowledge")
+        return root, r
+
+    def install(self, root, env=None):
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, env or {}), contextlib.redirect_stdout(out):
+            code = closeout.main(["install-gate", str(root)])
+        return code, out.getvalue()
+
+    def commit_spec(self, root, name="02-spec-x.md", *flags, env=None):
+        (root / "knowledge").mkdir(exist_ok=True)
+        (root / "knowledge" / name).write_text("# x\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", f"knowledge/{name}"], check=True)
+        return subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", name,
+                               *flags], capture_output=True, text=True, env=env or self.env())
+
+    def heartbeats(self):
+        return [json.loads(p.read_text(encoding="utf-8")) for p in sorted((self.tmp / "state" / "gates").glob("*/*-*.json"))]
+
+    def foreign(self, root, body):
+        hooks = root / "scripts" / "git-hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        (hooks / "pre-commit").write_text(body, encoding="utf-8")
+        (hooks / "pre-commit").chmod(0o755)
+        subprocess.run(["git", "-C", str(root), "add", "scripts"], check=True)
+        subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "hooks"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(root), "config", "core.hooksPath", str(hooks)], check=True)
+
+    OPTED = "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\ngate: config-hook\n"
+
+    def test_gate_runs_before_a_foreign_hook_that_exits_0(self):
+        self.config_hooks()
+        root, _ = self.plain_repo(claude_md=self.OPTED)
+        self.foreign(root, "#!/bin/sh\ngit diff --cached --name-only | grep -q '\\.py$' || exit 0\n")
+        code, out = self.install(root)
+        self.assertEqual(code, 0, out)
+        r = self.commit_spec(root)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-x.md", r.stdout + r.stderr)
+        (hb,) = self.heartbeats()
+        self.assertEqual((hb["helper"], hb["result"]), (self.HELPER, "report"))
+
+    def test_gate_runs_before_exit_1_and_exec_endings(self):
+        self.config_hooks()
+        root, _ = self.plain_repo(claude_md=self.OPTED)
+        self.foreign(root, "#!/bin/sh\nexit 1\n")
+        self.install(root)
+        r = self.commit_spec(root)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-x.md", r.stdout + r.stderr)
+        (root / "scripts" / "git-hooks" / "pre-commit").write_text("#!/bin/sh\nexec true\n", encoding="utf-8")
+        r = self.commit_spec(root, "02-spec-y.md")
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-y.md", r.stdout + r.stderr)
+
+    def test_gate_runs_in_a_linked_worktree(self):
+        self.config_hooks()
+        root, _ = self.plain_repo(claude_md=self.OPTED)
+        self.foreign(root, "#!/bin/sh\nexit 0\n")
+        self.install(root)
+        subprocess.run(["git", "-C", str(root), "worktree", "add", "-q", "-b", "lane", str(self.tmp / "lane")], check=True)
+        r = self.commit_spec(self.tmp / "lane")
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-x.md", r.stdout + r.stderr)
+
+    def test_install_from_a_worktree_never_edits_a_tree_file(self):
+        self.config_hooks()
+        root, _ = self.plain_repo(claude_md=self.OPTED)
+        self.foreign(root, "#!/bin/sh\nexit 0\n")
+        subprocess.run(["git", "-C", str(root), "worktree", "add", "-q", "-b", "lane", str(self.tmp / "lane")], check=True)
+        before = self.everything(root, self.tmp / "lane")
+        before.pop("config")
+        code, out = self.install(self.tmp / "lane")
+        self.assertEqual(code, 0, out)
+        self.assertTrue(out.startswith("commit gate: runs as a git config hook (git "), out)
+        after = self.everything(root, self.tmp / "lane")
+        after.pop("config")
+        self.assertEqual(after, before)
+        with self.shim():
+            subprocess.run(["git", "-C", str(root), "config", "--unset-all", "hook.doc-guardrails.command"])
+            subprocess.run(["git", "-C", str(root), "config", "--unset-all", "hook.doc-guardrails.event"])
+            code, out = self.install(self.tmp / "lane")
+        self.assertEqual(code, 3, out)
+        self.assertIn("commit gate: NOT installed", out)
+        self.assertIn(closeout.GATE_BEGIN, out)   # the hand-over quotes the block
+        after = self.everything(root, self.tmp / "lane")
+        after.pop("config")
+        self.assertEqual(after, before)
+
+    def test_fallback_places_the_block_first_in_a_pack_owned_hook(self):
+        root, _ = self.plain_repo()
+        hook = root / ".git" / "hooks" / "pre-commit"
+        hook.write_text("#!/bin/bash\n# the project's checks\nset -e\necho theirs\nexit 0\n", encoding="utf-8")
+        hook.chmod(0o755)
+        with self.shim():
+            code, out = self.install(root)
+        self.assertEqual(code, 0, out)
+        self.assertTrue(out.startswith(f"commit gate: runs first in {hook}"), out)
+        text = hook.read_text(encoding="utf-8")
+        self.assertLess(text.index(closeout.GATE_BEGIN), text.index("echo theirs"))
+        self.assertEqual(closeout.gate_reach(text), [])
+        with self.shim():
+            r = self.commit_spec(root, env=self.env(PATH=os.environ["PATH"]))
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-x.md", r.stdout + r.stderr)
+
+    def test_a_python_hook_is_never_edited(self):
+        root, _ = self.plain_repo()
+        hook = root / ".git" / "hooks" / "pre-commit"
+        hook.write_text("#!/usr/bin/env python3\nprint('theirs')\n", encoding="utf-8")
+        with self.shim():
+            code, out = self.install(root)
+        self.assertEqual(code, 3, out)
+        self.assertEqual(hook.read_text(encoding="utf-8"), "#!/usr/bin/env python3\nprint('theirs')\n")
+
+    def test_launcher_finds_the_helper_at_run_time(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        copy = self.tmp / "copy" / "closeout.py"
+        copy.parent.mkdir()
+        __import__("shutil").copy(self.HELPER, copy)
+        subprocess.run([sys.executable, str(copy), "install-gate", str(root)], check=True, capture_output=True,
+                       env=self.env())
+        copy.unlink()
+        value = subprocess.run(["git", "-C", str(root), "config", "--get", "hook.doc-guardrails.command"],
+                               capture_output=True, text=True).stdout
+        self.assertNotIn(str(copy), value)
+        self.assertNotIn(sys.executable, value)
+        cfg = self.tmp / "cfg"
+        (cfg / "skills" / "closeout").mkdir(parents=True)
+        (cfg / "skills" / "closeout" / "closeout.py").symlink_to(self.HELPER)
+        env = {k: v for k, v in self.env(CLAUDE_CONFIG_DIR=str(cfg)).items() if k != "CLOSEOUT_PY"}
+        r = self.commit_spec(root, env=env)
+        self.assertIn("doc-guardrails: MISSING — knowledge/02-spec-x.md", r.stdout + r.stderr)
+        self.assertEqual(self.heartbeats()[-1]["helper"], self.HELPER)
+        env = {k: v for k, v in self.env(CLAUDE_CONFIG_DIR=str(self.tmp / "none"), HOME=str(self.tmp / "none")).items()
+               if k != "CLOSEOUT_PY"}
+        r = self.commit_spec(root, "02-spec-y.md", env=env)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("gate skipped: the gate cannot run", r.stderr)
+        (root / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: block\n",
+                                        encoding="utf-8")
+        r = self.commit_spec(root, "02-spec-z.md", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("cannot run", r.stderr)
+
+    def test_install_twice_one_registration_and_old_block_removed(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        hook = root / ".git" / "hooks" / "pre-commit"
+        hook.write_bytes(b"#!/bin/sh\r\necho theirs\r\n" + closeout.GATE_BEGIN.encode() + b"\r\nold\r\n"
+                         + closeout.GATE_END.encode() + b"\r\necho after\r\n")
+        self.install(root)
+        self.install(root)
+        values = subprocess.run(["git", "-C", str(root), "config", "--get-all", "hook.doc-guardrails.command"],
+                                capture_output=True, text=True).stdout.splitlines()
+        self.assertEqual(len(values), 1)
+        self.assertEqual(hook.read_bytes(), b"#!/bin/sh\r\necho theirs\r\necho after\r\n")
+
+    def gate(self, root):
+        return closeout.facts(root)["gate"]
+
+    def test_facts_says_whether_the_gate_ran_on_the_last_commit(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        self.install(root)
+        self.commit_spec(root)
+        self.assertIs(self.gate(root)["ran_on_last_commit"], True)
+        r = self.commit_spec(root, "02-spec-b.md", "--no-verify")
+        g = self.gate(root)
+        self.assertIs(g["ran_on_last_commit"], False)
+        self.assertTrue(g["note"].startswith("did not run on "), g["note"])
+        (root / "knowledge" / "02-spec-c.md").write_text("# c\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "knowledge/02-spec-c.md"], check=True)
+        subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--amend",
+                        "--no-edit"], check=True, capture_output=True, env=self.env())
+        self.assertIs(self.gate(root)["ran_on_last_commit"], True)       # the amend's base is the commit it replaced
+        (root / "knowledge" / "02-spec-d.md").write_text("# d\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "knowledge/02-spec-d.md"], check=True)
+        subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--amend",
+                        "--no-edit", "--no-verify"], check=True, capture_output=True, env=self.env())
+        self.assertIs(self.gate(root)["ran_on_last_commit"], False)
+
+    def test_install_gate_prints_one_of_its_states_with_its_exit_code(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        code, out = self.install(root)
+        self.assertEqual(code, 0)
+        self.assertRegex(out.splitlines()[0], r"^commit gate: runs as a git config hook \(git [0-9.]+; every worktree: 1\)$")
+        self.assertEqual(out.splitlines()[1], "last ran: never")
+        code, out = self.install(root)
+        self.assertIn("already registered", out.splitlines()[0])
+        plain = self.tmp / "plain"
+        plain.mkdir()
+        self.assertEqual(self.install(plain)[0], 2)
+        held, _ = self.plain_repo("held")
+        (self.tmp / "state" / "gates").mkdir(parents=True, exist_ok=True)
+        (self.tmp / "state" / "gates" / "HOLD").write_text("rollback rehearsal\n", encoding="utf-8")
+        code, out = self.install(held)
+        self.assertEqual(code, 0)
+        self.assertEqual(out.splitlines()[0], f"commit gate: registration held for a pack rollback "
+                                              f"({self.tmp / 'state' / 'gates' / 'HOLD'}); nothing written")
+
+    def test_heartbeat_only_with_the_flag_and_bounded(self):
+        root, _ = self.plain_repo()
+        (root / "knowledge" / "02-spec-x.md").write_text("# x\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "knowledge/02-spec-x.md"], check=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            closeout.main(["link-audit", str(root), "--staged"])
+            self.assertEqual(self.heartbeats(), [])
+            for _ in range(60):
+                closeout.main(["link-audit", str(root), "--staged", "--heartbeat"])
+        self.assertEqual(len(self.heartbeats()), 50)
+
+    def test_gate_error_never_refuses_a_report_only_commit(self):
+        root, _ = self.plain_repo()
+        (root / "knowledge" / "02-spec-x.md").write_text("# x\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "knowledge/02-spec-x.md"], check=True)
+        err = io.StringIO()
+        with mock.patch.object(closeout, "judge", side_effect=RuntimeError("boom")), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            self.assertEqual(closeout.main(["link-audit", str(root), "--staged", "--heartbeat"]), 0)
+            (root / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: block\n",
+                                            encoding="utf-8")
+            self.assertEqual(closeout.main(["link-audit", str(root), "--staged", "--heartbeat"]), 1)
+        self.assertIn("doc-guardrails: gate error: RuntimeError: boom", err.getvalue())
+        self.assertEqual([h["result"] for h in self.heartbeats()], ["error", "error"])
+
+    def test_a_declining_repository_is_never_registered(self):
+        root, _ = self.plain_repo()
+        hook = root / ".git" / "hooks" / "pre-commit"
+        hook.write_text("#!/bin/sh\n" + closeout.GATE_BEGIN + "\nold\n" + closeout.GATE_END + "\necho mine\n",
+                        encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "config", "hook.doc-guardrails.enabled", "false"], check=True)
+        code, out = self.install(root)
+        self.assertEqual((code, out.splitlines()[0]), (0, "commit gate: declined by the repository "
+                                                          "(hook.doc-guardrails.enabled=false in local config)"))
+        keys = subprocess.run(["git", "-C", str(root), "config", "--show-scope", "--get-regexp", r"^hook\."],
+                              capture_output=True, text=True).stdout.splitlines()
+        self.assertEqual(keys, ["local\thook.doc-guardrails.enabled false"])
+        self.assertEqual(hook.read_text(encoding="utf-8"), "#!/bin/sh\necho mine\n")
+        self.assertEqual(self.gate(root)["form"], "declined")
+        subprocess.run(["git", "-C", str(root), "config", "--unset", "hook.doc-guardrails.enabled"], check=True)
+        glob = self.tmp / "global.config"
+        glob.write_text("[hook \"doc-guardrails\"]\n\tenabled = false\n", encoding="utf-8")
+        with self.shim():
+            code, out = self.install(root, env={"GIT_CONFIG_GLOBAL": str(glob)})
+        self.assertIn("(hook.doc-guardrails.enabled=false in global config)", out)
+        self.assertEqual(hook.read_text(encoding="utf-8"), "#!/bin/sh\necho mine\n")
+
+    def launcher_commit(self, root, helper, claude_md=None, name="02-spec-l.md"):
+        if claude_md is not None:
+            (root / "CLAUDE.md").write_text(claude_md, encoding="utf-8")
+        return self.commit_spec(root, name, env=self.env(CLOSEOUT_PY=str(helper)))
+
+    def test_the_launcher_never_refuses_a_report_only_commit_across_versions(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        self.install(root)
+        old = self.tmp / "old.py"      # a helper that does not know the gate's arguments (argparse, exit 2)
+        old.write_text("import sys\nsys.stderr.write('closeout.py: error: unrecognized arguments: --heartbeat\\n')\n"
+                       "sys.exit(2)\n", encoding="utf-8")
+        one = self.tmp / "one.py"
+        one.write_text("import sys\nsys.exit(1)\n", encoding="utf-8")
+        boom = self.tmp / "boom.py"
+        boom.write_text("raise ImportError('broken')\n", encoding="utf-8")
+        report = "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"
+        block = report + "guardrails: block\n"
+        for n, (helper, words) in enumerate(((old, "closeout.py exit 2"), (one, "closeout.py exit 1"),
+                                             (boom, "closeout.py exit 1"), (self.tmp / "missing.py", "cannot run"))):
+            r = self.launcher_commit(root, helper, report, f"02-spec-r{n}.md")
+            self.assertEqual(r.returncode, 0, (helper, r.stderr))
+            self.assertIn("gate skipped", r.stderr)
+            self.assertIn(words, r.stderr)
+            r = self.launcher_commit(root, helper, block, f"02-spec-b{n}.md")
+            self.assertEqual(r.returncode, 1, (helper, r.stderr))
+            if words != "closeout.py exit 1":   # exit 1 under block is the helper's own verdict or refusal
+                self.assertIn("commit refused", r.stderr)
+        cases = [("## Doc map\nguardrails: block\n", True), ("## Doc map\n  Guardrails: BLOCK\n", True),
+                 ("## Doc map\nguardrails: blocked\n", False), ("## Doc map\r\nguardrails: block\r\n", True),
+                 ("## Doc map — where it lives\nguardrails: block\n", True),
+                 ("## Doc map · x\nguardrails: block\n", True),
+                 ("## Doc map\nroadmap: knowledge/00-ROADMAP.md\n\n## Doc map: lane audit\nguardrails: block\n", False),
+                 ("### Doc map\nguardrails: block\n", False),
+                 ("## Doc map\nguardrails: report\n\n## Notes\nguardrails: block\n", False)]
+        for n, (text, is_block) in enumerate(cases):
+            with self.subTest(text=text):
+                r = self.launcher_commit(root, one, "# p\n\n" + text, f"02-spec-c{n}.md")
+                self.assertEqual(r.returncode, 1 if is_block else 0, r.stderr)
+                ctx_block = closeout.link_context(root)["mode"] == "block"
+                self.assertEqual(ctx_block, is_block)
+        # no map in CLAUDE.md, a pin map saying block: block; a CLAUDE.md map saying report beside it: report
+        (root / "knowledge" / "00-CURRENT.md").write_text("# pin\n\n## Doc map\nguardrails: block\n", encoding="utf-8")
+        r = self.launcher_commit(root, one, "# p\nno map\n", "02-spec-pin.md")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        r = self.launcher_commit(root, one, "# p\n\n## Doc map\nguardrails: report\n", "02-spec-pin2.md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def registered(self, name):
+        root, _ = self.plain_repo(name)
+        self.install(root)
+        return root
+
+    def registrations(self, env=None):
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, env or {}), contextlib.redirect_stdout(out):
+            code = closeout.main(["gate-registrations"])
+        return code, out.getvalue().splitlines()
+
+    def unset(self, root):
+        for k in ("command", "event"):
+            subprocess.run(["git", "-C", str(root), "config", "--unset-all", f"hook.doc-guardrails.{k}"])
+
+    def test_gate_registrations_lists_and_refuses_until_every_one_is_unset(self):
+        self.config_hooks()
+        a, b = self.registered("a"), self.registered("b")
+        code, lines = self.registrations()
+        self.assertEqual(code, 1)
+        self.assertEqual(sorted(l.split()[0] for l in lines), ["registered", "registered"])
+        other = self.tmp / "other-state"
+        with mock.patch.dict(os.environ, {"DOC_GUARDRAILS_STATE": str(other)}):
+            self.registered("c")                  # an eval case's own state folder: never listed here
+        self.unset(a)
+        code, lines = self.registrations()
+        self.assertEqual((code, sorted(l.split()[0] for l in lines)), (1, ["registered", "unset"]))
+        self.unset(b)
+        self.assertEqual(self.registrations()[0], 0)
+        d = self.registered("d")
+        __import__("shutil").rmtree(d)
+        code, lines = self.registrations()
+        self.assertEqual(code, 0)
+        self.assertTrue(any(l.startswith("gone") for l in lines), lines)
+        self.assertFalse(any(str(self.tmp / "c") in l for l in lines))
+
+    def test_the_rollback_hold_stops_every_registration_and_lets_the_list_shrink(self):
+        self.config_hooks()
+        a, b = self.registered("a"), self.registered("b")
+        hold = self.tmp / "state" / "gates" / "HOLD"
+        hold.write_text("rollback rehearsal\n", encoding="utf-8")
+        self.assertEqual(self.registrations()[0], 1)
+        self.unset(a)
+        config = (a / ".git" / "config").read_bytes()
+        code, out = self.install(a)
+        self.assertEqual(code, 0)
+        self.assertTrue(out.startswith("commit gate: registration held for a pack rollback ("), out)
+        self.assertEqual(self.keys(a), 1)
+        self.assertEqual((a / ".git" / "config").read_bytes(), config)
+        c, _ = self.plain_repo("c")
+        with self.shim():
+            code, out = self.install(c)
+        self.assertTrue(out.startswith("commit gate: registration held"))
+        self.assertFalse((c / ".git" / "hooks" / "pre-commit").exists())
+        self.unset(b)
+        self.assertEqual(self.registrations()[0], 0)
+        other = self.tmp / "other-state" / "gates"          # a hold in another state folder stops nothing here
+        other.mkdir(parents=True)
+        (other / "HOLD").write_text("x", encoding="utf-8")
+        hold.unlink()
+        code, out = self.install(a)
+        self.assertTrue(out.startswith("commit gate: runs as a git config hook"), out)
+        self.assertEqual(self.registrations()[0], 1)
+
+    def test_gate_registrations_labels_a_harness_task_repository(self):
+        self.config_hooks()
+        runs = self.tmp / "runs"
+        (runs / "SI1").mkdir(parents=True)
+        (self.tmp / "runs_other").mkdir()
+        task, _ = self.plain_repo("runs/SI1/t6")
+        other, _ = self.plain_repo("runs_other/t6")
+        self.install(task)
+        self.install(other)
+        with mock.patch.object(closeout, "HARNESS_ROOTS", (runs,)):
+            code, lines = self.registrations()
+            self.assertEqual(code, 1)
+            by = {l.split()[1]: l for l in lines}
+            self.assertTrue(by[str(task)].endswith("harness task: unset pack-side"), by)
+            self.assertNotIn("harness task", by[str(other)])
+            self.unset(task)
+            self.assertEqual(self.registrations()[0], 1)
+            self.unset(other)
+            self.assertEqual(self.registrations()[0], 0)
+        self.install(task)
+        with mock.patch.object(closeout, "HARNESS_ROOTS", ()):
+            self.assertFalse(any("harness task" in l for l in self.registrations()[1]))
+
+    def test_gate_verdict_re_matches_every_verdict_line_and_nothing_else(self):
+        root, _ = self.plain_repo()
+        (root / "knowledge" / "02-spec-x.md").write_text("# x\n", encoding="utf-8")
+        (root / "knowledge" / "02-spec-y.md").write_text("# y\nroadmap: R-9\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "knowledge"], check=True)
+        for claude_md in (None, "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nguardrails: block\n"):
+            if claude_md:
+                (root / "CLAUDE.md").write_text(claude_md, encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                closeout.main(["link-audit", str(root), "--staged"])
+            verdicts = [l for l in out.getvalue().splitlines() if " — knowledge/" in l]
+            self.assertEqual(len(verdicts), 2)
+            self.assertTrue(all(closeout.GATE_VERDICT_RE.match(l) for l in verdicts))
+        for line in ("doc-guardrails: gate error: RuntimeError: boom",
+                     "doc-guardrails: gate skipped: the gate cannot run (no python or closeout.py found); report-only project, commit continues",
+                     "doc-guardrails: commit refused: the gate cannot run (no python or closeout.py found) and this project says guardrails: block"):
+            self.assertIsNone(closeout.GATE_VERDICT_RE.match(line))
+
+    def test_a_project_placed_block_wins_and_is_never_edited(self):
+        self.config_hooks()
+        root, _ = self.plain_repo()
+        launcher = closeout.GATE_LAUNCHER
+        self.foreign(root, "#!/bin/sh\n" + closeout.GATE_BEGIN + "\n( " + launcher + " ) || exit 1\n"
+                     + closeout.GATE_END + "\necho theirs\nexit 0\n")
+        hook = root / "scripts" / "git-hooks" / "pre-commit"
+        text = hook.read_bytes()
+        code, out = self.install(root)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(out.splitlines()[0], f"commit gate: runs first in {hook} (placed by the project)")
+        self.assertEqual(self.keys(root), 1)
+        self.assertEqual(hook.read_bytes(), text)
+        r = self.commit_spec(root)
+        self.assertEqual((r.stdout + r.stderr).count("doc-guardrails: MISSING — knowledge/02-spec-x.md"), 1)
+
+    def test_a_project_managed_hooks_folder_is_never_registered_uninvited(self):
+        for form in ("absolute", "relative"):
+            with self.subTest(form=form):
+                self.setUp()
+                main, lane = self.managed_repo(form)
+                before = self.everything(main, lane)
+                code, out = self.install(lane)
+                self.assertEqual(code, 0)
+                self.assertTrue(out.startswith("commit gate: hooks managed by the project: see its doc map ("), out)
+                self.assertEqual(self.keys(main), 1)
+                self.assertEqual(self.everything(main, lane), before)
+                self.assertFalse(list((self.tmp / "state").glob("gates/*/registered.json")))
+                g = self.gate(main)
+                self.assertEqual((g["form"], g["ran_on_last_commit"]), ("project-managed", None))
+                self.assertEqual(self.install(main)[0], 0)
+                self.assertEqual(self.everything(main, lane), before)
+                with self.shim():
+                    code, out = self.install(main)
+                self.assertEqual(code, 0)
+                self.assertTrue(out.startswith("commit gate: hooks managed by the project"), out)
+
+    def test_the_doc_map_line_opts_the_project_in(self):
+        self.config_hooks()
+        main, lane = self.managed_repo()
+        (main / "CLAUDE.md").write_text(self.OPTED, encoding="utf-8")
+        subprocess.run(["git", "-C", str(main), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "opt in"],
+                       check=True, capture_output=True)
+        code, out = self.install(main)
+        self.assertTrue(out.startswith("commit gate: runs as a git config hook ("), out)
+        self.assertEqual(len(list((self.tmp / "state").glob("gates/*/registered.json"))), 1)
+        for where in (main, lane):
+            r = self.commit_spec(where, f"02-spec-{where.name}.md")
+            self.assertIn(f"doc-guardrails: MISSING — knowledge/02-spec-{where.name}.md", r.stdout + r.stderr)
+        self.assertEqual({h["helper"] for h in self.heartbeats()}, {self.HELPER})
+        config = (main / ".git" / "config").read_bytes()
+        code, out = self.install(lane)
+        self.assertEqual(code, 0)
+        self.assertIn("registered by the project's opt-in, left as it is", out.splitlines()[0])
+        self.assertEqual((main / ".git" / "config").read_bytes(), config)
+        # a typo, or the line in a lane section: not read, nothing registered
+        for text in (self.OPTED.replace("config-hook", "config-hooks"),
+                     "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n\n## Doc map: lane x\nroadmap: "
+                     "knowledge/00-ROADMAP.md\nid form: table rows | X-<n> |\ngate: config-hook\n"):
+            self.unset(main)
+            (main / "CLAUDE.md").write_text(text, encoding="utf-8")
+            code, out = self.install(main)
+            self.assertTrue(out.startswith("commit gate: hooks managed by the project"), out)
+            self.assertTrue(any(p["key"] == "gate" or "gate" in p["message"] for p in closeout.link_context(main)["problems"]))
+
+    def test_no_project_hooks_folder_means_no_change(self):
+        self.config_hooks()
+        for claude_md in ("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n", self.OPTED):
+            with self.subTest(claude_md=claude_md):
+                self.setUp()
+                root, _ = self.plain_repo(claude_md=claude_md)
+                self.assertTrue(self.install(root)[1].startswith("commit gate: runs as a git config hook"))
+        for value in ("untracked-hooks", "outside", ".git/hooks"):
+            with self.subTest(value=value):
+                self.setUp()
+                root, _ = self.plain_repo()
+                (root / "untracked-hooks").mkdir()
+                (self.tmp / "outside").mkdir()
+                path = str(self.tmp / "outside") if value == "outside" else value
+                subprocess.run(["git", "-C", str(root), "config", "core.hooksPath", path], check=True)
+                self.assertIsNone(closeout.hooks_managed_by_project(root))
+                self.assertTrue(self.install(root)[1].startswith("commit gate: runs as a git config hook"))
+
+    def test_a_git_error_in_the_managed_test_registers_nothing(self):
+        main, lane = self.managed_repo()
+        (main / ".git" / "index").write_bytes(b"garbage")
+        with self.assertRaises(closeout.GitProbeError) as e:
+            closeout.hooks_managed_by_project(main)
+        self.assertIn("git ls-files", str(e.exception))
+        self.assertIn("exit 128", str(e.exception))
+        self.assertIn("index file smaller than expected", str(e.exception))
+        before = self.everything(main, lane)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(closeout.main(["install-gate", str(main)]), 0)
+        self.assertTrue(out.getvalue().startswith("commit gate: not registered: could not tell whether the project "
+                                                  "manages its hooks (git ls-files"), out.getvalue())
+        self.assertEqual(self.keys(main), 1)
+        self.assertEqual(self.everything(main, lane), before)
+        self.assertFalse(list((self.tmp / "state").glob("gates/*/registered.json")))
+        self.assertEqual(closeout.facts(main)["gate"]["form"], "undetermined")
 
 
 class Baseline(Base):
@@ -787,6 +1564,146 @@ class MemoryReport(Base):
                           ("home", "a.md", f"{rooted}/nope/x.md")])
 
 
+    def test_backup_copies_every_folder_it_lists_and_never_writes_over_one(self):
+        (self.own / "mine.md").write_text("mine", encoding="utf-8")
+        (self.own / "MEMORY.md").write_text("- [Mine](mine.md) — x\n", encoding="utf-8")
+        (self.home / "a.md").write_text("garden_app ships on Friday", encoding="utf-8")
+        (self.home / "n.md").write_text("recipe_app only", encoding="utf-8")
+        (self.other / "e.md").write_text("nothing here", encoding="utf-8")
+        dest = self.dir / "scratch"
+        made = closeout.memory_backup(self.proj, dest)
+        self.assertEqual([(m["kind"], Path(m["to"]).name, m["files"]) for m in made],
+                         [("own", "memory-backup-own", 2), ("home", "memory-backup-home", 2)])
+        self.assertEqual((dest / "memory-backup-own" / "mine.md").read_text(encoding="utf-8"), "mine")
+        self.assertEqual((dest / "memory-backup-home" / "n.md").read_text(encoding="utf-8"), "recipe_app only")
+        self.assertFalse((dest / "memory-backup-other").exists())   # the other folder says nothing about this project
+        (self.own / "mine.md").write_text("changed", encoding="utf-8")
+        with self.assertRaises(FileExistsError):
+            closeout.memory_backup(self.proj, dest)
+        self.assertEqual((dest / "memory-backup-own" / "mine.md").read_text(encoding="utf-8"), "mine")
+
+    def test_backup_from_the_command_line(self):
+        (self.own / "mine.md").write_text("mine", encoding="utf-8")
+        env = {**os.environ, "CLOSEOUT_CONFIG_DIRS": str(self.cfg)}
+        cmd = [sys.executable, str(Path(closeout.__file__).resolve()), "memory", str(self.proj),
+               "--backup", str(self.dir / "scratch")]
+        r = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([b["kind"] for b in json.loads(r.stdout)["backups"]], ["own"])
+        again = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        self.assertEqual((again.returncode, again.stdout), (1, ""))
+        self.assertIn("never writes over another", again.stderr)
+
+class Receipt(unittest.TestCase):
+    """closeout.receipt_facts: the ELI5 v5 receipt as fields, groups and errors (R-22 §5.3); one home for the parser the
+    evals and R-28's live check both use."""
+    GOOD = ("Some prose before.\n\nELI5 v5\n- Did: ran the 41 ingest tests\n- Why: the loader dropped rows (see R-3)\n"
+            "- Result: worked\n- Proof: 41 passed in 2.1 s\n- Files: shelf/load.py\n\n"
+            "- Redman: filed 1 small → knowledge/redman/LEDGER.md\n- Greenman: G-4 (M): kept csv over sqlite\n\n"
+            "- Next: R-4\n- Need from you: none\n\n- Goal: R-3 · loader — rows survive · goal changed: no\n"
+            "- In one sentence: The loader keeps every row now; nothing waits on you.\n")
+
+    def errors(self, text):
+        blocks = closeout.receipt_facts(text)
+        self.assertEqual(len(blocks), 1, text)
+        return blocks[0]["errors"]
+
+    def test_receipt_facts(self):
+        block = closeout.receipt_facts(self.GOOD)[0]
+        self.assertEqual(block["errors"], [])
+        self.assertEqual(block["title"], "ELI5 v5")
+        self.assertEqual([n for n, _ in block["fields"]][:3], ["Did", "Why", "Result"])
+        self.assertEqual(block["groups"], [["Did", "Why", "Result", "Proof", "Files"], ["Redman", "Greenman"],
+                                           ["Next", "Need from you"], ["Goal", "In one sentence"]])
+        self.assertEqual(closeout.receipt_ids(block), ["G-4"])
+        self.assertEqual(closeout.receipt_facts("no receipt here\n"), [])
+        bad = {
+            "title": self.GOOD.replace("ELI5 v5", "ELI5 v4"),
+            "order": self.GOOD.replace("- Next: R-4\n- Need from you: none", "- Need from you: none\n- Next: R-4"),
+            "result": self.GOOD.replace("Result: worked", "Result: mostly"),
+            "fail when worked": self.GOOD.replace("- Files:", "- Fail: nothing\n- Files:"),
+            "no fail when failed": self.GOOD.replace("Result: worked", "Result: failed"),
+            "empty proof": self.GOOD.replace("- Proof: 41 passed in 2.1 s", "- Proof:"),
+            "reason rule": self.GOOD.replace("the loader dropped rows (see R-3)", "the user asked for it (2026-09-22)"),
+            "no goal": self.GOOD.replace("- Goal: R-3 · loader — rows survive · goal changed: no\n", ""),
+            "no sentence": self.GOOD.replace("- In one sentence: The loader keeps every row now; nothing waits on you.\n", ""),
+            "lone dash": self.GOOD.replace("- Files: shelf/load.py\n\n", "- Files: shelf/load.py\n-\n"),
+        }
+        for name, text in bad.items():
+            self.assertTrue(self.errors(text), name)
+        self.assertEqual(self.errors(self.GOOD.replace("- Proof: 41 passed in 2.1 s", "- Proof: none — not verified")), [])
+        failed = self.GOOD.replace("Result: worked", "Result: failed").replace("- Files:", "- Fail: the fixture broke; pin it\n- Files:")
+        self.assertEqual(self.errors(failed), [])
+        self.assertEqual(self.errors(self.GOOD.replace("the loader dropped rows (see R-3)",
+                                                       "the loader drops the rows you asked about")), [])  # a reason
+        self.assertIn("because the user asked", " ".join(self.errors(self.GOOD.replace(
+            "the loader dropped rows (see R-3)", "because the user asked"))))
+
+
+class ReceiptTexts(unittest.TestCase):
+    """What the close-out skills tell a session to report about the audit and the commit gate says what holds (R-24
+    §5.7): the pre-existing lines and whose each warning is; the gate's state line and whether it ran on the last
+    commit; and another writer's staged files left as they are, yours committed by name."""
+    SKILLS = Path(__file__).resolve().parent.parent / "skills"
+    AUDIT = "the audit (0 fail; N pre-existing broken, reported; each warn, whose it is and why it stays)"
+    GATE = "the commit gate (its `install-gate` state line; ran on the last commit: yes, no or no commit)"
+
+    def text(self, *parts):
+        return " ".join((self.SKILLS.joinpath(*parts)).read_text(encoding="utf-8").split())
+
+    def test_the_receipt_and_commit_texts_say_what_holds(self):
+        for skill in ("closeout", "project-update"):
+            text = self.text(skill, "SKILL.md")
+            self.assertIn(self.AUDIT + "; " + self.GATE + ";", text, skill)
+            self.assertNotIn("installed, already there, or no", text, skill)
+            self.assertNotIn("each warn and why it stays", text, skill)
+        self.assertIn("| registered where missing, its state reported; committed |",
+                      self.text("project-update", "SKILL.md"))
+        updating = self.text("closeout", "UPDATING.md")
+        self.assertIn("commit yours by name, `git commit -m \"<message>\" -- <your files>`", updating)
+        self.assertNotIn("lists your files and nothing else", updating)
+
+
+class DecisionIds(Base):
+    """closeout.decision_ids: the G-ids a project has a record of (R-28 §5.3; built by R-22, its first user)."""
+
+    def setUp(self):
+        super().setUp()
+        self.r = Repo(self.dir)
+        self.r.write("x", "1")
+        self.r.commit("x", "x")
+
+    def test_decision_ids_reads_records_and_ledger_rows(self):
+        self.r.write("knowledge/decisions/G-1-store.md", "# G-1\nroadmap: R-2\nstatus: decided\n")
+        self.r.write("knowledge/decisions/G-12-cli.md", "# G-12\n")
+        self.r.write("knowledge/decisions/LEDGER.md",
+                     "# Greenman ledger\n\n| date | id | the choice | depth | status |\n|---|---|---|---|---|\n"
+                     "| 2026-09-14 | G-2 | a small call | S | decided |\n"
+                     "prose naming G-7 is not a row\n| 2026-09-15 | see G-8 | not an id cell | S | decided |\n")
+        self.assertEqual(closeout.decision_ids(self.dir), {"G-1", "G-12", "G-2"})
+        # a decisions folder the doc map declares
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\ndecisions: docs/adr\n")
+        self.r.write("docs/adr/G-3-auth.md", "# G-3\n")
+        self.r.write("docs/adr/LEDGER.md", "| 2026-09-16 | G-4 | x | S | decided |\n")
+        self.assertEqual(closeout.decision_ids(self.dir), {"G-1", "G-12", "G-2", "G-3", "G-4"})
+
+    def test_decision_ids_runs_no_link_audit_and_no_git_status(self):
+        self.r.write("knowledge/decisions/G-1-store.md", "# G-1\n")
+        calls = []
+        real_git = closeout.run_git
+
+        def recording(folder, *args):
+            calls.append(args)
+            return real_git(folder, *args)
+
+        def refuse(*a, **k):
+            raise AssertionError("decision_ids ran a link-audit")
+        with mock.patch.object(closeout, "run_git", recording), mock.patch.object(closeout, "link_audit", refuse):
+            self.assertEqual(closeout.decision_ids(self.dir), {"G-1"})
+        self.assertFalse([a for a in calls if "status" in a], calls)
+        self.assertEqual(closeout.decision_ids(self.dir / "nowhere"), set())
+
+
 class Worklist(Base):
     def items(self, text):
         return [l for l in text.splitlines() if l.startswith("- [ ]")]
@@ -824,6 +1741,399 @@ class Worklist(Base):
             self.assertEqual(closeout.main(["worklist", str(self.dir), "--docs", "README.md"]), 0)
             self.assertEqual(closeout.main(["memory", str(self.dir)]), 0)
         self.assertIn("- [ ] README.md:1 — 12 tests", out.getvalue())
+
+
+
+# ---------------------------------------------------------------------------------------------------- figures (R-29 § 5.1)
+
+COUNTS = {"scenarios": 3, "graded sessions": 31, "checks": 106, "turns": 46, "check-runs": 193, "quick sessions": 12,
+          "check kinds": 23}
+# a project's own `evals/run.py`, standing in for R-22's `--counts`: each call leaves one line in calls.log
+COUNTS_STUB = """import json, os, sys
+here = os.path.dirname(os.path.abspath(__file__))
+open(os.path.join(here, "calls.log"), "a").write("x\\n")
+spec = json.load(open(os.path.join(here, "scenarios.json")))
+counts = dict(%s, scenarios=len(spec["scenarios"]))
+if "--counts" in sys.argv:
+    print(json.dumps(counts))
+"""
+SUITE = ["eval.scenarios", "eval.sessions", "eval.turns", "eval.checks", "eval.check_runs", "eval.check_kinds",
+         "eval.quick"]
+FIELDS = {"eval.scenarios": "scenarios", "eval.sessions": "graded sessions", "eval.turns": "turns",
+          "eval.checks": "checks", "eval.check_runs": "check-runs", "eval.check_kinds": "check kinds",
+          "eval.quick": "quick sessions"}
+
+
+def figures_decl(docs, extra=None, mentions=None, tables=None):
+    figs = {n: {"kind": "json_command", "argv": ["evals/run.py", "--counts"], "field": FIELDS[n]} for n in SUITE}
+    figs.update(extra or {})
+    out = {"_about": "test", "docs": docs, "figures": figs}
+    if mentions is not None:
+        out["mentions"] = mentions
+    if tables is not None:
+        out["tables"] = tables
+    return json.dumps(out, indent=1)
+
+
+def run_main(*args):
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = closeout.main([str(a) for a in args])
+    return code, out.getvalue()
+
+
+class Figures(Base):
+    """`closeout.py figures`: every span a declared doc carries holds its source's value (R-29 tests 1-6, 25, 28)."""
+
+    def setUp(self):
+        super().setUp()
+        self.r = Repo(self.dir)
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nfigures: tools/figures.json\n")
+        self.r.write("knowledge/00-ROADMAP.md", "# r\n\n## Now\n- R-1 a\n")
+        self.stub(self.dir, ["a", "b", "c"])
+        self.r.write("tools/figures.json", figures_decl(["README.md", "public/docs/evidence.md"]))
+
+    def stub(self, where, ids, counts=None):
+        (where / "evals").mkdir(parents=True, exist_ok=True)
+        (where / "evals" / "run.py").write_text(COUNTS_STUB % json.dumps(counts or COUNTS), encoding="utf-8")
+        (where / "evals" / "scenarios.json").write_text(json.dumps({"scenarios": [{"id": i} for i in ids]}),
+                                                        encoding="utf-8")
+
+    def calls(self, where=None):
+        log = (where or self.dir) / "evals" / "calls.log"
+        return len(log.read_text().splitlines()) if log.is_file() else 0
+
+    def test_span_matches(self):
+        self.r.write("README.md", "# p\n\n<!-- fig:eval.sessions -->31<!-- /fig --> graded sessions\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(out.strip().splitlines()[-1], "figures: 1 span(s), 0 stale, 0 unknown, 0 missing")
+
+    def test_stale_span_fails(self):
+        """Known-bad: a span edited to a wrong value fails, naming file:line, the figure, the stated and the computed
+        value; `audit` FAILs on it when the line is this pass's and WARNs when it is not."""
+        self.r.write("README.md", "# p\n\n<!-- fig:eval.sessions -->29<!-- /fig --> graded sessions\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("STALE README.md:3 eval.sessions: says 29, source says 31", out)
+        self.assertEqual(out.strip().splitlines()[-1], "figures: 1 span(s), 1 stale, 0 unknown, 0 missing")
+        fails = [f for f in closeout.audit(self.dir, ["README.md"]) if f[0] == "FAIL"]
+        self.assertEqual([(f[1], "eval.sessions" in f[2]) for f in fails], [("README.md:3", True)])
+        self.r.commit("base", ".")
+        self.r.write("other.md", "x\n")
+        found = closeout.audit(self.dir, ["other.md"])
+        self.assertEqual([f for f in found if f[0] == "FAIL"], [])
+        self.assertTrue(any(f[0] == "WARN" and f[1] == "README.md:3" and "says 29" in f[2] for f in found), found)
+
+    def test_write_rewrites_spans_only(self):
+        body = ("# p\n\n<!-- fig:eval.sessions -->29<!-- /fig --> graded sessions, "
+                "<!-- fig:eval.checks -->1<!-- /fig --> checks.\r\ntrailing  spaces  \n\nend")
+        self.r.write("README.md", body)
+        outside = lambda t: re.sub(r"<!-- fig:[\w.]+ -->.*?<!-- /fig -->", "", t, flags=re.S)
+        code, out = run_main("figures", self.dir, "--write")
+        self.assertEqual(code, 0, out)
+        after = (self.dir / "README.md").read_bytes().decode("utf-8")
+        self.assertIn("<!-- fig:eval.sessions -->31<!-- /fig -->", after)
+        self.assertIn("<!-- fig:eval.checks -->106<!-- /fig -->", after)
+        self.assertEqual(outside(after), outside(body))            # no other byte moved, CR and spaces included
+        self.assertEqual(run_main("figures", self.dir, "--check")[0], 0)
+
+    def test_unknown_name_fails(self):
+        self.r.write("README.md", "<!-- fig:eval.nope -->3<!-- /fig -->\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("UNKNOWN README.md:1 eval.nope", out)
+        self.assertEqual(out.strip().splitlines()[-1], "figures: 1 span(s), 0 stale, 1 unknown, 0 missing")
+
+    def test_missing_mention_fails(self):
+        self.r.write("tools/figures.json", figures_decl(
+            ["public/docs/evidence.md"],
+            mentions=[{"doc": "public/docs/evidence.md", "each": {"file": "evals/scenarios.json", "list": "scenarios",
+                                                                 "field": "id"}, "form": "`{}`"}]))
+        self.r.write("public/docs/evidence.md", "| `a` | x |\n| `b` | y |\nand c in prose, not in its form\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertEqual([l for l in out.splitlines() if l.startswith("MISSING")],
+                         ["MISSING public/docs/evidence.md: `c`"])
+
+    def test_no_key_no_change(self):
+        """Without `figures:`, a declared handoff, a `G-` record or an inventory, `audit` and `facts` say what they
+        said before R-29 (the golden was captured on the code before this row), and `figures` prints nothing."""
+        d = self.dir / "plain"
+        d.mkdir()
+        r = Repo(d)
+        for rel, text in {"CLAUDE.md": "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n",
+                          "knowledge/00-ROADMAP.md": "# r\n\n## Now\n- R-1 a\n\n## Done\n- R-2 b, 2026-09-01\n",
+                          "knowledge/redman/LEDGER.md": "# L\nroadmap: none — ledger\n\n| date | kind | item | size | state "
+                                                        "| where |\n|---|---|---|---|---|---|\n| 2026-09-01 | k | an open "
+                                                        "finding | small | filed | x |\n",
+                          "knowledge/02-spec-a.md": "# a\n\nno roadmap line\n",
+                          "README.md": "# p\n31 graded sessions\n"}.items():
+            r.write(rel, text)
+        r.commit("base", ".")
+        r.write("README.md", "# p\n31 graded sessions\n29 checks\n")
+        golden_audit = [["WARN", "linking", "1 document(s) of a linked kind carry no `roadmap:` line — `closeout.py "
+                                            "link-audit` writes the inventory (LINKING.md)"]]
+        self.assertEqual([list(f) for f in closeout.audit(d, ["README.md"], today="2026-09-28")], golden_audit)
+        f = closeout.facts(d)
+        golden_facts = {"baseline": {"missing": ["pin", "handoff", "overview", "brain"],
+                                     "present": {"claude_md": ["CLAUDE.md"], "readme": ["README.md"],
+                                                 "roadmap": ["knowledge/00-ROADMAP.md"]}},
+                        "greenman": {"awaiting_ruling": [], "decisions": 0, "real_fix_owed": [],
+                                     "undeclared_record_folders": [], "unreadable_ledgers": []},
+                        "redman": {"by_lane": {"main": 1}, "deep_runs": [], "ledgers": ["knowledge/redman/LEDGER.md"],
+                                   "open_rows": 1, "rows_after_a_break": [], "unreadable_ledgers": [],
+                                   "unreadable_states": []}, "untracked_records": []}
+        self.assertEqual({k: f[k] for k in golden_facts}, golden_facts)
+
+    def test_no_key_figures_prints_nothing(self):
+        (self.dir / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n", encoding="utf-8")
+        self.assertEqual(run_main("figures", self.dir, "--check"), (0, ""))
+        self.assertEqual(run_main("figures", self.dir, "--write"), (0, ""))
+
+    def test_json_command_kind(self):
+        # one --counts call serves every suite figure of a run
+        self.r.write("README.md", "".join(f"<!-- fig:{n} -->{COUNTS[FIELDS[n]] if n != 'eval.scenarios' else 3}"
+                                          f"<!-- /fig -->\n" for n in SUITE))
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual((code, self.calls()), (0, 1), out)
+        # a missing field, a non-zero exit and unparsable output are each UNKNOWN naming the command
+        self.stub(self.dir, ["a"], counts={k: v for k, v in COUNTS.items() if k != "checks"})
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertIn("UNKNOWN README.md:4 eval.checks: `evals/run.py --counts` gave no field 'checks'", out)
+        for body, why in (("import sys\nsys.exit(3)\n", "exited 3"), ("print('not json')\n", "printed no JSON")):
+            (self.dir / "evals" / "run.py").write_text(body, encoding="utf-8")
+            code, out = run_main("figures", self.dir, "--check")
+            self.assertEqual(code, 1)
+            self.assertIn(f"UNKNOWN README.md:1 eval.scenarios: `evals/run.py --counts` {why}", out)
+        # json_count: the rows matching `where`; a named figure whose file is absent is UNKNOWN, an unnamed one costs
+        # nothing
+        self.stub(self.dir, ["a", "b", "c"])
+        extra = {"rows.a": {"kind": "json_count", "file": "data/rows.json", "list": "rows", "where": {"chart": "a"}},
+                 "rows.gone": {"kind": "json_count", "file": "data/gone.json", "list": "rows", "where": {}},
+                 "rows.unnamed": {"kind": "json_count", "file": "data/none.json", "list": "rows", "where": {}}}
+        self.r.write("tools/figures.json", figures_decl(["README.md"], extra=extra))
+        self.r.write("data/rows.json", json.dumps({"rows": [{"chart": "a"}, {"chart": "b"}, {"chart": "a"}]}))
+        self.r.write("README.md", "<!-- fig:rows.a -->2<!-- /fig -->\n<!-- fig:rows.gone -->0<!-- /fig -->\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("UNKNOWN README.md:2 rows.gone: data/gone.json is not there", out)
+        self.assertNotIn("rows.a", out)
+        self.assertNotIn("rows.unnamed", out)
+        # the doctrine repo is the folder the project's tools/export.py names, never a ~ path in the declaration
+        doctrine = self.dir / "doctrine-repo"
+        (doctrine / "harness").mkdir(parents=True)
+        (doctrine / "harness" / "arms.json").write_text(json.dumps({"rows": [{"chart": "x"}] * 4}), encoding="utf-8")
+        exp = ("from pathlib import Path\nPACK = Path(__file__).resolve().parent.parent\nDOCTRINE = Path(%r)\n"
+               "SHARED = [(PACK, 'a/SKILL.md', 'skills/a/SKILL.md'), (PACK, 'a/X.md', 'skills/a/X.md'),\n"
+               "          (PACK, 'b/SKILL.md', 'skills/b/SKILL.md'), (DOCTRINE, 'l.md', 'doctrine/l.md')]\n"
+               "KIT_ONLY = [%s]\n")
+        self.r.write("tools/export.py", exp % (str(doctrine), ""))
+        extra = {"doctrine.rows": {"kind": "json_count", "repo": "doctrine", "file": "harness/arms.json",
+                                   "list": "rows", "where": {"chart": "x"}},
+                 "kit.skills": {"kind": "shipped_skills", "target": "kit"}}
+        self.r.write("tools/figures.json", figures_decl(["README.md"], extra=extra))
+        self.r.write("README.md", "<!-- fig:doctrine.rows -->4<!-- /fig -->, <!-- fig:kit.skills -->2<!-- /fig -->\n")
+        self.assertEqual(run_main("figures", self.dir, "--check")[0], 0)
+        self.r.write("tools/export.py", exp % (str(doctrine), "(PACK, 'c/SKILL.md', 'skills/c/SKILL.md')"))
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertIn("STALE README.md:1 kit.skills: says 2, source says 3", out)
+
+    def test_public_tree_counts_its_own_scenarios(self):
+        """Known-bad included (G-27 Addenda): a public page is computed in the built public tree, which may leave a
+        scenario out; this repo's own documents keep this repo's values."""
+        self.r.write("tools/figures.json", figures_decl(
+            ["README.md", "public/docs/evidence.md"],
+            mentions=[{"doc": "public/docs/evidence.md", "each": {"file": "evals/scenarios.json", "list": "scenarios",
+                                                                 "field": "id"}, "form": "`{}`"}]))
+        self.r.write("public/docs/evidence.md", "<!-- fig:eval.scenarios -->2<!-- /fig --> scenarios: `a`, `b`\n")
+        self.r.write("README.md", "<!-- fig:eval.scenarios -->3<!-- /fig --> scenarios\n")
+        tree = self.dir / "built"
+        self.stub(tree, ["a", "b"])
+        code, out = run_main("figures", self.dir, "--check", "--public-tree", tree)
+        self.assertEqual(code, 0, out)
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("STALE public/docs/evidence.md:1 eval.scenarios: says 2, source says 3", out)
+        self.assertIn("MISSING public/docs/evidence.md: `c`", out)
+        self.assertNotIn("README.md:1", out.replace("public/docs/evidence.md", ""))
+
+    def runs_file(self, records):
+        self.r.write("evals/RUNS.jsonl", "".join(json.dumps(x) + "\n" for x in records))
+
+    def test_estimated_cost_needs_the_word(self):
+        """Known-bad included (G-29 F3-X9): an estimated case cost reaches a span only with "(estimated)"; a null
+        cost with no estimate is UNKNOWN, never an earlier run's figure."""
+        entry = {"case": "large_stop-fable", "basis": 1.05, "floor": 0.64, "estimate": 1.05, "unpriced": [],
+                 "reason": "turn 2 reported no cost"}
+        self.assertEqual(len(entry), 6)
+        earlier = {"run": "r1", "date": "2026-09-20", "selection": "full", "cost": 29.1, "result": "29/29"}
+        last = {"run": "r2", "date": "2026-09-28", "selection": "full", "cost": None, "result": "49/49",
+                "cost_estimated": {"cost": 31.5, "cases": [entry]}}
+        self.runs_file([earlier, last])
+        extra = {"run.full.cost": {"kind": "jsonl_last", "file": "evals/RUNS.jsonl", "where": {"selection": "full"},
+                                   "field": "cost", "format": "${:.2f}"}}
+        self.r.write("tools/figures.json", figures_decl(["README.md"], extra=extra))
+        self.r.write("README.md", "about <!-- fig:run.full.cost -->$31.50 (estimated)<!-- /fig -->\n")
+        self.assertEqual(run_main("figures", self.dir, "--check")[0], 0)
+        self.r.write("README.md", "about <!-- fig:run.full.cost -->$30.00<!-- /fig -->\n")
+        self.assertEqual(run_main("figures", self.dir, "--write")[0], 0)
+        self.assertEqual((self.dir / "README.md").read_text(), "about <!-- fig:run.full.cost -->$31.50 (estimated)"
+                                                                "<!-- /fig -->\n")
+        self.r.write("README.md", "about <!-- fig:run.full.cost -->$31.50<!-- /fig -->\n")
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("STALE README.md:1 run.full.cost: says $31.50, source says $31.50 (estimated)", out)
+        self.runs_file([earlier, dict(last, cost_estimated=None)])
+        code, out = run_main("figures", self.dir, "--check")
+        self.assertIn("UNKNOWN README.md:1 run.full.cost: r2 has no cost", out)
+        self.assertNotIn("29.10", out)
+
+
+class RunsTable(unittest.TestCase):
+    """The run table names every failure, scenario and seat together: a note covers a failure only by naming both, so
+    no failure hides behind a note that names another seat's, or a longer scenario that starts with its name."""
+    SPEC = {"where": {"selection": ["full"]}}
+
+    def cell(self, failed, note, seats=("fable", "opus")):
+        rec = {"date": "2026-09-14", "selection": "full", "cases": 9, "passed": 9 - len(failed), "seats": list(seats),
+               "failed": [list(f) for f in failed], "note": note}
+        return closeout.runs_table([rec], self.SPEC).splitlines()[-1].rsplit(" | ", 1)[1][:-2]
+
+    def test_a_note_naming_scenario_and_seat_covers_that_failure(self):
+        self.assertEqual(self.cell([("large_stop", "fable")], "layer — large_stop-fable: header"),
+                         "layer — large_stop-fable: header")
+        self.assertEqual(self.cell([("large_stop", "opus")], "`large_stop` on Opus again"), "`large_stop` on Opus again")
+        self.assertEqual(self.cell([("x", "fable"), ("x", "opus")], "`x` on Fable and Opus — fixed"),
+                         "`x` on Fable and Opus — fixed")
+        self.assertEqual(self.cell([("x", "opus55")], "x on Opus 5.5 asked", ("fable", "opus55")), "x on Opus 5.5 asked")
+        self.assertEqual(self.cell([("x", "opus55")], "`x` — it stopped", ("opus55",)), "`x` — it stopped")
+
+    def test_known_bad_the_other_seat_is_not_covered(self):
+        # 2026-09-14's re-graded note names large_stop-fable; large_stop failed on Opus too
+        self.assertEqual(self.cell([("large_stop", "fable"), ("large_stop", "opus")], "layer — large_stop-fable: x"),
+                         "`large_stop` on Opus; layer — large_stop-fable: x")
+        self.assertEqual(self.cell([("x", "opus55")], "x on Opus asked", ("fable", "opus55")),
+                         "`x` on Opus 5.5; x on Opus asked")
+        self.assertEqual(self.cell([("x", "fable")], "the cause of x", ("fable", "opus")), "`x` on Fable; the cause of x")
+
+    def test_known_bad_a_longer_scenario_is_not_its_prefix(self):
+        for short, longer in (("full_flow", "full_flow_two_lane"), ("shell_doc", "shell_doc_eli5"),
+                              ("shell_doc", "shell_doc_commit")):
+            with self.subTest(short=short, longer=longer):
+                for note in (f"{longer} on Fable failed", f"{longer}-fable: header", f"`{longer}` stopped"):
+                    self.assertEqual(self.cell([(short, "fable")], note, ("fable",)), f"`{short}` on Fable; {note}")
+        self.assertEqual(self.cell([("two_lane", "fable")], "full_flow_two_lane on Fable", ("fable",)),
+                         "`two_lane` on Fable; full_flow_two_lane on Fable")
+
+
+class StateChecks(Base):
+    """`audit`'s state checks (R-29 § 5.4; tests 7-11): the handoff's Open items where a handoff is declared, a record
+    owed on a Done item, the inventory, the decisions ledger in git, and BACKLOG.md as a plan."""
+    LEDGER = ("# L\nroadmap: none — ledger\n\n| date | kind | item | size | state | where |\n"
+              "|---|---|---|---|---|---|\n| 2026-09-20 | defect | the importer drops the header row on Windows | small "
+              "| filed | x |\n| 2026-09-19 | defect | an old one | small | closed — fixed | x |\n")
+
+    def setUp(self):
+        super().setUp()
+        self.r = Repo(self.dir)
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n")
+        self.r.write("knowledge/00-ROADMAP.md", "# r\n\n## Now\n- R-3 the importer\n\n## Done\n- R-1 done, 2026-09-01\n")
+        self.r.write("knowledge/redman/LEDGER.md", self.LEDGER)
+        self.r.commit("base", ".")
+
+    def handoff_findings(self, found):
+        return [f for f in found if "handoff" in f[2]]
+
+    def test_handoff_omits_open_row(self):
+        """Known-bad: a root HANDOFF.md whose Open items leave out an open ledger row fails, naming the row."""
+        self.r.write("HANDOFF.md", "# h\n\n## Open items\n- R-3 the importer\n\n## Start prompt\nx\n")
+        found = self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"]))
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0][:2], ("FAIL", "HANDOFF.md"))
+        self.assertIn("handoff Open items omit: knowledge/redman/LEDGER.md 2026-09-20 "
+                      "(the importer drops the header row on Windows)", found[0][2])
+        self.r.write("HANDOFF.md", "# h\n\n## Open items\n- R-3 the importer\n- the importer drops the header row on "
+                                   "Windows (ledger)\n")
+        self.assertEqual(self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"])), [])
+        self.r.write("HANDOFF.md", "# h\n\n## Open items\n- the importer drops the header row on Windows\n")
+        found = self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"]))
+        self.assertIn("handoff Open items omit: R-3", found[0][2])            # the Now item, by its id
+
+    def test_a_decision_kept_only_as_a_ledger_row_is_an_open_item(self):
+        """What `facts` lists as awaiting or owing a real fix includes a decision ledger's row with no `G-` file (an S
+        call, or a project that keeps its decisions only as rows); the handoff must name it too."""
+        self.r.write("knowledge/decisions/LEDGER.md", "# ledger\nroadmap: none — ledger\n\n| date | id | the choice | "
+                                                      "status |\n|---|---|---|---|\n| 2026-09-20 | G-8 | where the store "
+                                                      "lives | awaiting a ruling |\n")
+        self.r.commit("ledger", "knowledge/decisions/LEDGER.md")
+        self.assertEqual(len(closeout.facts(self.dir)["greenman"]["awaiting_ruling"]), 1)
+        self.r.write("HANDOFF.md", "# h\n\n## Open items\n- R-3 the importer\n- the importer drops the header row on "
+                                   "Windows\n")
+        found = self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"]))
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("omit: knowledge/decisions/LEDGER.md: where the store lives", found[0][2])
+        self.r.write("HANDOFF.md", "# h\n\n## Open items\n- R-3 the importer\n- the importer drops the header row on "
+                                   "Windows\n- G-8, where the store lives, awaits a ruling\n")
+        self.assertEqual(self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"])), [])
+
+    def test_handoff_check_needs_a_declared_handoff(self):
+        self.r.write("knowledge/2026-09-20-session-handoff.md", "# h\nroadmap: R-3\n\n## Open items\n- nothing\n")
+        self.assertEqual(self.handoff_findings(closeout.audit(self.dir, ["knowledge/2026-09-20-session-handoff.md"])),
+                         [])
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"
+                                  "handoff: knowledge/2026-09-20-session-handoff.md\n")
+        found = self.handoff_findings(closeout.audit(self.dir, ["knowledge/2026-09-20-session-handoff.md"]))
+        self.assertEqual([f[0] for f in found], ["FAIL"])
+        self.assertIn("omit: knowledge/redman/LEDGER.md 2026-09-20", found[0][2])
+        self.r.write("knowledge/2026-09-20-session-handoff.md", "# h\nroadmap: R-3\n\nno sections\n")
+        found = self.handoff_findings(closeout.audit(self.dir, ["knowledge/2026-09-20-session-handoff.md"]))
+        self.assertEqual([(f[0], f[2]) for f in found], [("WARN", "handoff has no Open items section")])
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nhandoff: knowledge/gone.md\n")
+        problems = [p["message"] for p in closeout.load_doc_map(self.dir)["problems"]]
+        self.assertTrue(any("handoff: knowledge/gone.md" in m for m in problems), problems)
+
+    def test_record_owed_on_done_warns(self):
+        self.r.write("knowledge/decisions/G-4-plan.md", "# G-4\nroadmap: R-1\nstatus: decided; the suite on the new "
+                                                          "seat stays owed after the harness pass\n")
+        self.r.write("knowledge/decisions/G-5-now.md", "# G-5\nroadmap: R-3\nstatus: awaiting a ruling\n")
+        found = [f for f in closeout.audit(self.dir, ["knowledge/decisions/G-4-plan.md"]) if "owed" in f[2] or
+                 "Done" in f[2]]
+        self.assertEqual([(f[0], f[1]) for f in found], [("WARN", "knowledge/decisions/G-4-plan.md")])
+        self.assertIn("R-1 is Done", found[0][2])
+
+    def test_inventory_stale_and_stray(self):
+        head = ("# UNLINKED — {n} document(s) with no `roadmap:` line — 2026-09-01\n"
+                "roadmap: none — this is the linking backlog itself, written by `closeout.py link-audit`; delete it "
+                "when empty\n")
+        self.r.write("knowledge/UNLINKED-2026-09-01.md", head.format(n=3))
+        self.r.write("knowledge/02-spec-a.md", "# a\n")
+        self.r.write("knowledge/02-spec-b.md", "# b\n")
+        stray = self.r.write("knowledge/audit/findings/UNLINKED-2026-09-01.md", head.format(n=2))
+        found = closeout.audit(self.dir, ["knowledge/02-spec-a.md"])
+        stale = [f for f in found if f[1] == "knowledge/UNLINKED-2026-09-01.md"]
+        self.assertEqual([(f[0], "lists 3" in f[2] and "2 now" in f[2]) for f in stale], [("WARN", True)])
+        strays = [f for f in found if f[1] == "knowledge/audit/findings/UNLINKED-2026-09-01.md"]
+        self.assertEqual([(f[0], "stray inventory" in f[2]) for f in strays], [("WARN", True)])
+        self.assertTrue(stray.is_file())                                      # reported, never deleted
+
+    def test_untracked_decisions_ledger_warns_in_audit(self):
+        self.r.write("knowledge/decisions/LEDGER.md", "# ledger\nroadmap: none — ledger\n\n| date | id | status |\n"
+                                                      "|---|---|---|\n| 2026-09-20 | S | decided |\n")
+        self.assertIn("knowledge/decisions/LEDGER.md", closeout.facts(self.dir)["untracked_records"])
+        found = [f for f in closeout.audit(self.dir, ["knowledge/02-x.md"]) if f[1] == "records"]
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("knowledge/decisions/LEDGER.md", found[0][2])
+
+    def test_backlog_is_a_roadmap(self):
+        for rel in ("BACKLOG.md", "knowledge/00-SPRINT-LEDGER.md", "docs/DECISION-LOG.md"):
+            self.r.write(rel, "x\n")
+        present = closeout.facts(self.dir)["baseline"]["present"]["roadmap"]
+        self.assertIn("BACKLOG.md", present)
+        self.assertNotIn("knowledge/00-SPRINT-LEDGER.md", present)
+        self.assertNotIn("docs/DECISION-LOG.md", present)
+        self.assertTrue(closeout.RECORD_RE.search("00_decision_log.md"))     # `_` is not a letter, as it is to \b
+        self.assertIsNone(closeout.RECORD_RE.search("backlog"))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1083" width="1200" height="1083" role="img" aria-labelledby="fot fod">
+<title id="fot">Correctness and cost on the nine-task set: twenty-seven runs of ten configurations</title>
+<desc id="fod">A scatter chart of correctness against cost for 27 runs of 10 configurations on the nine-task set, one dot per run. Hollow dots run without a page, filled dots with one, squares are Opus 5.5 or Sonnet 5.5 on the Opus 5 page, its 15 September version. Opus 5 high: 92 at $25.17 without a page, 97 at $27.41 with one (+4.9, better). Opus 5 max: 91 at $36.99 without a page, 94 at $83.75 with one (+3.1, better, just past the 3-point rule, agents 0 → 18). Fable 5.1 low: 90 at $18.85 without a page, 98 at $20.17 with one (+8.2, better). Fable 5.1 medium: 93 at $21.25 without a page, 97 at $21.70 with one (+3.5, better, just past the 3-point rule). Sonnet 5 max: 90 at $32.75 without a page, 87 at $38.86 with one (−2.8, level within noise, agents 1 → 7). Opus 5.5 medium: 93 at $10.30 without a page, 96 at $11.54 with one (+3.2, better, just past the 3-point rule); on the Opus 5 page 95 at $11.03. Opus 5.5 high: 95 at $14.94 without a page, 98 at $13.98 with one (+3.0, level within noise); on the Opus 5 page 96 at $13.32. Opus 5.5 max: 92 at $47.28 without a page, 96 at $51.86 with one (+3.3, better, just past the 3-point rule); on the Opus 5 page 90 at $87.80, 17 agents. Sonnet 5.5 high: 92 at $5.19 without a page, 96 at $8.38 with one (+3.4, better, just past the 3-point rule); a first pass, 30 September and 5 October, without a page 93 at $5.88; on the Opus 5 page 93 at $6.87. Sonnet 5.5 max: 89 at $31.78 without a page, 97 at $37.96 with one (+8.0, better); a first pass, 30 September and 5 October, without a page 93 at $36.21; on the Opus 5 page 91 at $77.07, 9 agents. Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise. One fresh session per task. How the pairs ran: Sonnet 5.5 high and max (both passes) ran without and with a page side by side, task by task (Sonnet 5.5 high and max, first pass, over 30 September and 5 October); Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium and Opus 5.5 medium, high and max on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 4.2: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 88.7 (on 5 October), 4.2 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page and the Opus 5 page of 15 September on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October, after a first pass without a page and on the Opus 5 page on 30 September and 5 October. Opus 5.5 high, repeated on its page: 96.4 (97.6 here); medium, run again on the revised 22 September page: 95.3, 2 agents. The pages that ship since 7 October were measured only on the held-out set.</desc>
+<style>
+:root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+}
+:root[data-theme="dark"] { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif; fill: var(--ink); }
+.bg { fill: var(--bg); } .grid { stroke: var(--grid); stroke-width: 1; } .axis { stroke: var(--line); stroke-width: 1.5; }
+.halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.h{font-size:25px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:21px;font-weight:700;} .sub{font-size:17.5px;font-weight:400;fill:var(--muted);} .name{font-size:17.5px;font-weight:650;} .delta{font-size:16.5px;font-weight:400;fill:var(--muted);} .note{font-size:16.5px;font-weight:400;fill:var(--muted);} .tick{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:16.5px;font-weight:400;} .num{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:16.5px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:16.5px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:16.5px;font-weight:650;} .small{font-size:16.5px;font-weight:400;fill:var(--muted);} .th{font-size:17px;font-weight:650;} .thm{font-size:16.5px;font-weight:400;fill:var(--muted);} .td{font-size:17px;font-weight:400;} .tdn{font-size:17px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:17px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:17px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
+</style>
+<rect class="bg" x="0" y="0" width="1200" height="1083" rx="14"/>
+<text class="h" x="50.0" y="52.0">Correctness and cost on the nine-task set:</text>
+<text class="h" x="50.0" y="86.5">twenty-seven runs of ten configurations</text>
+<text class="sub" x="50.0" y="118.5">Up is better, left is cheaper. A line joins a configuration without a page (hollow) and with one (filled); a square is</text>
+<text class="sub" x="50.0" y="142.6">Opus 5.5 or Sonnet 5.5 on the Opus 5 page, its 15 September version; the hollow dot labelled first pass (93, $36.21)</text>
+<text class="sub" x="50.0" y="166.7">is Sonnet 5.5 max's first pass without a page. One dot per run.</text>
+<text class="sub" x="50.0" y="193.8">Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise.</text>
+<rect class="zoombox" x="161.3" y="295.0" width="294.6" height="412.5" rx="6" style="fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4"/>
+<line class="grid" x1="120" x2="1150" y1="913.8" y2="913.8"/>
+<text class="tick" x="106.0" y="918.3" text-anchor="end">84</text>
+<line class="grid" x1="120" x2="1150" y1="748.8" y2="748.8"/>
+<text class="tick" x="106.0" y="753.3" text-anchor="end">88</text>
+<line class="grid" x1="120" x2="1150" y1="583.8" y2="583.8"/>
+<text class="tick" x="106.0" y="588.3" text-anchor="end">92</text>
+<line class="grid" x1="120" x2="1150" y1="418.8" y2="418.8"/>
+<text class="tick" x="106.0" y="423.3" text-anchor="end">96</text>
+<line class="grid" x1="120" x2="1150" y1="253.8" y2="253.8"/>
+<text class="tick" x="106.0" y="258.3" text-anchor="end">100</text>
+<text class="tick" x="120.0" y="935.8" text-anchor="middle">$0</text>
+<text class="tick" x="232.0" y="935.8" text-anchor="middle">$10</text>
+<text class="tick" x="343.9" y="935.8" text-anchor="middle">$20</text>
+<text class="tick" x="455.9" y="935.8" text-anchor="middle">$30</text>
+<text class="tick" x="567.8" y="935.8" text-anchor="middle">$40</text>
+<text class="tick" x="679.8" y="935.8" text-anchor="middle">$50</text>
+<text class="tick" x="791.7" y="935.8" text-anchor="middle">$60</text>
+<text class="tick" x="903.7" y="935.8" text-anchor="middle">$70</text>
+<text class="tick" x="1015.7" y="935.8" text-anchor="middle">$80</text>
+<text class="tick" x="1127.6" y="935.8" text-anchor="middle">$90</text>
+<line class="axis" x1="120" x2="1150" y1="913.8" y2="913.8"/><line class="axis" x1="120" x2="120" y1="253.79999999999998" y2="913.8"/>
+<text class="axlabel" x="120.0" y="239.8">correctness, nine tasks</text>
+<text class="axlabel" x="1150.0" y="959.8" text-anchor="end">total cost of the nine tasks at the metered rate</text>
+<line class="casing" x1="401.8" y1="574.6" x2="426.9" y2="373.0" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="401.8,574.6,426.9,373.0" class="link cased" x1="401.8" y1="574.6" x2="426.9" y2="373.0" style="fill:none;stroke:var(--opus);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="534.1" y1="626.9" x2="1057.6" y2="499.8" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="534.1,626.9,1057.6,499.8" class="link cased" x1="534.1" y1="626.9" x2="1057.6" y2="499.8" style="fill:none;stroke:var(--opus);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="331.0" y1="666.2" x2="345.8" y2="327.1" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="331.0,666.2,345.8,327.1" class="link cased" x1="331.0" y1="666.2" x2="345.8" y2="327.1" style="fill:none;stroke:var(--fable);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="357.9" y1="536.5" x2="362.9" y2="391.3" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="357.9,536.5,362.9,391.3" class="link cased" x1="357.9" y1="536.5" x2="362.9" y2="391.3" style="fill:none;stroke:var(--fable);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="486.7" y1="679.1" x2="555.1" y2="794.5" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="486.7,679.1,555.1,794.5" class="link cased" x1="486.7" y1="679.1" x2="555.1" y2="794.5" style="fill:none;stroke:var(--sonnet);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="235.3" y1="541.9" x2="241.7" y2="482.0" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="235.3,541.9,249.2,410.9" class="link cased" x1="235.3" y1="541.9" x2="241.7" y2="482.0" style="fill:none;stroke:var(--o55);stroke-width:2.0;stroke-opacity:0.8"/><line class="casing" x1="244.0" y1="460.0" x2="249.2" y2="410.9" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="235.3,541.9,249.2,410.9" class="link cased" x1="244.0" y1="460.0" x2="249.2" y2="410.9" style="fill:none;stroke:var(--o55);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="287.3" y1="476.4" x2="276.5" y2="354.6" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="287.3,476.4,276.5,354.6" class="link cased" x1="287.3" y1="476.4" x2="276.5" y2="354.6" style="fill:none;stroke:var(--o55);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="649.3" y1="573.2" x2="700.6" y2="438.4" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="649.3,573.2,700.6,438.4" class="link cased" x1="649.3" y1="573.2" x2="700.6" y2="438.4" style="fill:none;stroke:var(--o55);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="178.1" y1="569.1" x2="185.4" y2="540.1" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="178.1,569.1,213.8,428.0" class="link cased" x1="178.1" y1="569.1" x2="185.4" y2="540.1" style="fill:none;stroke:var(--s55);stroke-width:2.0;stroke-opacity:0.8"/><line class="casing" x1="191.6" y1="516.0" x2="213.8" y2="428.0" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="178.1,569.1,213.8,428.0" class="link cased" x1="191.6" y1="516.0" x2="213.8" y2="428.0" style="fill:none;stroke:var(--s55);stroke-width:2.0;stroke-opacity:0.8"/>
+<line class="casing" x1="475.8" y1="718.4" x2="481.6" y2="690.8" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="475.8,718.4,545.0,387.2" class="link cased" x1="475.8" y1="718.4" x2="481.6" y2="690.8" style="fill:none;stroke:var(--s55);stroke-width:2.0;stroke-opacity:0.8"/><line class="casing" x1="486.7" y1="666.4" x2="510.5" y2="552.2" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="475.8,718.4,545.0,387.2" class="link cased" x1="486.7" y1="666.4" x2="510.5" y2="552.2" style="fill:none;stroke:var(--s55);stroke-width:2.0;stroke-opacity:0.8"/><line class="casing" x1="514.4" y1="533.8" x2="545.0" y2="387.2" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="475.8,718.4,545.0,387.2" class="link cased" x1="514.4" y1="533.8" x2="545.0" y2="387.2" style="fill:none;stroke:var(--s55);stroke-width:2.0;stroke-opacity:0.8"/>
+<circle class="casing" cx="401.8" cy="574.6" r="10.2" style="fill:var(--bg)"/><circle cx="401.8" cy="574.6" r="7.5" data-cfg="Opus 5 high" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
+<circle cx="426.9" cy="373.0" r="7.5" data-cfg="Opus 5 high" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="534.1" cy="626.9" r="10.2" style="fill:var(--bg)"/><circle cx="534.1" cy="626.9" r="7.5" data-cfg="Opus 5 max" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
+<circle cx="1057.6" cy="499.8" r="7.5" data-cfg="Opus 5 max" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="331.0" cy="666.2" r="10.2" style="fill:var(--bg)"/><circle cx="331.0" cy="666.2" r="7.5" data-cfg="Fable 5.1 low" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="345.8" cy="327.1" r="7.5" data-cfg="Fable 5.1 low" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="357.9" cy="536.5" r="10.2" style="fill:var(--bg)"/><circle cx="357.9" cy="536.5" r="7.5" data-cfg="Fable 5.1 medium" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="362.9" cy="391.3" r="7.5" data-cfg="Fable 5.1 medium" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="486.7" cy="679.1" r="10.2" style="fill:var(--bg)"/><circle cx="486.7" cy="679.1" r="7.5" data-cfg="Sonnet 5 max" style="fill:var(--bg);stroke:var(--sonnet);stroke-width:2.5"/>
+<circle cx="555.1" cy="794.5" r="7.5" data-cfg="Sonnet 5 max" style="fill:var(--sonnet);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="235.3" cy="541.9" r="10.2" style="fill:var(--bg)"/><circle cx="235.3" cy="541.9" r="7.5" data-cfg="Opus 5.5 medium" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="249.2" cy="410.9" r="7.5" data-cfg="Opus 5.5 medium" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<rect x="238.0" y="465.5" width="11.0" height="11.0" rx="2" data-cfg="Opus 5.5 medium" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="287.3" cy="476.4" r="10.2" style="fill:var(--bg)"/><circle cx="287.3" cy="476.4" r="7.5" data-cfg="Opus 5.5 high" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="276.5" cy="354.6" r="7.5" data-cfg="Opus 5.5 high" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<rect x="263.6" y="432.9" width="11.0" height="11.0" rx="2" data-cfg="Opus 5.5 high" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="649.3" cy="573.2" r="10.2" style="fill:var(--bg)"/><circle cx="649.3" cy="573.2" r="7.5" data-cfg="Opus 5.5 max" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="700.6" cy="438.4" r="7.5" data-cfg="Opus 5.5 max" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<rect x="1097.5" y="669.8" width="11.0" height="11.0" rx="2" data-cfg="Opus 5.5 max" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="178.1" cy="569.1" r="10.2" style="fill:var(--bg)"/><circle cx="178.1" cy="569.1" r="7.5" data-cfg="Sonnet 5.5 high" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<circle cx="213.8" cy="428.0" r="7.5" data-cfg="Sonnet 5.5 high" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="475.8" cy="718.4" r="10.2" style="fill:var(--bg)"/><circle cx="475.8" cy="718.4" r="7.5" data-cfg="Sonnet 5.5 max" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<circle cx="545.0" cy="387.2" r="7.5" data-cfg="Sonnet 5.5 max" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="185.8" cy="527.3" r="10.2" style="fill:var(--bg)"/><circle cx="185.8" cy="527.3" r="7.5" data-cfg="Sonnet 5.5 high" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<rect x="191.4" y="549.3" width="11.0" height="11.0" rx="2" data-cfg="Sonnet 5.5 high" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="525.4" cy="545.7" r="10.2" style="fill:var(--bg)"/><circle cx="525.4" cy="545.7" r="7.5" data-cfg="Sonnet 5.5 max" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<rect x="977.3" y="625.3" width="11.0" height="11.0" rx="2" data-cfg="Sonnet 5.5 max" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="name halo" x="714.6" y="425.4" style="fill:var(--o55)" data-of="649.3,573.2 700.6,438.4">Opus 5.5 max</text>
+<text class="delta halo" x="714.6" y="446.4">92 → 96 (+3.3)</text>
+<text class="delta halo" x="714.6" y="467.4">better, just past the 3-point rule</text>
+<text class="delta halo" x="714.6" y="488.4">$47.28 → $51.86</text>
+<text class="name halo" x="1130.0" y="528.3" text-anchor="end" style="fill:var(--opus)" data-of="534.1,626.9 1057.6,499.8">Opus 5 max</text>
+<text class="delta halo" x="1130.0" y="549.3" text-anchor="end">91 → 94 (+3.1)</text>
+<text class="delta halo" x="1130.0" y="570.3" text-anchor="end">better, just past the 3-point rule</text>
+<text class="delta halo" x="1130.0" y="591.3" text-anchor="end">$36.99 → $83.75, agents 0 → 18</text>
+<text class="name halo" x="863.0" y="706.3" style="fill:var(--o55)" data-of="1103.0,675.3">Opus 5.5 max, Opus 5 page</text>
+<text class="delta halo" x="863.0" y="727.3">90, $87.80, 17 agents</text>
+<text class="name halo" x="569.1" y="800.5" style="fill:var(--sonnet)" data-of="486.7,679.1 555.1,794.5">Sonnet 5 max</text>
+<text class="delta halo" x="569.1" y="821.5">90 → 87 (−2.8)</text>
+<text class="delta halo" x="569.1" y="842.5">level within noise</text>
+<text class="delta halo" x="569.1" y="863.5">$32.75 → $38.86, agents 1 → 7</text>
+<text class="name halo" x="559.0" y="330.2" style="fill:var(--s55)" data-of="475.8,718.4 545.0,387.2">Sonnet 5.5 max</text>
+<text class="delta halo" x="559.0" y="351.2">89 → 97 (+8.0)</text>
+<text class="delta halo" x="559.0" y="372.2">better</text>
+<text class="delta halo" x="559.0" y="393.2">$31.78 → $37.96</text>
+<text class="name halo" x="966.8" y="635.8" text-anchor="end" style="fill:var(--s55)" data-of="982.8,630.8">Sonnet 5.5 max, Opus 5 page</text>
+<text class="delta halo" x="966.8" y="656.8" text-anchor="end">first pass: 91, $77.07, 9 agents</text>
+<text class="name halo" x="539.4" y="527.7" style="fill:var(--s55)" data-of="525.4,545.7">first pass</text>
+<text class="delta halo" x="539.4" y="548.7">93, $36.21</text>
+<text class="note" x="165.3" y="729.5">labelled on the zoom chart</text>
+<line class="grid" x1="50" x2="1150" y1="989.8" y2="989.8"/>
+<circle class="casing" cx="62.5" cy="1016.4" r="9.2" style="fill:var(--bg)"/><circle cx="62.5" cy="1016.4" r="6.5" style="fill:var(--bg);stroke:var(--ink);stroke-width:2.5"/>
+<text class="legend" x="77.0" y="1021.8">without a page</text>
+<circle cx="232.9" cy="1016.4" r="6.5" style="fill:var(--ink);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="247.4" y="1021.8">with a page</text>
+<rect x="370.5" y="1009.9" width="13.0" height="13.0" rx="2" style="fill:var(--ink);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="391.5" y="1021.8">Opus 5.5 or Sonnet 5.5 on the Opus 5 page</text>
+<circle cx="792.1" cy="1016.4" r="6.5" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="806.6" y="1021.8">Opus 5</text>
+<circle cx="900.3" cy="1016.4" r="6.5" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="914.8" y="1021.8">Opus 5.5</text>
+<circle cx="62.5" cy="1047.2" r="6.5" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="77.0" y="1052.6">Fable 5.1</text>
+<circle cx="188.6" cy="1047.2" r="6.5" style="fill:var(--sonnet);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="203.1" y="1052.6">Sonnet 5</text>
+<circle cx="311.6" cy="1047.2" r="6.5" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="326.1" y="1052.6">Sonnet 5.5</text>
+<line class="casing" x1="443.8" y1="1047.2" x2="459.1" y2="1047.2" style="stroke:var(--bg);stroke-width:5.0"/><line data-glyph="1" data-line="443.8,1047.2,496.8,1047.2" class="link cased" x1="443.8" y1="1047.2" x2="459.1" y2="1047.2" style="fill:none;stroke:var(--muted);stroke-width:2.0;stroke-opacity:0.8"/><line class="casing" x1="481.6" y1="1047.2" x2="496.8" y2="1047.2" style="stroke:var(--bg);stroke-width:5.0"/><line data-glyph="1" data-line="443.8,1047.2,496.8,1047.2" class="link cased" x1="481.6" y1="1047.2" x2="496.8" y2="1047.2" style="fill:none;stroke:var(--muted);stroke-width:2.0;stroke-opacity:0.8"/>
+<circle cx="470.3" cy="1047.2" r="6.5" style="fill:var(--ink);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="504.8" y="1052.6">Lines break where they pass a dot they do not join.</text>
+</svg>

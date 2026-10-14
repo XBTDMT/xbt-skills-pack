@@ -2,11 +2,17 @@
 
 ## The record — `<decisions folder>/G-<n>-<slug>.md` (M and L)
 
-The decisions folder is the project's own: the doc map's `decisions:` path, else `<project root>/knowledge/decisions/`
+The decisions folder is the lane's own: the `decisions:` folder the doc map declares for the call's lane (under `## Doc
+map`, or `## Doc map: lane <name>`), else `<project root>/knowledge/decisions/`
 (`docs/decisions/` in a project without `knowledge/`), created there and declared as `decisions:` in the doc map
 when missing. Never the pack folder.
 
-`<n>` is the next free number. It is a linked document: its `roadmap:` line names the item the decision serves (or
+The id is `closeout.py facts` → `lanes.<lane>.next_decision_id` (`closeout.py` is in the closeout skill's folder,
+beside greenman's): `G-<n>` in the project, the lane's declared form
+(`decision ids: G-A<n>`) in a lane, one past the highest number recorded in that lane's folder and ledger on any of its
+branches. The ids the doc map lists under `decision ids outside sequence` (records kept from before the project's
+numbering) never set it, and a citation of one still resolves in its section's folder and ledger. An id is never
+reused or changed; an old record keeps its id. It is a linked document: its `roadmap:` line names the item the decision serves (or
 `none — why`), and doc-guardrails checks it. Greenman never edits the roadmap; the user owns it, and `/closeout` carries
 the id onto the item.
 
@@ -41,7 +47,10 @@ roadmap: none — the project's greenman ledger; each row names its own roadmap 
 Columns: date · id (`G-<n>` for M and L; `S` for a small call) · the choice · depth · status · chose · rejected, and
 which were shortcuts · `roadmap:` · revisit. Rows dated, rewritten in place. An S row is the whole record of that
 call; `/closeout` drops S rows it has passed. M and L rows stay: they index the `G-` files. `facts` reads the status
-column too, so an S row marked `shortcut taken — real fix owed` still surfaces at close-out.
+column too, so an S row marked `shortcut taken — real fix owed` still surfaces at close-out. `/closeout` reads the
+ledger by its header names (`id`, `status`, `the choice`, `roadmap`): keep the header row, keep every row inside the
+table (no blank or text line between rows), and a ledger without a `status` column is reported unreadable, never read
+by position.
 
 ## How it mirrors redman
 
@@ -59,6 +68,6 @@ more than one sensible fix exists or the obvious one is blocked.
 
 ## Seats
 
-On a two-seat setup the engineer seat drafts the options at L and the reviewer seat (Opus) or the user rules. In the
-author's own review runs the reviewer seat was the more reliable at catching every planted defect, so until the
-engineer seat holds on real reviews, a hard call is judged by Opus or the user.
+On a two-seat setup the engineer seat drafts the options at L and the reviewer seat (Opus) or the user rules; a hard call
+is judged by the reviewer seat or the user. Which seat is better at what, with the measurements, is in the doctrine's
+`SEATS.md`; this file restates none of them.

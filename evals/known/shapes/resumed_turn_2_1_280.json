@@ -1,0 +1,29 @@
+{
+ "placeholder": "<LOADER OUTPUT>",
+ "stream": [
+  {
+   "type": "system",
+   "subtype": "hook_started",
+   "hook_id": "00000000-0000-4000-8000-000000000004",
+   "hook_name": "SessionStart:resume",
+   "hook_event": "SessionStart",
+   "uuid": "00000000-0000-4000-8000-000000000005",
+   "session_id": "00000000-0000-4000-8000-000000000000"
+  },
+  {
+   "type": "system",
+   "subtype": "hook_response",
+   "hook_id": "00000000-0000-4000-8000-000000000004",
+   "hook_name": "SessionStart:resume",
+   "hook_event": "SessionStart",
+   "output": "<LOADER OUTPUT>",
+   "stdout": "<LOADER OUTPUT>",
+   "stderr": "",
+   "exit_code": 0,
+   "outcome": "success",
+   "uuid": "00000000-0000-4000-8000-000000000006",
+   "session_id": "00000000-0000-4000-8000-000000000000"
+  }
+ ],
+ "transcript_records": []
+}

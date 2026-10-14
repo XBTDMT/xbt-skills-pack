@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1108" width="470" height="867.9" role="img" aria-labelledby="vnt vnd">
+<title id="vnt">What the 14 September pages changed against the 13 September pages: four tasks, one session each</title>
+<desc id="vnd">Rows for the two seats on four tasks of the nine-task set, each placing its 13 September doctrine page (hollow dot) and its 14 September page (filled dot) on a correctness axis. Fable 5.1 low: the engineer seat on 14 September: 86.4 at $6.46 on the 13 September page, 96.4 at $6.51 on the 14 September page (+10.0). Opus 5 high: the reviewer seat on 14 September: 96.4 at $8.99 on the 13 September page, 97.5 at $8.72 on the 14 September page (+1.1). Hollow: the 13 September page of each seat (a byte copy of the page committed on 3 September); filled: the 14 September page. Fable 5.1 low moved +10.0, all of it on the Review task, whose repeat scored 100.0 on both pages; Opus 5 high moved +1.1, less than one check on the Migrate task is worth on a four-task mean (3.6 points). One session per task per page, run 14 September 2026. On four tasks one check moves the mean by several points (one check on the Migrate task by 3.6), so the nine-task set's 3-point rule does not apply here and a gap counts only once it repeats; the Review gap did not (corrected 22 September: the earlier claim rested on a scorer defect).</desc>
+<style>
+:root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+}
+:root[data-theme="dark"] { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif; fill: var(--ink); }
+.bg { fill: var(--bg); } .grid { stroke: var(--grid); stroke-width: 1; } .axis { stroke: var(--line); stroke-width: 1.5; }
+.halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.h{font-size:26px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:23.5px;font-weight:700;} .sub{font-size:21.4px;font-weight:400;fill:var(--muted);} .name{font-size:22.5px;font-weight:650;} .delta{font-size:21.4px;font-weight:400;fill:var(--muted);} .note{font-size:21.4px;font-weight:400;fill:var(--muted);} .tick{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:21.4px;font-weight:400;} .num{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:21.4px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:21.4px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:21.4px;font-weight:650;} .small{font-size:21.4px;font-weight:400;fill:var(--muted);} .th{font-size:22px;font-weight:650;} .thm{font-size:21.4px;font-weight:400;fill:var(--muted);} .td{font-size:21.4px;font-weight:400;} .tdn{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
+</style>
+<rect class="bg" x="0" y="0" width="600" height="1108" rx="14"/>
+<text class="h" x="30.0" y="46.0">What the 14 September pages</text>
+<text class="h" x="30.0" y="81.9">changed against the 13 September</text>
+<text class="h" x="30.0" y="117.8">pages: four tasks, one session each</text>
+<text class="axlabel" x="30.0" y="167.8">correctness, four tasks</text>
+<text class="tick" x="44.0" y="197.8" text-anchor="middle">80</text>
+<text class="tick" x="172.0" y="197.8" text-anchor="middle">85</text>
+<text class="tick" x="300.0" y="197.8" text-anchor="middle">90</text>
+<text class="tick" x="428.0" y="197.8" text-anchor="middle">95</text>
+<text class="tick" x="556.0" y="197.8" text-anchor="middle">100</text>
+<text class="name" x="30.0" y="237.8">Fable 5.1 low: the engineer seat</text>
+<text class="name" x="30.0" y="268.8">on 14 September</text>
+<text class="delta" x="30.0" y="300.8">86.4 → 96.4 (+10.0)</text>
+<text class="delta" x="30.0" y="330.3">$6.46 → $6.51</text>
+<text class="delta" x="30.0" y="359.8">all of the gain on the Review task;</text>
+<text class="delta" x="30.0" y="389.3">its repeat the same evening scored 100.0 on</text>
+<text class="delta" x="30.0" y="418.8">both pages</text>
+<text class="delta" x="30.0" y="448.3">(corrected 22 September)</text>
+<line class="grid track" x1="44.0" x2="556.0" y1="471.1" y2="471.1"/>
+<line class="grid" x1="44.0" x2="44.0" y1="466.1" y2="476.1"/>
+<line class="grid" x1="172.0" x2="172.0" y1="466.1" y2="476.1"/>
+<line class="grid" x1="300.0" x2="300.0" y1="466.1" y2="476.1"/>
+<line class="grid" x1="428.0" x2="428.0" y1="466.1" y2="476.1"/>
+<line class="grid" x1="556.0" x2="556.0" y1="466.1" y2="476.1"/>
+<line class="casing" x1="208.6" y1="471.1" x2="464.6" y2="471.1" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="208.6" y1="471.1" x2="464.6" y2="471.1" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="208.6" cy="471.1" r="13.8" style="fill:var(--bg)"/><circle cx="208.6" cy="471.1" r="11.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="464.6" cy="471.1" r="11.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="name" x="30.0" y="526.1">Opus 5 high: the reviewer seat</text>
+<text class="name" x="30.0" y="557.1">on 14 September</text>
+<text class="delta" x="30.0" y="589.1">96.4 → 97.5 (+1.1)</text>
+<text class="delta" x="30.0" y="618.6">$8.99 → $8.72</text>
+<line class="grid track" x1="44.0" x2="556.0" y1="641.4" y2="641.4"/>
+<line class="grid" x1="44.0" x2="44.0" y1="636.4" y2="646.4"/>
+<line class="grid" x1="172.0" x2="172.0" y1="636.4" y2="646.4"/>
+<line class="grid" x1="300.0" x2="300.0" y1="636.4" y2="646.4"/>
+<line class="grid" x1="428.0" x2="428.0" y1="636.4" y2="646.4"/>
+<line class="grid" x1="556.0" x2="556.0" y1="636.4" y2="646.4"/>
+<line class="casing" x1="464.6" y1="641.4" x2="492.0" y2="641.4" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="464.6" y1="641.4" x2="492.0" y2="641.4" style="fill:none;stroke:var(--opus);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="464.6" cy="641.4" r="13.8" style="fill:var(--bg)"/><circle cx="464.6" cy="641.4" r="11.0" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
+<circle cx="492.0" cy="641.4" r="11.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<text class="tick" x="44.0" y="682.3" text-anchor="middle">80</text>
+<text class="tick" x="172.0" y="682.3" text-anchor="middle">85</text>
+<text class="tick" x="300.0" y="682.3" text-anchor="middle">90</text>
+<text class="tick" x="428.0" y="682.3" text-anchor="middle">95</text>
+<text class="tick" x="556.0" y="682.3" text-anchor="middle">100</text>
+<circle class="casing" cx="45.0" cy="719.3" r="11.8" style="fill:var(--bg)"/><circle cx="45.0" cy="719.3" r="9.0" style="fill:var(--bg);stroke:var(--ink);stroke-width:2.5"/>
+<text class="legend" x="62.0" y="726.3">the 13 September page</text>
+<circle cx="45.0" cy="756.8" r="9.0" style="fill:var(--ink);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="62.0" y="763.8">the 14 September page</text>
+<circle cx="45.0" cy="794.3" r="9.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="62.0" y="801.3">Opus 5</text>
+<circle cx="172.3" cy="794.3" r="9.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="189.3" y="801.3">Fable 5.1</text>
+<text class="note" x="30.0" y="839.3">Hollow: the 13 September page of each seat;</text>
+<text class="note" x="30.0" y="868.8">filled: the 14 September page. One session per</text>
+<text class="note" x="30.0" y="898.3">task per page, 14 September 2026. Costs are</text>
+<text class="note" x="30.0" y="927.8">for the four tasks at the metered rate.</text>
+<text class="note" x="30.0" y="960.3">On four tasks one check moves the mean by</text>
+<text class="note" x="30.0" y="989.8">several points (one check on the Migrate task</text>
+<text class="note" x="30.0" y="1019.3">by 3.6), so the nine-task set's 3-point rule does</text>
+<text class="note" x="30.0" y="1048.8">not apply here and a gap counts only once it</text>
+<text class="note" x="30.0" y="1078.3">repeats; the Review gap did not.</text>
+</svg>

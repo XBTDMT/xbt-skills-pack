@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1593" width="470" height="1247.8" role="img" aria-labelledby="cnt cnd">
+<title id="cnt">Do the skills change outcomes? Absent, present, invoked, and redman typed</title>
+<desc id="cnd">A table of counts per cell: 42 sessions of Fable 5.1 low on four tasks of the nine-task set, three runs per column, in four columns: skills absent, skills present but not called, skills invoked by the prompt, and redman typed first (two tasks). Fable 5.1 low without a doctrine page, one fresh session per task, three runs per column; the typed column ran two of the four tasks. Forty-two sessions, 22 September 2026. Review: all five planted defects found: absent 3 of 3; present 2 of 3; invoked 2 of 3; typed —. Review: a red herring flagged as a defect: absent 1 of 3; present 1 of 3; invoked 1 of 3; typed —. Close-out: all nine outcome checks: absent 3 of 3; present 3 of 3; invoked 3 of 3; typed —. Close-out: handoff and overview written, pin re-derived: absent 0 of 3; present 0 of 3; invoked 3 of 3; typed —. Oracle migrate: trap found, fixed, verified: absent 3 of 3; present 3 of 3; invoked 3 of 3; typed 3 of 3. Oracle migrate: the source of the change named: absent 1 of 3; present 1 of 3; invoked 3 of 3; typed 3 of 3. Oracle migrate: a decision record left in the repo: absent 0 of 3; present 0 of 3; invoked 3 of 3; typed 3 of 3. Oracle migrate: a redman ledger row left in the repo: absent 0 of 3; present 0 of 3; invoked 0 of 3; typed 3 of 3. Wide audit: files found of 50: absent 37 · 32 · 38; present 36 · 34 · 39; invoked 39 · 41 · 35; typed 40 · 43 · 35. Wide audit: “do not edit anything” respected: absent 3 of 3; present 3 of 3; invoked 3 of 3; typed 2 of 3. Helper agents spawned: absent 0 in 12; present 0 in 12; invoked 0 in 12; typed 0 in 6. Cost, Oracle migrate + Wide audit: absent $14.58; present $20.76; invoked $21.85; typed $25.12. Shaded rows: the counts that differ between the columns (three counts per column, files found, only when every run of one column lies above every run of another; the cost, a sum, never). ▲ marks a share better than the column to its left, ▼ a worse one. Four tasks of the nine-task set (Review, Close-out, Oracle migrate, Wide audit), counts per cell. A share of runs (k of 3, or agents in sessions) differs when it is not the same in every column. Every named skill loaded when asked (receipt 6 of 6, close-out 3 of 3, decision skill 3 of 3, redman 6 of 6 when typed). Redman's file-every-finding rule met the Wide audit task's “do not edit anything”: two sessions held the findings and said why, one filed and failed. Costs: the absent, invoked and typed columns from each session's own transcript record; the present column from /cost readouts pasted the same day. The cost row is the two tasks the typed column ran.</desc>
+<style>
+:root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+}
+:root[data-theme="dark"] { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif; fill: var(--ink); }
+.bg { fill: var(--bg); } .grid { stroke: var(--grid); stroke-width: 1; } .axis { stroke: var(--line); stroke-width: 1.5; }
+.halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.h{font-size:26px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:23.5px;font-weight:700;} .sub{font-size:21.4px;font-weight:400;fill:var(--muted);} .name{font-size:22.5px;font-weight:650;} .delta{font-size:21.4px;font-weight:400;fill:var(--muted);} .note{font-size:21.4px;font-weight:400;fill:var(--muted);} .tick{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:21.4px;font-weight:400;} .num{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:21.4px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:21.4px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:21.4px;font-weight:650;} .small{font-size:21.4px;font-weight:400;fill:var(--muted);} .th{font-size:22px;font-weight:650;} .thm{font-size:21.4px;font-weight:400;fill:var(--muted);} .td{font-size:21.4px;font-weight:400;} .tdn{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
+</style>
+<rect class="bg" x="0" y="0" width="600" height="1593" rx="14"/>
+<text class="h" x="30.0" y="44.0">Do the skills change</text>
+<text class="h" x="30.0" y="79.9">outcomes? Absent, present,</text>
+<text class="h" x="30.0" y="115.8">invoked, and redman typed</text>
+<text class="th" x="97.0" y="167.8" text-anchor="middle">absent</text>
+<text class="th" x="232.0" y="167.8" text-anchor="middle">present</text>
+<text class="th" x="367.0" y="167.8" text-anchor="middle">invoked</text>
+<text class="th" x="502.0" y="167.8" text-anchor="middle">typed</text>
+<line class="axis" x1="30" x2="570" y1="181.8" y2="181.8"/>
+<rect class="hi" x="20" y="186.8" width="560" height="62.0" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="209.8">Review: all five planted defects found</text>
+<text class="tdn" x="97.0" y="237.8" text-anchor="middle">3 of 3</text>
+<text class="tdl" x="265.9" y="237.8" text-anchor="end" style="fill:var(--loss)">2 of 3</text>
+<path class="glyph" d="M271.9,223.3 L286.9,223.3 L279.4,236.8 Z" style="fill:var(--loss)"/>
+<text class="tdn" x="367.0" y="237.8" text-anchor="middle">2 of 3</text>
+<text class="tdn" x="502.0" y="237.8" text-anchor="middle">—</text>
+<line class="grid" x1="30" x2="570" y1="251.8" y2="251.8"/>
+<text class="td" x="30.0" y="279.8">Review: a red herring flagged as a defect</text>
+<text class="tdn" x="97.0" y="307.8" text-anchor="middle">1 of 3</text>
+<text class="tdn" x="232.0" y="307.8" text-anchor="middle">1 of 3</text>
+<text class="tdn" x="367.0" y="307.8" text-anchor="middle">1 of 3</text>
+<text class="tdn" x="502.0" y="307.8" text-anchor="middle">—</text>
+<line class="grid" x1="30" x2="570" y1="321.8" y2="321.8"/>
+<text class="td" x="30.0" y="349.8">Close-out: all nine outcome checks</text>
+<text class="tdn" x="97.0" y="377.8" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="232.0" y="377.8" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="367.0" y="377.8" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="502.0" y="377.8" text-anchor="middle">—</text>
+<line class="grid" x1="30" x2="570" y1="391.8" y2="391.8"/>
+<rect class="hi" x="20" y="396.8" width="560" height="91.5" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="419.8">Close-out: handoff and overview written,</text>
+<text class="td" x="30.0" y="449.3">pin re-derived</text>
+<text class="tdn" x="97.0" y="477.3" text-anchor="middle">0 of 3</text>
+<text class="tdn" x="232.0" y="477.3" text-anchor="middle">0 of 3</text>
+<text class="tdg" x="400.9" y="477.3" text-anchor="end" style="fill:var(--gain)">3 of 3</text>
+<path class="glyph" d="M406.9,476.3 L421.9,476.3 L414.4,462.8 Z" style="fill:var(--gain)"/>
+<text class="tdn" x="502.0" y="477.3" text-anchor="middle">—</text>
+<line class="grid" x1="30" x2="570" y1="491.3" y2="491.3"/>
+<text class="td" x="30.0" y="519.3">Oracle migrate: trap found, fixed, verified</text>
+<text class="tdn" x="97.0" y="547.3" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="232.0" y="547.3" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="367.0" y="547.3" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="502.0" y="547.3" text-anchor="middle">3 of 3</text>
+<line class="grid" x1="30" x2="570" y1="561.3" y2="561.3"/>
+<rect class="hi" x="20" y="566.3" width="560" height="91.5" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="589.3">Oracle migrate: the source of the</text>
+<text class="td" x="30.0" y="618.8">change named</text>
+<text class="tdn" x="97.0" y="646.8" text-anchor="middle">1 of 3</text>
+<text class="tdn" x="232.0" y="646.8" text-anchor="middle">1 of 3</text>
+<text class="tdg" x="400.9" y="646.8" text-anchor="end" style="fill:var(--gain)">3 of 3</text>
+<path class="glyph" d="M406.9,645.8 L421.9,645.8 L414.4,632.3 Z" style="fill:var(--gain)"/>
+<text class="tdn" x="502.0" y="646.8" text-anchor="middle">3 of 3</text>
+<line class="grid" x1="30" x2="570" y1="660.8" y2="660.8"/>
+<rect class="hi" x="20" y="665.8" width="560" height="91.5" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="688.8">Oracle migrate: a decision record left</text>
+<text class="td" x="30.0" y="718.3">in the repo</text>
+<text class="tdn" x="97.0" y="746.3" text-anchor="middle">0 of 3</text>
+<text class="tdn" x="232.0" y="746.3" text-anchor="middle">0 of 3</text>
+<text class="tdg" x="400.9" y="746.3" text-anchor="end" style="fill:var(--gain)">3 of 3</text>
+<path class="glyph" d="M406.9,745.3 L421.9,745.3 L414.4,731.8 Z" style="fill:var(--gain)"/>
+<text class="tdn" x="502.0" y="746.3" text-anchor="middle">3 of 3</text>
+<line class="grid" x1="30" x2="570" y1="760.3" y2="760.3"/>
+<rect class="hi" x="20" y="765.3" width="560" height="91.5" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="788.3">Oracle migrate: a redman ledger row left</text>
+<text class="td" x="30.0" y="817.8">in the repo</text>
+<text class="tdn" x="97.0" y="845.8" text-anchor="middle">0 of 3</text>
+<text class="tdn" x="232.0" y="845.8" text-anchor="middle">0 of 3</text>
+<text class="tdn" x="367.0" y="845.8" text-anchor="middle">0 of 3</text>
+<text class="tdg" x="535.9" y="845.8" text-anchor="end" style="fill:var(--gain)">3 of 3</text>
+<path class="glyph" d="M541.9,844.8 L556.9,844.8 L549.4,831.3 Z" style="fill:var(--gain)"/>
+<line class="grid" x1="30" x2="570" y1="859.8" y2="859.8"/>
+<text class="td" x="30.0" y="887.8">Wide audit: files found of 50</text>
+<text class="td" x="97.0" y="915.8" text-anchor="middle">37 · 32 · 38</text>
+<text class="td" x="232.0" y="915.8" text-anchor="middle">36 · 34 · 39</text>
+<text class="td" x="367.0" y="915.8" text-anchor="middle">39 · 41 · 35</text>
+<text class="td" x="502.0" y="915.8" text-anchor="middle">40 · 43 · 35</text>
+<line class="grid" x1="30" x2="570" y1="929.8" y2="929.8"/>
+<rect class="hi" x="20" y="934.8" width="560" height="62.0" rx="6" style="fill:var(--hi)"/>
+<text class="td" x="30.0" y="957.8">Wide audit: “do not edit anything” respected</text>
+<text class="tdn" x="97.0" y="985.8" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="232.0" y="985.8" text-anchor="middle">3 of 3</text>
+<text class="tdn" x="367.0" y="985.8" text-anchor="middle">3 of 3</text>
+<text class="tdl" x="535.9" y="985.8" text-anchor="end" style="fill:var(--loss)">2 of 3</text>
+<path class="glyph" d="M541.9,971.3 L556.9,971.3 L549.4,984.8 Z" style="fill:var(--loss)"/>
+<line class="grid" x1="30" x2="570" y1="999.8" y2="999.8"/>
+<text class="td" x="30.0" y="1027.8">Helper agents spawned</text>
+<text class="tdn" x="97.0" y="1055.8" text-anchor="middle">0 in 12</text>
+<text class="tdn" x="232.0" y="1055.8" text-anchor="middle">0 in 12</text>
+<text class="tdn" x="367.0" y="1055.8" text-anchor="middle">0 in 12</text>
+<text class="tdn" x="502.0" y="1055.8" text-anchor="middle">0 in 6</text>
+<line class="grid" x1="30" x2="570" y1="1069.8" y2="1069.8"/>
+<text class="td" x="30.0" y="1097.8">Cost, Oracle migrate + Wide audit</text>
+<text class="tdn" x="97.0" y="1125.8" text-anchor="middle">$14.58</text>
+<text class="tdn" x="232.0" y="1125.8" text-anchor="middle">$20.76</text>
+<text class="tdn" x="367.0" y="1125.8" text-anchor="middle">$21.85</text>
+<text class="tdn" x="502.0" y="1125.8" text-anchor="middle">$25.12</text>
+<line class="grid" x1="30" x2="570" y1="1139.8" y2="1139.8"/>
+<text class="note" x="30.0" y="1173.8">Fable 5.1 low without a doctrine page, one</text>
+<text class="note" x="30.0" y="1203.3">fresh session per task, three runs per column;</text>
+<text class="note" x="30.0" y="1232.8">the typed column ran two of the four tasks.</text>
+<text class="note" x="30.0" y="1262.3">Forty-two sessions, 22 September 2026.</text>
+<text class="note" x="30.0" y="1294.8">Columns: absent: removed from the session;</text>
+<text class="note" x="30.0" y="1324.3">present: in the session, not called; invoked:</text>
+<text class="note" x="30.0" y="1353.8">the prompt calls them; typed: /redman first,</text>
+<text class="note" x="30.0" y="1383.3">then the task.</text>
+<text class="note" x="30.0" y="1415.8">Shaded rows: the counts that differ between</text>
+<text class="note" x="30.0" y="1445.3">the columns (three counts per column, files</text>
+<text class="note" x="30.0" y="1474.8">found, only when every run of one column lies</text>
+<text class="note" x="30.0" y="1504.3">above every run of another; the cost, a sum,</text>
+<text class="note" x="30.0" y="1533.8">never). ▲ marks a share better than the</text>
+<text class="note" x="30.0" y="1563.3">column to its left, ▼ a worse one.</text>
+</svg>

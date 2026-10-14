@@ -1,15 +1,18 @@
 # xbt-skills-pack — Windows setup. From the pack's folder, in PowerShell:
 #
-#   powershell -ExecutionPolicy Bypass -File .\setup.ps1                              the skills and the doc check
-#   powershell -ExecutionPolicy Bypass -File .\setup.ps1 -WithDoctrine -WithPlugins   everything
+#   powershell -ExecutionPolicy Bypass -File .\setup.ps1                              what install-defaults.json says
+#   powershell -ExecutionPolicy Bypass -File .\setup.ps1 -WithDoctrine -WithPlugins   also the doctrine and the plugins
+#   powershell -ExecutionPolicy Bypass -File .\setup.ps1 -SkipPlugins                 everything the defaults say but the plugins
 #
-# It checks what is installed, then runs install.py, which copies the skills into %USERPROFILE%\.claude\skills
-# (or into $env:CLAUDE_CONFIG_DIR\skills when that is set).
-# -WithDoctrine also adds the doctrine hook to settings.json, a template %USERPROFILE%\.claude\CLAUDE.md if you
-# have none, and `cc` to your PowerShell profile (and lets PowerShell load that profile); -WithPlugins installs
-# the plugins. -DryRun changes nothing. Safe to run again.
+# What it does with no switches is written in install-defaults.json beside this script. install.py is the one reader
+# of that file: this script asks it for the options that apply (install.py --print-options) and stops if it cannot
+# read them. It checks what is installed, then runs install.py, which copies the skills into
+# %USERPROFILE%\.claude\skills (or into $env:CLAUDE_CONFIG_DIR\skills when that is set). With the doctrine on it also
+# adds the doctrine hook to settings.json, a template %USERPROFILE%\.claude\CLAUDE.md if you have none, and `cc` to
+# your PowerShell profile (and lets PowerShell load that profile); with the plugins on it installs the plugins.
+# -DryRun changes nothing. Safe to run again.
 
-param([switch]$WithDoctrine, [switch]$WithPlugins, [switch]$DryRun)
+param([switch]$WithDoctrine, [switch]$WithPlugins, [switch]$SkipPlugins, [switch]$DryRun)
 $ErrorActionPreference = 'Stop'
 $pack = Split-Path -Parent $MyInvocation.MyCommand.Path
 
@@ -40,6 +43,21 @@ if ($missing.Count -gt 0) {
 }
 Write-Host "Python: $python"
 
+# The switches, passed to install.py as they are; install.py applies them over install-defaults.json.
+$installPy = Join-Path $pack 'install.py'
+$flags = @()
+if ($WithDoctrine) { $flags += '--with-doctrine' }
+if ($WithPlugins) { $flags += '--with-plugins' }
+if ($SkipPlugins) { $flags += '--skip-plugins' }
+
+# One reader of the defaults: install.py prints the options that apply, or says what is wrong and exits non-zero.
+$printed = & $python $installPy --print-options @flags
+if ($LASTEXITCODE -ne 0) {
+    $printed | ForEach-Object { Write-Host $_ }
+    exit $LASTEXITCODE
+}
+$options = ($printed | Out-String) | ConvertFrom-Json
+
 # A profile only loads when scripts are allowed to run. RemoteSigned for the current user is the usual
 # developer setting: your own scripts run, downloaded ones must be signed. Nothing machine-wide changes.
 # This script itself runs under -ExecutionPolicy Bypass, so plain Get-ExecutionPolicy answers "Bypass": work out
@@ -49,7 +67,7 @@ foreach ($scope in @('MachinePolicy', 'UserPolicy', 'CurrentUser', 'LocalMachine
     $p = [string](Get-ExecutionPolicy -Scope $scope)
     if ($p -ne 'Undefined') { $effective = $p; $from = $scope; break }
 }
-if ($WithDoctrine -and @('Restricted', 'AllSigned') -contains $effective) {
+if ($options.doctrine -and @('Restricted', 'AllSigned') -contains $effective) {
     if (@('MachinePolicy', 'UserPolicy') -contains $from) {
         Write-Host "Group Policy sets scripts to '$effective', so your profile will not load and 'cc' will not exist." -ForegroundColor Yellow
         Write-Host "Claude Code itself still works: start it with 'claude'."
@@ -61,9 +79,8 @@ if ($WithDoctrine -and @('Restricted', 'AllSigned') -contains $effective) {
     }
 }
 
-$installArgs = @((Join-Path $pack 'install.py'))
-if ($WithDoctrine) { $installArgs += @('--with-doctrine', '--profile', $PROFILE.CurrentUserAllHosts) }
-if ($WithPlugins) { $installArgs += '--with-plugins' }
+$installArgs = @($installPy) + $flags
+if ($options.doctrine) { $installArgs += @('--profile', $PROFILE.CurrentUserAllHosts) }
 if ($DryRun) { $installArgs += '--dry-run' }
 & $python @installArgs
 exit $LASTEXITCODE

@@ -1,0 +1,4 @@
+{
+ "redman_no_edit-fable-2_1_280": "20260922-224650/redman_no_edit-fable: each turn's init (claude_code_version) and result (total_cost_usd); turn 3's assistant records trimmed to message.id, model and usage",
+ "pushback_ruling-fable-2_1_272": "20260914-213447/pushback_ruling-fable: each turn's init (claude_code_version) and result (total_cost_usd)"
+}

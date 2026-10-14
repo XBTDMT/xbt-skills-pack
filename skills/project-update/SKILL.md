@@ -10,7 +10,8 @@ all the docs, the master docs, the overview artifact, and memory — up to date,
 project actually is today.* Corrected in place, not appended to: *make sure all documentation is
 up to date — not just added to.*
 
-**Read `~/.claude/skills/closeout/UPDATING.md` first.** It holds the steps this skill shares with `/closeout`, and
+**Read `UPDATING.md` in the closeout skill's folder first** (the `closeout` folder beside this skill's base
+directory). It holds the steps this skill shares with `/closeout`, and
 "§ X" below names a section of it. What is different here:
 
 | | `/closeout` | `/project-update` |
@@ -18,12 +19,12 @@ up to date — not just added to.*
 | Tracking docs | the closed unit flips to done | nothing is newly marked done; a status that contradicts a record the project already keeps is fixed as a mirror (step 7); counts re-derived; nothing allocated, reworded or reordered |
 | Scope | what the closed unit changed | every live doc and every figure in it, worked from a written worklist |
 | Memory | the entries that touch this work | every entry about this project, in every memory folder |
-| Pin | new state; `last_marker` moves to this commit | the same — new state, marker to this pass's commit — unless the pin freezes it |
+| Pin | the closed unit's lane's pin: new state; `last_marker` moves to this commit | the pin of each lane whose facts moved, in that lane's checkout — new state, marker to this pass's commit — unless the pin freezes it |
 | Handoff | a new one | none (step 9) |
 | Questions | one, when it is unclear what closed | none — they go in the pin's open questions |
 | Redman ledgers | open rows carried into tracking and dropped | read and reported; a big unruled row in the pin's open questions; no ledger rewritten, no item allocated |
 | Greenman records | ids onto the closed item; `real fix owed` onto *Not decided*; passed S rows dropped | read and reported; `awaiting the user` in the pin's open questions |
-| Commit gate, untracked records | installed where missing; committed | the same (§ The skills' records) |
+| Commit gate, untracked records | registered where missing, its state reported; committed | the same (§ The skills' records) |
 
 ## Steps, in order
 
@@ -31,7 +32,8 @@ up to date — not just added to.*
 2. **Memory** — § Memory, for every entry `memory` lists: each claim checked against disk and fixed in place or
    deleted, the index repaired, one way in. Project state that lives only in memory goes into the project's docs
    (step 7); an entry that has to point at a doc this pass creates is finished after step 8.
-3. **Take stock** — § Take stock, including the skills' records. Read every commit since the pin's `last_marker`
+3. **Take stock** — § Take stock, including the skills' records and the doc map's problems (`facts` → `doc_map`),
+   reported first. Read every commit since the pin's `last_marker`
    (`facts` → `since_marker`): that is where the docs drifted.
 4. **Name this pass in one line**: "refresh as of <date> · <HEAD>". Nothing closes in a refresh. A unit that looks
    done but is not recorded as done stays open, and goes in Open questions as "looks done — `/closeout` records it".
@@ -41,7 +43,9 @@ up to date — not just added to.*
    figure has a side effect the project's own docs call a hazard (a second bundle, a registered copy), run it and
    name the side effect in the report. Anything outside the repo: read-only, or "not re-checked — last seen
    <date>" (§ What kind of doc is it).
-6. **Build the worklist**: `$H worklist --docs <every live doc> > <scratchpad>/worklist.md`. Live docs:
+6. **Build the worklist**: where the doc map declares `figures:`, `$H figures . --write` runs first (UPDATING.md
+   § Figures), so the spans and tables it fills are current and the worklist is for everything else; then
+   `$H worklist --docs <every live doc> > <scratchpad>/worklist.md`. Live docs:
    the pin, the overview, `README.md`, `CLAUDE.md`, the tracking docs, the descriptive docs, an undated handoff,
    and any other doc whose facts can go stale. Leave out, and name in the report: append-only logs; redman's ledgers and greenman's
    decision records (the project's own; read at Take stock and reported, not rewritten here) and the pack's side
@@ -62,7 +66,7 @@ up to date — not just added to.*
    is not marked done (step 4). Replace a false figure where it stands; a claim that was overturned rather than
    merely stale is struck and left visible with a pointer, in the project's own convention. Never add a section
    that states the new truth while the old figure still stands elsewhere.
-8. **Pin** — § Pin. Rewrite State, Re-derive on arrival, In flight and Open questions; the Next action changes
+8. **Pin** — § Pin, for each lane whose facts moved (`facts` → `pins`). Rewrite State, Re-derive on arrival, In flight and Open questions; the Next action changes
    only if the facts moved it. `## Just closed` stays as the last close-out wrote it, false facts in it fixed. A
    pin you create takes the whole § Pin shape; its `## Just closed` names the last unit the docs record as closed,
    with that record, or says nothing is recorded as closed yet.
@@ -76,9 +80,10 @@ up to date — not just added to.*
 12. **Commit** — § Commit, with `git commit -m "refresh: docs, overview and pin true as of <date>"`; then
     `$H stamp <pin>` (a pin that freezes its marker makes it refuse: then `--keep-marker`).
 13. **Report** in plain words, leading with "refreshed as of <date> · <HEAD>", how many figures were wrong and how
-    many other false claims you corrected, by doc; then each doc changed and what was false in it; the docs left
+    many other false claims you corrected, by doc; the doc map's problems, if any; then each doc changed and what was false in it; the docs left
     off the worklist and why; the memory entries fixed, deleted or re-pointed, and the backup's path; the two
-    commits; the audit (0 fail; each warn and why it stays); the commit gate (installed, already there, or no git);
+    commits; the audit (0 fail; N pre-existing broken, reported; each warn, whose it is and why it stays); the commit
+    gate (its `install-gate` state line; ran on the last commit: yes, no or no commit);
     untracked records committed; open redman rows and greenman records awaiting the user; open rows in the pack's side
     ledger; any operation that was refused; what is in flight that is not yours; the user's open questions, "looks done"
     units first.

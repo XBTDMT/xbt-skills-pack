@@ -1,0 +1,2 @@
+{"_about": "What install.py and setup.ps1 do with no switches: the skills, the end-of-turn doc check and eli5's two skill checks. --with-doctrine and --with-plugins add the rest.",
+ "doctrine": false, "plugins": false, "doc_check": true, "skill_checks": true}

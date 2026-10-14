@@ -1,5 +1,6 @@
 """Tests for doc-guardrails/hook.sh, the optional PostToolUse layer: it reports an unlinked document the moment it is
 written, and stays silent about everything else. zsh only, so the whole file skips where there is none."""
+import git_quiet  # noqa: F401  (first: git's background upkeep off for every fixture; tests/git_quiet.py)
 import json
 import os
 import shutil

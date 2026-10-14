@@ -1,0 +1,4 @@
+{
+ "exit": 1,
+ "stdout": "{\n  \"loggedIn\": false,\n  \"authMethod\": \"none\",\n  \"apiProvider\": \"firstParty\",\n  \"analyticsDisabled\": false,\n  \"projectsDirectory\": \"<config>/projects\",\n  \"configDirectory\": \"<config>\"\n}\n"
+}

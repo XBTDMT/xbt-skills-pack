@@ -1,0 +1,58 @@
+{
+ "id": "gate_block-fable-gate-rule-5-20260915-135640",
+ "source": "gate-rule-5/20260915-135640/gate_block-fable",
+ "scenario": "gate_block",
+ "seat": "fable",
+ "turns": [
+  {
+   "prompt": null,
+   "skills": [],
+   "typed": [],
+   "bash": [
+    {
+     "cmd": "git -C <case>/project commit -m \"Add CLI spec\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\"",
+     "out": "This command requires approval",
+     "id": "toolu_01PMMe4Aosoo57kLHaj5HSWp"
+    }
+   ],
+   "writes": [],
+   "final": "The commit was not made. The command needed approval and was denied, so I stopped there rather than retrying it in another form.\n\nBefore you approve it, one thing to know. The staged spec at knowledge/02-spec-cli.md has no roadmap tag, and this project's doc map says knowledge specs must name their roadmap item, with guardrails set to block. The roadmap's matching item is R-3, the command-line entry point. As staged, the commit gate will most likely reject it. I would add a line to the spec naming R-3, re-stage it, and then commit with your message. If you would rather commit the file exactly as staged, say so and I will run the commit again on your approval.",
+   "hooks": [],
+   "cost": 0.43070925,
+   "api_error": null
+  }
+ ],
+ "snapshots": [
+  {
+   "CLAUDE.md": "5f52893be0cbe4b45b6234466927c8b31d6164f1",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "knowledge/02-spec-cli.md": "042eae728051761532966b725fbb3d24cdc726ff",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  },
+  {
+   "CLAUDE.md": "5f52893be0cbe4b45b6234466927c8b31d6164f1",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "knowledge/02-spec-cli.md": "042eae728051761532966b725fbb3d24cdc726ff",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  }
+ ],
+ "files": {},
+ "baseline_tests": null,
+ "fails": [
+  "bash_output"
+ ]
+}

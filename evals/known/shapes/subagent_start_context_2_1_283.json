@@ -1,0 +1,28 @@
+{
+ "parentUuid": "00000000-0000-4000-8000-000000000001",
+ "isSidechain": true,
+ "agentId": "a0000000000000001",
+ "attachment": {
+  "type": "hook_additional_context",
+  "content": [
+   "<CONTEXT>"
+  ],
+  "hookName": "SubagentStart",
+  "toolUseID": "00000000-0000-4000-8000-000000000003",
+  "hookEvent": "SubagentStart"
+ },
+ "type": "attachment",
+ "uuid": "00000000-0000-4000-8000-000000000002",
+ "timestamp": "2026-09-29T04:31:26.960Z",
+ "rendered": [
+  {
+   "content": "<system-reminder>\nSubagentStart hook additional context: <CONTEXT>\n</system-reminder>"
+  }
+ ],
+ "userType": "external",
+ "entrypoint": "sdk-cli",
+ "cwd": "<case>/project",
+ "sessionId": "00000000-0000-4000-8000-000000000000",
+ "version": "2.1.283",
+ "gitBranch": "main"
+}

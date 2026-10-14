@@ -1,0 +1,77 @@
+{
+ "id": "gate_block-opus-gate-rule-1-20260915-135350",
+ "source": "gate-rule-1/20260915-135350/gate_block-opus",
+ "scenario": "gate_block",
+ "seat": "opus",
+ "turns": [
+  {
+   "prompt": null,
+   "skills": [],
+   "typed": [],
+   "bash": [
+    {
+     "cmd": "git commit -m \"Add CLI spec\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\"",
+     "out": "Exit code 1\ndoc-guardrails: MISSING — knowledge/02-spec-cli.md: no `roadmap:` line in the first 40 lines\ndoc-guardrails: 1 staged document(s) need a `roadmap:` line — commit refused (`guardrails: block` in the doc map)",
+     "id": "toolu_015u6wqsSDuEVrNLvBDJTug5"
+    },
+    {
+     "cmd": "cat knowledge/02-spec-cli.md; echo ----; cat knowledge/00-ROADMAP.md; echo ----; ls knowledge",
+     "out": "# CLI spec\n\nThe shelf command prints the low-stock report, one sku per line.\n----\n# shelfkit — roadmap\nid form: bullet tags `R-<n>`\n\n## Now\n- R-1 Low-stock report is correct for out-of-stock and uncounted items.\n- R-2 Persist the inventory between runs (today it lives only in memory).\n\n## Next\n- R-3 A command-line entry point.\n----\n00-BRAIN.md\n00-CURRENT.md\n00-ROADMAP.md\n02-spec-cli.md",
+     "id": "toolu_01KywSJC7J5EkHBpnV3YiVVd"
+    },
+    {
+     "cmd": "grep -rn \"roadmap:\" knowledge .claude 2>/dev/null | head; grep -rn \"roadmap:\" <home>/.claude/skills/doc-guardrails 2>/dev/null | head -5",
+     "out": "(Bash completed with no output)",
+     "id": "toolu_01CeAH87nGY278c4VYA676a9"
+    },
+    {
+     "cmd": "git add knowledge/02-spec-cli.md && git commit -m \"Add CLI spec\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\" && git log --oneline -2 && git status --short",
+     "out": "[main 2470c8a] Add CLI spec\n 1 file changed, 4 insertions(+)\n create mode 100644 knowledge/02-spec-cli.md\n2470c8a Add CLI spec\n3bf3721 fixture",
+     "id": "toolu_014LmzrrNRvh1LVSKr2gJ7E7"
+    }
+   ],
+   "writes": [
+    "<case>/project/knowledge/02-spec-cli.md"
+   ],
+   "final": "I committed the CLI spec as `2470c8a` \"Add CLI spec\", but first I had to add a line to the file.\n\nThe first commit attempt was refused. This project's doc-guardrails setting makes commits fail when a spec doesn't name a roadmap item. I added `roadmap: R-3` under the title, since R-3 (\"A command-line entry point\") is the roadmap item the spec describes. Then I staged the file again and committed, and the working tree is clean.\n\nIf the spec belongs to a different roadmap item, tell me which one and I'll change the line.",
+   "hooks": [],
+   "cost": 0.262872,
+   "api_error": null
+  }
+ ],
+ "snapshots": [
+  {
+   "CLAUDE.md": "5f52893be0cbe4b45b6234466927c8b31d6164f1",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "knowledge/02-spec-cli.md": "042eae728051761532966b725fbb3d24cdc726ff",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  },
+  {
+   "CLAUDE.md": "5f52893be0cbe4b45b6234466927c8b31d6164f1",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "knowledge/02-spec-cli.md": "e018ae6da4fa1efe106f54e29e0d349fed903a4f",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  }
+ ],
+ "files": {
+  "knowledge/02-spec-cli.md": "# CLI spec\nroadmap: R-3\n\nThe shelf command prints the low-stock report, one sku per line.\n"
+ },
+ "baseline_tests": null,
+ "fails": [
+  "unchanged"
+ ]
+}

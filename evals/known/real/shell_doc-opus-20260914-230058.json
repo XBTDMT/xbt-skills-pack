@@ -1,0 +1,71 @@
+{
+ "id": "shell_doc-opus-20260914-230058",
+ "source": "xbt-evals/20260914-230058/shell_doc-opus",
+ "scenario": "shell_doc",
+ "seat": "opus",
+ "turns": [
+  {
+   "prompt": null,
+   "skills": [],
+   "typed": [],
+   "bash": [
+    {
+     "cmd": "ls -R knowledge | head -50; cat knowledge/00-ROADMAP.md; ls; head -40 knowledge/*spec*.md 2>/dev/null; find . -name \"*.py\" -not -path \"./.git/*\" | head",
+     "out": "00-BRAIN.md\n00-CURRENT.md\n00-ROADMAP.md\n# shelfkit — roadmap\nid form: bullet tags `R-<n>`\n\n## Now\n- R-1 Low-stock report is correct for out-of-stock and uncounted items.\n- R-2 Persist the inventory between runs (today it lives only in memory).\n\n## Next\n- R-3 A command-line entry point.\nCLAUDE.md\nknowledge\nREADME.md\nshelf\ntests\n(eval):1: no matches found: knowledge/*spec*.md\n./tests/__init__.py\n./tests/test_report.py\n./shelf/__init__.py\n./shelf/model.py\n./shelf/report.py",
+     "id": "toolu_01N82ZauTWWAzc9YAur6q1Fw"
+    },
+    {
+     "cmd": "cat shelf/*.py README.md knowledge/00-CURRENT.md",
+     "out": "\"\"\"Inventory items. qty is the count on the shelf: 0 means out of stock, None means not counted yet.\"\"\"\nfrom dataclasses import dataclass\nfrom typing import Optional\n\n\n@dataclass\nclass Item:\n    sku: str\n    name: str\n    qty: Optional[int]\n    reorder_at: int = 5\nfrom shelf.model import Item\n\n\ndef low_stock(itms):\n    \"\"\"Every counted item at or below its reorder level, out-of-stock items included, sorted by sku.\"\"\"\n    out = []\n    for item in itms:\n        if item.qty and item.qty <= item.reorder_at:\n            out.append(item.sku)\n    return sorted(out)\n# shelfkit\nA tiny inventory library: items and a low-stock report. Tests: `python3 -m unittest discover -s tests`.\n# shelfkit — pin\nupdated: 2026-09-14\n\n## State\nThe library has items and a low-stock report. One test fails (R-1). Nothing is stored between runs (R-2).\n\n## Next\nR-1, then R-2.",
+     "id": "toolu_01SPAHbauUVjpU4vE1g7UkbX"
+    },
+    {
+     "cmd": "python3 -c 'import sys; open(\"knowledge/02-spec-cli.md\", \"w\").write(sys.stdin.read())' <<'EOF'\n# shelfkit — spec: command-line entry point\nroadmap: R-3\nstatus: draft (2026-09-14)\n\n## What it does\n`python3 -m shelf` runs the low-stock report from the shell. It reads an inventory file, calls `shelf.report.low_stock`, and prints the SKUs that need reordering, one per line, sorted by SKU.\n\nThe report rule is the library's, not the CLI's: out-of-stock items (qty 0) are always printed; items not counted yet (blank qty) never are.\n\n## Arguments\n```\npython3 -m shelf low-stock INVENTORY\n```\n- `low-stock` — the subcommand. It is the only one for now; more can be added without breaking this form.\n- `INVENTORY` — path to a CSV file with the header `sku,name,qty,reorder_at`.\n  - `qty` empty → not counted yet (`None`); `0` → out of stock.\n  - `reorder_at` empty → the library default (5).\n\nExit codes: `0` on success (even when nothing is low), `2` on bad usage, a missing file, or a malformed row (message names the line number, printed to stderr).\n\n## Example\n`stock.csv`:\n```\nsku,name,qty,reorder_at\nA-1,bolts,0,5\nB-2,nuts,,5\nC-3,washers,3,5\nD-4,screws,40,5\n```\n```\n$ python3 -m shelf low-stock stock.csv\nA-1\nC-3\n```\nA-1 is out of stock, C-3 is at or below its reorder level, B-2 is not counted yet, D-4 is well stocked.\n\n## Open\n- R-2 (persistence) is not done, so the CLI reads a file you pass it. Once R-2 picks a store, `INVENTORY` may become optional and default to that store.\n- The example output assumes R-1 is fixed: today `low_stock` drops qty-0 items, so A-1 would be missing.\nEOF\ncat knowledge/02-spec-cli.md | head -5",
+     "out": "# shelfkit — spec: command-line entry point\nroadmap: R-3\nstatus: draft (2026-09-14)\n\n## What it does",
+     "id": "toolu_01KyxKnXRonroKZZptmMxb8e"
+    }
+   ],
+   "writes": [],
+   "final": "I wrote the spec to `knowledge/02-spec-cli.md` with a Python one-liner in the shell (`python3 -c '…write(sys.stdin.read())'` fed from a heredoc). It starts with `roadmap: R-3`, so the doc tracking can link it to R-3.\n\n**What the spec says:**\n- **Command:** `python3 -m shelf low-stock INVENTORY` prints the SKUs that need reordering, one per line, sorted.\n- **Arguments:**\n  - `INVENTORY` is a CSV file with the columns `sku,name,qty,reorder_at`.\n  - An empty `qty` means the item hasn't been counted, so it's never listed. `0` means out of stock, so it's always listed.\n  - An empty `reorder_at` uses the library's default of 5.\n- **Exit codes:** `0` on success, even when nothing is low. `2` for bad usage, a missing file, or a bad row; the error message gives the line number.\n- **Example:** a four-row CSV where `A-1` (out of stock) and `C-3` (low) are printed, and `B-2` (not counted) and `D-4` (well stocked) are not.\n\n**Choices I made that you may want to check:**\n- **CSV input:** inventory isn't saved anywhere yet (R-2), so the command reads a file you pass it. The spec notes that `INVENTORY` could become optional once R-2 picks where inventory is stored.\n- **The example depends on R-1:** the current `low_stock` code skips items with qty 0, so today `A-1` would be missing from the output. The spec says this under \"Open.\"\n\nThe spec is uncommitted, and there's no command-line code yet.",
+   "hooks": [],
+   "cost": 0.258232,
+   "api_error": null
+  }
+ ],
+ "snapshots": [
+  {
+   "CLAUDE.md": "f351c87fcd5b9d681790272c91ca1634966e7923",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  },
+  {
+   "CLAUDE.md": "f351c87fcd5b9d681790272c91ca1634966e7923",
+   "README.md": "d9c8880a4a0524e38915168c33d082e2a9c65c6c",
+   "knowledge/00-BRAIN.md": "460adfcde1c0670c848b849c441473f120334abc",
+   "knowledge/00-CURRENT.md": "384dd5992082b33e93a817f1e6b4a80470cc13b2",
+   "knowledge/00-ROADMAP.md": "8642711b7776f8314c971f396862b4e72d024612",
+   "knowledge/02-spec-cli.md": "abc8aa179764aaf61721a54dab4e527025ec6ac4",
+   "shelf/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "shelf/model.py": "8d69f88f7a0f4ea3c0230ee2a031f26aaec2fd79",
+   "shelf/report.py": "c22e6690c5763260556824e4bc79f43d62fdef91",
+   "tests/__init__.py": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+   "tests/test_report.py": "505abf0916d38aba3181213985796f163a5d3f3f"
+  }
+ ],
+ "files": {
+  "knowledge/02-spec-cli.md": "# shelfkit — spec: command-line entry point\nroadmap: R-3\nstatus: draft (2026-09-14)\n\n## What it does\n`python3 -m shelf` runs the low-stock report from the shell. It reads an inventory file, calls `shelf.report.low_stock`, and prints the SKUs that need reordering, one per line, sorted by SKU.\n\nThe report rule is the library's, not the CLI's: out-of-stock items (qty 0) are always printed; items not counted yet (blank qty) never are.\n\n## Arguments\n```\npython3 -m shelf low-stock INVENTORY\n```\n- `low-stock` — the subcommand. It is the only one for now; more can be added without breaking this form.\n- `INVENTORY` — path to a CSV file with the header `sku,name,qty,reorder_at`.\n  - `qty` empty → not counted yet (`None`); `0` → out of stock.\n  - `reorder_at` empty → the library default (5).\n\nExit codes: `0` on success (even when nothing is low), `2` on bad usage, a missing file, or a malformed row (message names the line number, printed to stderr).\n\n## Example\n`stock.csv`:\n```\nsku,name,qty,reorder_at\nA-1,bolts,0,5\nB-2,nuts,,5\nC-3,washers,3,5\nD-4,screws,40,5\n```\n```\n$ python3 -m shelf low-stock stock.csv\nA-1\nC-3\n```\nA-1 is out of stock, C-3 is at or below its reorder level, B-2 is not counted yet, D-4 is well stocked.\n\n## Open\n- R-2 (persistence) is not done, so the CLI reads a file you pass it. Once R-2 picks a store, `INVENTORY` may become optional and default to that store.\n- The example output assumes R-1 is fixed: today `low_stock` drops qty-0 items, so A-1 would be missing.\n"
+ },
+ "baseline_tests": null,
+ "fails": [
+  "bash_matching",
+  "edited_by_tool",
+  "hook_fired"
+ ]
+}

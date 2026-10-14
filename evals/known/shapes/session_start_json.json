@@ -1,0 +1,14 @@
+{
+ "type": "system",
+ "subtype": "hook_response",
+ "hook_id": "00000000-0000-4000-8000-000000000007",
+ "hook_name": "SessionStart:startup",
+ "hook_event": "SessionStart",
+ "output": "{\n  \"hookSpecificOutput\": {\n    \"hookEventName\": \"SessionStart\",\n    \"additionalContext\": \"<ADDITIONAL CONTEXT>\"\n  }\n}\n",
+ "stdout": "{\n  \"hookSpecificOutput\": {\n    \"hookEventName\": \"SessionStart\",\n    \"additionalContext\": \"<ADDITIONAL CONTEXT>\"\n  }\n}\n",
+ "stderr": "",
+ "exit_code": 0,
+ "outcome": "success",
+ "uuid": "00000000-0000-4000-8000-000000000008",
+ "session_id": "00000000-0000-4000-8000-000000000000"
+}

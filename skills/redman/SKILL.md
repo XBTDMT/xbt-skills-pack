@@ -7,7 +7,7 @@ disable-model-invocation: true
 # /redman — size what comes up, make a failed step answer to its goal, ask the user now-or-later
 
 **`/redman`** turns the mode on for the session. **`/redman <path>`** interrogates one document: **read
-`~/.claude/skills/redman/DEEP-RUN.md` and follow it.** Redman **finds, sizes and asks**; it does not fix without the user's
+`DEEP-RUN.md` in this skill's base directory and follow it.** Redman **finds, sizes and asks**; it does not fix without the user's
 go. Meant for large, complex projects; not worth its overhead on a small one.
 
 ## While the mode is on
@@ -29,11 +29,13 @@ figure, a gap, a gate that cannot look). Diagnose it enough to size it:
   **When the task's own instruction forbids edits** (a review or an audit that says "do not edit anything"), the
   instruction wins over this rule: no row is written, the finding goes in the report, and the receipt reads
   `held N — no edits allowed`. Filing a row into a repo the user said not to touch is an edit.
-- **Big** (blocks the main task, touches production, data, doctrine or a high-blast-radius file, or overturns the
-  premise): **file the row first, then ask the user one line**: *found X while doing Y, big because Z, now or later?*
+- **Big** (blocks the main task, touches production, data (code that can lose or corrupt stored data counts, however
+  small the function), doctrine or a high-blast-radius file, or overturns the premise): **file the row first, then
+  ask the user one line**: *found X while doing Y, big because Z, now or later?*
   The receipt's `Redman:` line names the ledger the row went to, so a big finding is never only a question in chat:
   every finding, big or small, is a row. **Default is
-  later**; a finding the user already ruled later is not re-asked.
+  later**; a finding the user already ruled later is not re-asked. Under a task that forbids edits, a big finding is not
+  filed either: it goes in the report with its now-or-later question and counts in `held N`.
 
 **3. The budget.** Sizing a side finding gets **one pass**: at most three reads or read-only commands, three reading
 agents, no edits. If it cannot be sized inside that, that is the answer: *"bigger than a side finding; here is what I
@@ -47,16 +49,21 @@ and in the same turn add a row to the project's greenman ledger (`greenman/SKILL
 `greenman/REFERENCE.md`; the `G-` file too at M or L): `ruled by the user <date>: <the user's words>`, with why the advice
 differed. With greenman also on, it is one pushback per suggestion between the two skills. Say where you recorded it, and never raise it again without new evidence.
 
-**5. How it surfaces.** The eli5 receipt carries `Redman:` every turn (`off` · `NA` · `filed N small → <ledger path>` ·
-`big: <finding> → <ledger path> — now or later?` · a deep run's state; format in `eli5/SKILL.md`), and `Greenman:` directly under it. Nothing filed is `NA`, never `filed 0 small`. Never a
-second block, never a list of small findings. Without eli5 the same line closes the turn.
+**5. How it surfaces.** The eli5 receipt carries `Redman:` every turn and `Greenman:` directly under it; the forms are
+listed once, in the eli5 skill's `SKILL.md` (the `eli5` folder beside this skill's base directory). Nothing filed is
+`NA`, never `filed 0 small`. Never a second block, never a list of small findings. Without eli5 the same line closes
+the turn: read that list for its form.
 
 ## The ledger — the project's own, in the project's tree
 
 Each project keeps its documents in its own structure; redman adds to it. **Where:** the ledger the
-project's doc map declares (`ledgers: <path>, <path>`, one per lane: an audit lane, say, keeps its own at
-`knowledge/audit/redman/LEDGER.md`); a finding goes to the ledger of the lane whose work produced it, else the first
-one listed. **None declared:** `<project root>/knowledge/redman/LEDGER.md`, or
+project's doc map declares for the finding's lane (`ledgers:` under `## Doc map` for the project, under
+`## Doc map: lane <name>` for a lane — one per lane: an audit lane, say, keeps its own at
+`knowledge/audit/redman/LEDGER.md`; `closeout.py facts` → `lanes` lists them). **The finding's lane** is the lane of
+the roadmap item the work that produced it serves (an `A-<n>` item belongs to the lane whose id form is `A-<n>`);
+when that work serves no item, the lane whose pin this session read first; when neither is clear, the project's
+ledger, and the report says so in one clause ("filed to the project's ledger: no lane item or pin to go by"). Never
+the folder or branch the session started in: two lanes' sessions often start in the same checkout. **None declared:** `<project root>/knowledge/redman/LEDGER.md`, or
 `<project root>/docs/redman/LEDGER.md` in a project without `knowledge/`. **None exists:** create it there in the
 format below, add it to the doc map's `ledgers:` unless it is already declared (a declared ledger needs no `linked kinds`
 entry: the checker adds it), and name it in the
@@ -64,12 +71,18 @@ report so the next close-out puts it in the project's file directory. Never crea
 pack folder. **Commit it** by name in the next
 commit of this work; if the turn commits nothing, say the ledger is uncommitted (an untracked ledger is invisible to
 other worktrees and lost to a clean-up; `facts` lists it and the close-out commits it). Deep runs sit beside the
-ledger of the lane their subject belongs to.
+ledger of the lane their subject belongs to; the close-out lists them and never counts their rows as open.
 
 First lines: `# Redman ledger — <project>` and `roadmap: none — the project's redman ledger; each row names its own roadmap item`.
-Rows dated, rewritten in place; `/closeout` carries closed rows into the roadmap or brain and drops them. Columns: date
+Rows dated, rewritten in place; only the close-out of the ledger's own lane moves its rows: it keeps a row that
+needs a code, data or design change in the ledger, `asked · later` until the user rules, and carries the others into the
+roadmap or brain and drops them (closeout's UPDATING.md § Redman ledgers). Columns: date
 · kind · item · size (small | big) · state (`filed`, `asked · later`, `asked · now`, `open-for-user`,
-`ruled by the user <date>: <text>`, `closed — evidence`, `dropped — why`) · where (`path#anchor`) · observed (`command → line`) · why it matters · first
+`ruled by the user <date>: <text>`, `closed — evidence`, `dropped — why` — the state cell starts with one of these
+exactly, and anything more follows a ` — ` (`asked · now — the user <date>: …`); `/closeout` reads the column by its
+header name `state`, counts a state it does not know as open and lists it with its line, so a new situation is
+written as one of the seven (a ruling as `ruled by the user <date>: …`, a fix as `closed — <evidence>`), never as a new
+word) · where (`path#anchor`) · observed (`command → line`) · why it matters · first
 step · `roadmap:`. Then a For-the-user block for anything big and unruled, and a Cost line. `/closeout` and
 `/project-update` read every declared ledger at Take stock, so small findings surface without anyone remembering them.
 

@@ -1,7 +1,8 @@
 #!/bin/zsh
 # doc-guardrails — PostToolUse hook on Write|Edit. Reads the tool input from stdin, and when the file written is a
-# markdown document of a linked kind with no `roadmap:` line (or a broken one), says so on stderr and exits 2 so the
-# session sees it while the work is still in hand. Silent otherwise: not markdown, no roadmap in this project,
+# markdown document of a linked kind with no `roadmap:` line (or a broken one, or a bare row id the checker does
+# not read), says so on stderr and exits 2 so the session sees it while the work is still in hand. Silent
+# otherwise: not markdown, no roadmap in this project,
 # `guardrails: off` in the doc map, or the file is linked. Never edits anything. Budget: two python starts.
 # This layer is optional: the end-of-turn check sees every document however it was written.
 # NOT installed by the installer: this is a zsh script for macOS and Linux. On Windows the other two layers

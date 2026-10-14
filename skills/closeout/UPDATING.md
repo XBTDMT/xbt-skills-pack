@@ -11,12 +11,11 @@ everything that repeats them, then the summaries — so nothing is lost and no d
 was itself stale. Every figure you write is one you observed in this session, with its command — or is marked "not
 re-checked — last seen <date>".
 
-Helper (stdlib Python): `closeout.py`, next to this file in `~/.claude/skills/closeout/`. `$H` below means
-running it: `python3 ~/.claude/skills/closeout/closeout.py` on macOS or Linux, `python` and the full path on Windows
-(PowerShell does not expand `~` in an argument to a program: write the home folder out). Commands: `facts`,
-`memory`, `worklist`, `tree`, `hunks`, `stage-hunks`, `stamp`, `audit`, `link-audit`, `install-gate`; `$H -h` for usage. It writes only through
-`stamp` (the pin), `stage-hunks` (the index), `link-audit` without `--no-inventory` (the UNLINKED inventory in
-`knowledge/`, else `docs/`) and `install-gate` (the repository's pre-commit hook).
+Helper (stdlib Python): `closeout.py`, next to this file in the closeout skill's base directory. `$H` below means
+running it with `python3` and that full path (on Windows `python` and the full path). Commands: `facts`, `memory`,
+`worklist`, `tree`, `hunks`, `stage-hunks`, `stamp`, `audit`, `link-audit`, `install-gate`; `$H -h` for usage. It
+writes only through `stamp` (the pin), `stage-hunks` (the index), `link-audit` without `--no-inventory` (the UNLINKED inventory in
+`knowledge/`, else `docs/`) and `install-gate` (the repository's git config, or a hook file in git's own hooks folder).
 
 ## What kind of doc is it — and where its truth lives
 
@@ -78,7 +77,7 @@ any still missing.
 | Roadmap | the plan: done, now, next, not decided | `knowledge/00-ROADMAP.md` | either skill |
 | Brain | lessons and decisions, dated, each with what it cost to learn | `knowledge/00-BRAIN.md` | either skill |
 
-**Linking (`~/.claude/skills/doc-guardrails/LINKING.md`).** Every spec, audit, recon, design, template, ledger and handoff names its roadmap item
+**Linking (`LINKING.md` in the doc-guardrails skill's folder).** Every spec, audit, recon, design, template, ledger and handoff names its roadmap item
 (`roadmap: <ids>` or `roadmap: none — <why>`) in its first 40 lines, and the roadmap cites documents by path plus
 anchor. A project declares where those documents live in a `## Doc map` block in `CLAUDE.md`; a pass that finds no
 map creates one from what it observed, `ledgers:`, `decisions:` and `guardrails: report` included, one line per key
@@ -124,8 +123,9 @@ keep `MEMORY.md` pointing at every entry (`memory` lists entries missing from it
 Project state — status, counts, what is next — goes in the project's docs, never only in memory: memory is not
 in git, so a cloud session or another machine never sees it, and nobody reviews it.
 
-- **Back up first.** Memory has no history: copy each folder you are about to change into your scratchpad
-  (`<scratchpad>/memory-backup-<own|home|other>/`, timestamps kept) and name the backup in the report.
+- **Back up first.** Memory has no history: `$H memory <folder> --backup <scratchpad>` copies each folder it lists
+  into `<scratchpad>/memory-backup-<own|home|other>` (never over an existing one), on its own, before any edit; name
+  the backup in the report.
 - **Whose lines you may change.** In the project's own folder, any of them. In the home folder and other projects'
   folders, only the entries and index lines about this project (the ones `memory` lists) — never another project's,
   not even an obvious duplicate; name it in the report instead.
@@ -153,14 +153,21 @@ handoff, the README or the overview — `CLAUDE.md`, the README and the handoff 
 close-out map, every row that fired is part of this job.
 
 
-**The skills' records: read them now.** `facts` → `redman.ledgers`, `pack_side_ledger`, `untracked_records` and
-`greenman` say what exists; read each ledger and record they list, as § The skills' records says. Nothing about them
+**The doc map first.** `facts` → `doc_map.problems`: report each `ERROR` first, one line each (each is a check the
+project believes it has and does not), and the `WARN`s in one line; propose the corrected map in the report
+(doc-guardrails step 2) and never edit a map another lane owns to quiet it. `facts` → `lanes` names each lane's
+roadmap, pin, ledgers, decisions folder and next decision id.
+
+**The skills' records: read them now.** `facts` → `redman.ledgers`, `redman.deep_runs`,
+`redman.unreadable_states`, `pack_side_ledger`, `untracked_records` and `greenman` (with
+`undeclared_record_folders` and `unreadable_ledgers`) say what exists; read each ledger and record they list, as § The skills' records says. Nothing about them
 is written at this step: the writes come after the unit is proved, in § Sources.
 
 ## The skills' records — redman's ledgers, greenman's decisions, the commit gate
 
-**Where they live.** Each project keeps its documents and folders its own way, and the skills add to it. Redman's ledgers and greenman's decision records live in the project's tree: the paths its doc map
-declares (`ledgers:`, `decisions:`), else `knowledge/redman/` and `knowledge/decisions/` (the `docs/` equivalents in a
+**Where they live.** Each project keeps its documents and folders its own way, and the skills add to it.
+Redman's ledgers and greenman's decision records live in the project's tree: the paths its doc map declares for each lane
+(`ledgers:`, `decisions:` in `## Doc map` and in each `## Doc map: lane <name>`), else `knowledge/redman/` and `knowledge/decisions/` (the `docs/` equivalents in a
 project without `knowledge/`).
 `<project root>/xbt-skills-pack/LEDGER.md` is only the pack's side ledger (findings about the skills themselves): read
 it, carry nothing from it into the project's tracking, and name its open rows in the report, so whoever maintains
@@ -170,39 +177,53 @@ the pack sees them.
 session's stray change: this pass commits it (both skills) and names it in the report, unless a live session is still
 writing it. Pass it to `tree --also` so it appears in the overview's file directory.
 
-**The commit gate.** In a git repository, run `python3 $H install-gate <folder>` (both skills; safe to re-run: it
-replaces its own block and keeps any other hook). It is report-only: it prints unlinked staged documents and lets the
-commit through; `guardrails: block` in the doc map makes it refuse. It writes git's local hooks folder, not the tree —
-unless `core.hooksPath` points inside the tree, which the command prints: then the hook file is a project file, named
-in the report and not committed unasked. No git: skip it and say so. Report whether it was installed or already there.
+**The commit gate.** In a git repository, run `$H install-gate <folder>` as a command of its own, nothing chained to
+it (both skills; safe to re-run): a refused chain takes the gate down with it. It
+registers a git config hook (git 2.54 or newer), which git runs before any hook file, in every worktree; with older
+git it places its block first in the hook file the pack owns (`.git/hooks/pre-commit`), keeping any other hook. It is
+report-only: it prints unlinked staged documents and lets the commit through; `guardrails: block` in the doc map makes
+it refuse. Report the state line it prints and `facts` → `gate.ran_on_last_commit` (yes, no, or no commit). Exit 3
+(not installed) is a hand-over to the project's owner, with the lines the command prints: never an edit of the
+project's hook. `declined` (`hook.doc-guardrails.enabled=false`) is the owner's choice: report it, never change it.
+"hooks managed by the project" (its `core.hooksPath` is a folder it tracks) is reported as it is: the close-out never
+writes `gate: config-hook` into the doc map, nor the config or the hook, to change it; that is the project's act. No
+git: skip it and say so.
 
 **Redman ledgers.** Read every ledger `facts` → `redman.ledgers` lists (the doc map's, the defaults) and any deep-run
 `REDMAN-<date>-*.md` beside them since the last marker. Every open row (`filed`, `asked · later`, `asked · now`,
-`open-for-user`) is a known finding. **`/closeout`**, at § Sources: carries each `filed` or `closed — evidence` row into
-the project's tracking the project's own way (an open item, a roadmap row, a brain lesson) or records why not, and
-drops the row from the ledger once it lives elsewhere, so the ledger stays short. A row that is a documentation
-correction (a stale figure, a wrong command in `CLAUDE.md`, a dead citation) is within the pass's remit: correct it in
-place, record it, drop the row. A row that needs a code change, a data change or a design decision stays in the
-ledger as it is, `asked · later` until the user rules. **`/project-update`** rewrites no ledger and allocates no item: it
+`open-for-user`) is a known finding. So is every row `facts` → `redman.unreadable_states` lists: a state outside the
+vocabulary counts as open until the lane that owns the ledger rewrites it. **`/closeout` moves rows only in the
+ledgers of the lane whose unit closed** (`facts` → `lanes.<lane>.ledgers`; a project without lanes has one lane): another
+lane's ledger is read and reported as `/project-update` reports it, never rewritten, and its rows wait for that lane's
+own close-out, even a row that looks easy to carry (closing A-2 in the audit lane leaves main's ledger as it is). In the
+closing lane's ledgers, at § Sources, it sorts each row before it moves any: a row that needs a code change, a data change or
+a design decision stays in the ledger as it is, `asked · later` until the user rules (a docstring or a comment is code:
+fixing it edits a source file); a row that is a documentation correction (a stale figure, a wrong command in
+`CLAUDE.md`, a dead citation) is within the pass's remit: correct it in place, record it, drop the row; every other
+`filed` or `closed — evidence` row is carried into the tracking of the ledger's lane (a lane's roadmap for a lane's
+ledger), the project's own way (an open item, a roadmap row, a brain lesson) or records why not, and dropped from the
+ledger once it lives elsewhere, so the ledger stays short. **`/project-update`** rewrites no ledger and allocates no item: it
 names the open rows' count and every big unruled row in the report, and a big unruled row in the pin's open questions.
 
-**Greenman decisions.** Read the project's greenman ledger (`<decisions folder>/LEDGER.md`) and every record `facts` →
+**Greenman decisions.** Read each lane's greenman ledger (`<decisions folder>/LEDGER.md`; one `facts` names
+unreadable is reported, and its rows are not read) and every record `facts` →
 `greenman.awaiting_ruling` and `real_fix_owed` lists, whatever its date (an S call has only its ledger row, which
 `facts` reads too), plus every `G-*.md` written or changed since the last marker. An `awaiting the user` record goes in the
 pin's open questions and the report, never decided by the pass. A `shortcut taken — real fix owed` record goes on the
 roadmap's *Not decided — for the user* list with its path (`/closeout`; `/project-update` reports it) until the real fix
 lands and the record is set to `decided`. A `decided` or `ruled by the user` record whose roadmap item closed in this pass
-gets its id onto that item (`/closeout` only), and its lesson, if it taught one, becomes a dated brain line. Check every
+gets its id onto that item in its lane's roadmap (`/closeout` only), and its lesson, if it taught one, becomes a dated brain line. Check every
 record's `revisit:` condition against what the repo shows now: a condition that has fired is reported as a question
-for the user, with the record's path. `/closeout` drops the ledger's S rows it has passed (they were the whole record of a
-small call); M and L rows stay as the index of the `G-` files. The ledgers and decision folders appear in the
+for the user, with the record's path. `/closeout` drops the S rows it has passed in the closing lane's greenman ledger (they
+were the whole record of a small call; another lane's ledger waits for that lane's close-out); M and L rows stay as the
+index of the `G-` files. The ledgers and decision folders appear in the
 overview's file directory like any other project doc.
 
 ## Sources, then everything that repeats them
 
 **Sources of truth first**, through their own procedures (table above): counts re-derived the project's way; a ruling the user
 made is one dated line in `CLAUDE.md`; the writes § The skills' records gives each skill (the gate, untracked records
-committed, ledger rows carried, decision ids onto closed items). A baseline doc the project lacks is created here (§ Baseline), the roadmap
+committed, ledger rows carried, decision ids onto closed items, each lane's in its own roadmap). A baseline doc the project lacks is created here (§ Baseline), the roadmap
 before anything that repeats it. The skill says what else changes in them.
 
 **Then everything that repeats them**: descriptive docs against the code, mirrors re-derived from what you
@@ -210,7 +231,21 @@ just updated, generated docs regenerated. Fix false facts where they stand; do n
 file you must fix carries another session's uncommitted edit, change only your lines and stage only your hunks:
 `$H hunks <file>` numbers them, `$H stage-hunks <file> N [N…]` stages those.
 
+## Figures
+
+A count or measurement a source can give is not typed: where the doc map declares `figures:` (a JSON file, LINKING
+§ 3), each figure a declared doc states sits in a span, `<!-- fig:NAME -->VALUE<!-- /fig -->` (markdown and HTML
+alike; never inside a heading, whose anchor must not move with a count), and a generated table between
+`<!-- fig-table:NAME -->` and `<!-- /fig-table -->`. The file names the docs, each figure's source (a command's JSON
+field, a count in a JSON file, the last matching record of a JSON-lines log, the unit tests, a Done count) and the
+tables. `$H figures . --write` refills every span and table before the worklist is built and rewrites nothing else;
+`$H figures . --check` reports each stale, unknown or missing figure. A span is never edited by hand: when its value
+is wrong, its source is what gets fixed. Without the key, neither command prints anything.
+
 ## Pin
+
+The pin is the pin of the lane whose unit closed (`facts` → `pins`, each with its `lane`); a lane's pin is written and
+stamped in a checkout on that lane's branch (`stamp` refuses elsewhere and names the lane's checkouts).
 
 Under ~100 lines (depth goes in the handoff):
 ```
@@ -257,26 +292,39 @@ missing; plus `--worklist <file>` when the skill builds
 one: every item still open is a `FAIL`, and so is an item ticked without saying what was found). It checks the lines
 you added (a new file is
 all new), and warns on a generated or never-hand-edit file you touched: each `FAIL` is fixed, each `WARN` fixed
-or explained in the report. A `FAIL` on a line this pass did not write (a broken citation already in the roadmap) is
-reported, not fixed: no pass edits a document to satisfy the guardrail. Then read your note, the sources, the pin, the handoff and the overview side by
-side: nothing from the note lost, the same unit closed, the same next action, the same figures and dates.
+or explained in the report. Each `FAIL` is a line this pass wrote and is fixed; a `PRE-EXISTING` line (a broken
+citation already in the roadmap) is reported, never edited to pass; a staged file this pass did not write is reported
+and left as it is. Where the doc map declares `figures:`, the audit also holds every span to its source (§ Figures):
+a stale, unknown or missing figure `FAIL`s on a line this pass wrote and `WARN`s elsewhere, and a count a declared
+doc states outside a span `WARN`s as `unmarked figure?`. Where a handoff is declared (`HANDOFF.md` at the root, or the
+doc map's `handoff:`), its *Open items* must name every item `facts` lists as open — each open ledger row, each record
+awaiting a ruling or owing a real fix, each *Now* item — or it `FAIL`s when this pass wrote the handoff; a declared
+handoff with no *Open items* section is one `WARN`. It also `WARN`s on a decision record whose roadmap item is Done
+while its status still says owed, awaiting or still; on an UNLINKED inventory whose count a fresh one no longer
+gives; and on an inventory anywhere else, which it never deletes. Then read your note, the sources, the pin, the
+handoff and the overview side by side: nothing from the note lost, the same unit closed, the same next action, the
+same figures and dates.
 
 The audit checks form, not truth — paths, links, charset, the pin's fields, whether the worklist is closed. Whether
-a figure is right is the worklist's job: a wholesale rewrite of a doc passes the audit clean.
+a figure is right is the worklist's job, except the figures the doc map declares, which `figures` checks against their
+sources: a wholesale rewrite of a doc passes the audit clean.
 
 ## Commit
 
 **Commit by name, never `git add -A`.** Stage everything except the pin with `git add -- <files>` (and
 `stage-hunks` for a file that carries another session's edit); check that `git diff --cached --name-only`
-lists your files and nothing else; commit with the message the skill gives. Then stamp the pin the way the skill
+lists your files; if it lists others (the audit names them), leave them staged and commit yours by name,
+`git commit -m "<message>" -- <your files>`, which commits only those paths and leaves the rest of the index as it
+was; use the message the skill gives. Then stamp the pin the way the skill
 says — `$H stamp <pin>` marks the commit you just made; `stamp <pin> --keep-marker` moves only the date —
 `git add -- <pin>`, and commit the pin alone (`-m "<the same prefix>: pin stamped <YYYY-MM-DD>"`). If the pin says its marker
 must not be advanced, `stamp` refuses: use `stamp <pin> --keep-marker` to move only the date. No git: skip
 commits and say so. Push only if the project's `CLAUDE.md` says close-outs push; otherwise report the unpushed
 count, or that there is no upstream to count against. A claim this pass's own commits falsify (a remote that
 matched, an installed copy that was current) is written as of the date it was true, and the report says the
-commits are local. If the overview is already published as a claude.ai artifact (a URL in the
-pin), republish it to that same URL; never create a new published artifact unasked. If no doc in the project records it, add `<!-- published: <url> -->` to the overview so the next pass
+commits are local. If the overview is already published as a claude.ai artifact, republish it to that same URL; never
+create a new published artifact unasked. Its URL is the overview's `<!-- published: <url> -->` line or a URL in the
+pin; if no doc in the project records the URL, add `<!-- published: <url> -->` to the overview so the next pass
 need not look it up. An artifact can be republished
 only from the login that published it: if this login's Artifact tool cannot find it, publish nothing — put a
 one-line publish prompt for the owning login in the report.

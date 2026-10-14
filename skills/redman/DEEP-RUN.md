@@ -28,5 +28,5 @@ dimension, and the walk continues until nothing is undecided; the pass count car
 CONVERGED with the open list, never smoothed over. A new `/redman <path>` on a subject that already has a `REDMAN-*-<slug>.md` beside the ledger resumes the newest one.
 
 **Delivery.** The For-the-user block first; the subject with every branch marked; the ledger path; the pre-registered
-condition that ended or paused the run; then the eli5 receipt exactly as `~/.claude/skills/eli5/SKILL.md` defines
-it, with the `Redman:` line carrying the run's state (`deep run <path>: paused, N for you` · `converged` · `NOT CONVERGED, N open`). No fix, no patch, no "while I was in there".
+condition that ended or paused the run; then the eli5 receipt exactly as the eli5 skill's `SKILL.md` defines
+it (the `eli5` folder beside this skill's base directory), with the `Redman:` line carrying the run's state (`deep run <path>: paused, N for you` · `converged` · `NOT CONVERGED, N open`). No fix, no patch, no "while I was in there".

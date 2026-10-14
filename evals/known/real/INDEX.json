@@ -1,0 +1,371 @@
+{
+ "about": "The regression corpus (R-22 criterion 14): the recorded sessions of ~/xbt-evals that failed for a behaviour reason (33 in the listing of 2026-09-23), triaged on 2026-09-24 by harvesting each (run.py --harvest), rebuilding it on today's fixture and grading it against today's scenarios. A kept one still fails on its `fails`; a dropped one says why. Private terms are judged on the text the public export ships.",
+ "entries": [
+  {
+   "id": "vendored_fork-fable-20260914-213740",
+   "source": "20260914-213740/vendored_fork-fable",
+   "kept": true,
+   "recorded_fails": [
+    "no_removed_lines"
+   ],
+   "fails": [
+    "file_exists",
+    "no_path",
+    "only_changed"
+   ]
+  },
+  {
+   "id": "vendored_fork-opus-20260914-213740",
+   "source": "20260914-213740/vendored_fork-opus",
+   "kept": true,
+   "recorded_fails": [
+    "file_exists",
+    "skill_invoked",
+    "tests_pass"
+   ],
+   "fails": [
+    "file_exists",
+    "record_status",
+    "skill_invoked",
+    "tests_pass"
+   ]
+  },
+  {
+   "id": "vendored_fork-opus-20260914-214023",
+   "source": "20260914-214023/vendored_fork-opus",
+   "kept": false,
+   "recorded_fails": [
+    "any_of",
+    "file_exists",
+    "skill_invoked"
+   ],
+   "reason": "the same failing shape (file_exists, record_status, skill_invoked, tests_pass) as vendored_fork-opus-20260914-213740, kept"
+  },
+  {
+   "id": "refusal-fable-20260914-230058",
+   "source": "20260914-230058/refusal-fable",
+   "kept": true,
+   "recorded_fails": [
+    "max_bash_matching",
+    "origin_empty"
+   ],
+   "fails": [
+    "max_bash_matching"
+   ]
+  },
+  {
+   "id": "shell_doc-fable-20260914-230058",
+   "source": "20260914-230058/shell_doc-fable",
+   "kept": true,
+   "recorded_fails": [
+    "transcript_contains"
+   ],
+   "fails": [
+    "edited_by_tool",
+    "hook_fired"
+   ]
+  },
+  {
+   "id": "shell_doc-opus-20260914-230058",
+   "source": "20260914-230058/shell_doc-opus",
+   "kept": true,
+   "recorded_fails": [
+    "bash_matching",
+    "transcript_contains"
+   ],
+   "fails": [
+    "bash_matching",
+    "edited_by_tool",
+    "hook_fired"
+   ]
+  },
+  {
+   "id": "refusal-fable-20260914-230642",
+   "source": "20260914-230642/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "large_stop-fable-20260914-231843",
+   "source": "20260914-231843/large_stop-fable",
+   "kept": true,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches",
+    "skill_invoked"
+   ],
+   "fails": [
+    "file_exists",
+    "file_matches",
+    "record_status",
+    "skill_invoked"
+   ]
+  },
+  {
+   "id": "large_stop-opus-20260914-231843",
+   "source": "20260914-231843/large_stop-opus",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches"
+   ],
+   "reason": "its session text still holds 2 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "shell_doc-fable-20260914-231843",
+   "source": "20260914-231843/shell_doc-fable",
+   "kept": true,
+   "recorded_fails": [
+    "any_of",
+    "bash_matching",
+    "file_exists",
+    "file_matches"
+   ],
+   "fails": [
+    "bash_matching",
+    "edited_by_tool",
+    "file_exists",
+    "file_matches",
+    "hook_fired"
+   ]
+  },
+  {
+   "id": "project_update_records-opus55-20260922-192134",
+   "source": "20260922-192134/project_update_records-opus55",
+   "kept": false,
+   "recorded_fails": [
+    "commits_at_least",
+    "file_matches",
+    "git_hook_contains",
+    "tracked"
+   ],
+   "reason": "its session text still holds 45 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "project_update_records-opus55-20260922-193002",
+   "source": "20260922-193002/project_update_records-opus55",
+   "kept": false,
+   "recorded_fails": [
+    "commits_at_least",
+    "git_hook_contains",
+    "tracked"
+   ],
+   "reason": "its session text still holds 40 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "gate_block-fable-after-turncheck-attr-20260915-133924",
+   "source": "after-turncheck-attr/20260915-133924/gate_block-fable",
+   "kept": false,
+   "recorded_fails": [
+    "commits_at_least",
+    "committed_file_matches"
+   ],
+   "reason": "it fails today only on checks the compact form cannot grade again (git history, facts, the gate probe); recorded failures: commits_at_least, committed_file_matches"
+  },
+  {
+   "id": "large_stop-opus-final-gatefix-20260914-232541",
+   "source": "final-gatefix/20260914-232541/large_stop-opus",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches"
+   ],
+   "reason": "its session text still holds 3 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "shell_doc-fable-final-gatefix-20260914-232541",
+   "source": "final-gatefix/20260914-232541/shell_doc-fable",
+   "kept": false,
+   "recorded_fails": [
+    "any_of",
+    "unchanged"
+   ],
+   "reason": "its session text still holds 2 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "shell_doc-fable-final-v3-20260914-233157",
+   "source": "final-v3/20260914-233157/shell_doc-fable",
+   "kept": false,
+   "recorded_fails": [
+    "unchanged"
+   ],
+   "reason": "its session text still holds 5 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "shell_doc-opus-final-v3-20260914-233157",
+   "source": "final-v3/20260914-233157/shell_doc-opus",
+   "kept": false,
+   "recorded_fails": [
+    "unchanged"
+   ],
+   "reason": "its session text still holds 1 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "large_stop-fable-full-rep-1-20260915-001144",
+   "source": "full-rep-1/20260915-001144/large_stop-fable",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches",
+    "skill_invoked"
+   ],
+   "reason": "the same failing shape (file_exists, file_matches, record_status, skill_invoked) as large_stop-fable-20260914-231843, kept"
+  },
+  {
+   "id": "large_stop-fable-full-rep-2-20260915-001855",
+   "source": "full-rep-2/20260915-001855/large_stop-fable",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches",
+    "skill_invoked"
+   ],
+   "reason": "the same failing shape (file_exists, file_matches, record_status, skill_invoked) as large_stop-fable-20260914-231843, kept"
+  },
+  {
+   "id": "large_stop-opus-full-rep-4-20260915-103926",
+   "source": "full-rep-4/20260915-103926/large_stop-opus",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches"
+   ],
+   "reason": "its session text still holds 4 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "large_stop-opus-full-rep-5-20260915-104710",
+   "source": "full-rep-5/20260915-104710/large_stop-opus",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches"
+   ],
+   "reason": "its session text still holds 4 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "gate_block-opus-gate-rule-1-20260915-135350",
+   "source": "gate-rule-1/20260915-135350/gate_block-opus",
+   "kept": true,
+   "recorded_fails": [
+    "commits_at_most",
+    "unchanged"
+   ],
+   "fails": [
+    "unchanged"
+   ]
+  },
+  {
+   "id": "gate_block-opus-gate-rule-2-20260915-135435",
+   "source": "gate-rule-2/20260915-135435/gate_block-opus",
+   "kept": false,
+   "recorded_fails": [
+    "commits_at_most",
+    "unchanged"
+   ],
+   "reason": "its session text still holds 4 private term(s) after the export's own rules (paths of the owner's machine, the git author handle, or another project's name); the corpus ships public"
+  },
+  {
+   "id": "gate_block-fable-gate-rule-5-20260915-135640",
+   "source": "gate-rule-5/20260915-135640/gate_block-fable",
+   "kept": true,
+   "recorded_fails": [
+    "final_matches"
+   ],
+   "fails": [
+    "bash_output"
+   ]
+  },
+  {
+   "id": "large_stop-fable-ls-g2-b-20260915-103231",
+   "source": "ls-g2-b/20260915-103231/large_stop-fable",
+   "kept": false,
+   "recorded_fails": [
+    "file_exists",
+    "file_matches",
+    "skill_invoked"
+   ],
+   "reason": "the same failing shape (file_exists, file_matches, record_status, skill_invoked) as large_stop-fable-20260914-231843, kept"
+  },
+  {
+   "id": "large_stop-fable-ls-g2-e-20260915-103624",
+   "source": "ls-g2-e/20260915-103624/large_stop-fable",
+   "kept": true,
+   "recorded_fails": [
+    "file_matches",
+    "no_new_code"
+   ],
+   "fails": [
+    "no_new_code",
+    "only_changed",
+    "record_status"
+   ]
+  },
+  {
+   "id": "gate_block_own-opus-pass3-quick-20260915-150249",
+   "source": "pass3-quick/20260915-150249/gate_block_own-opus",
+   "kept": false,
+   "recorded_fails": [
+    "commits_at_least",
+    "committed_file_matches"
+   ],
+   "reason": "it fails today only on checks the compact form cannot grade again (git history, facts, the gate probe); recorded failures: commits_at_least, committed_file_matches"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-1-20260914-231118",
+   "source": "refusal-repeat-1/20260914-231118/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-2-20260914-231118",
+   "source": "refusal-repeat-2/20260914-231118/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-3-20260914-231118",
+   "source": "refusal-repeat-3/20260914-231118/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-4-20260914-231215",
+   "source": "refusal-repeat-4/20260914-231215/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-5-20260914-231215",
+   "source": "refusal-repeat-5/20260914-231215/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  },
+  {
+   "id": "refusal-fable-refusal-repeat-6-20260914-231215",
+   "source": "refusal-repeat-6/20260914-231215/refusal-fable",
+   "kept": false,
+   "recorded_fails": [
+    "max_bash_matching"
+   ],
+   "reason": "the same failing shape (max_bash_matching) as refusal-fable-20260914-230058, kept"
+  }
+ ]
+}

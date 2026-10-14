@@ -1,0 +1,881 @@
+{
+ "type": "system",
+ "subtype": "init",
+ "claude_code_version": "2.1.280",
+ "plugins": [
+  {
+   "name": "plugin-1",
+   "path": "<config>/plugins/cache/plugin-1",
+   "source": "plugin-1@marketplace"
+  },
+  {
+   "name": "plugin-2",
+   "path": "<config>/plugins/cache/plugin-2",
+   "source": "plugin-2@marketplace"
+  },
+  {
+   "name": "plugin-3",
+   "path": "<config>/plugins/cache/plugin-3",
+   "source": "plugin-3@marketplace"
+  },
+  {
+   "name": "plugin-4",
+   "path": "<config>/plugins/cache/plugin-4",
+   "source": "plugin-4@marketplace"
+  },
+  {
+   "name": "plugin-5",
+   "path": "<config>/plugins/cache/plugin-5",
+   "source": "plugin-5@marketplace"
+  },
+  {
+   "name": "plugin-6",
+   "path": "<config>/plugins/cache/plugin-6",
+   "source": "plugin-6@marketplace"
+  },
+  {
+   "name": "plugin-7",
+   "path": "<config>/plugins/cache/plugin-7",
+   "source": "plugin-7@marketplace"
+  },
+  {
+   "name": "plugin-8",
+   "path": "<config>/plugins/cache/plugin-8",
+   "source": "plugin-8@marketplace"
+  },
+  {
+   "name": "plugin-9",
+   "path": "<config>/plugins/cache/plugin-9",
+   "source": "plugin-9@marketplace"
+  },
+  {
+   "name": "plugin-10",
+   "path": "<config>/plugins/cache/plugin-10",
+   "source": "plugin-10@marketplace"
+  },
+  {
+   "name": "plugin-11",
+   "path": "<config>/plugins/cache/plugin-11",
+   "source": "plugin-11@marketplace"
+  },
+  {
+   "name": "synced-plugin-1",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-1",
+   "source": "synced-plugin-1@synced"
+  },
+  {
+   "name": "synced-plugin-2",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-2",
+   "source": "synced-plugin-2@synced"
+  },
+  {
+   "name": "synced-plugin-3",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-3",
+   "source": "synced-plugin-3@synced"
+  },
+  {
+   "name": "synced-plugin-4",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-4",
+   "source": "synced-plugin-4@synced"
+  },
+  {
+   "name": "synced-plugin-5",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-5",
+   "source": "synced-plugin-5@synced"
+  },
+  {
+   "name": "synced-plugin-6",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-6",
+   "source": "synced-plugin-6@synced"
+  },
+  {
+   "name": "synced-plugin-7",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-7",
+   "source": "synced-plugin-7@synced"
+  },
+  {
+   "name": "synced-plugin-8",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-8",
+   "source": "synced-plugin-8@synced"
+  },
+  {
+   "name": "synced-plugin-9",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-9",
+   "source": "synced-plugin-9@synced"
+  },
+  {
+   "name": "synced-plugin-10",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-10",
+   "source": "synced-plugin-10@synced"
+  },
+  {
+   "name": "synced-plugin-11",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-11",
+   "source": "synced-plugin-11@synced"
+  },
+  {
+   "name": "synced-plugin-12",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-12",
+   "source": "synced-plugin-12@synced"
+  },
+  {
+   "name": "synced-plugin-13",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-13",
+   "source": "synced-plugin-13@synced"
+  },
+  {
+   "name": "synced-plugin-14",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-14",
+   "source": "synced-plugin-14@synced"
+  },
+  {
+   "name": "synced-plugin-15",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-15",
+   "source": "synced-plugin-15@synced"
+  },
+  {
+   "name": "synced-plugin-16",
+   "path": "<config>/plugins/synced/<account>/synced-plugin-16",
+   "source": "synced-plugin-16@synced"
+  },
+  {
+   "name": "agents-md",
+   "path": "builtin",
+   "source": "agents-md@builtin"
+  },
+  {
+   "name": "telemetry",
+   "path": "builtin",
+   "source": "telemetry@builtin"
+  }
+ ],
+ "skills": [
+  "axiom-macos",
+  "axiom-swiftui",
+  "closeout",
+  "skill-1",
+  "skill-2",
+  "doc-guardrails",
+  "eli5",
+  "greenman",
+  "skill-3",
+  "project-update",
+  "skill-4",
+  "redman",
+  "skill-5",
+  "skill-6",
+  "skill-7",
+  "skill-8",
+  "skill-9",
+  "skill-10",
+  "skill-11",
+  "skill-12",
+  "skill-13",
+  "skill-14",
+  "skill-15",
+  "skill-16",
+  "skill-17",
+  "skill-18",
+  "skill-19",
+  "skill-20",
+  "skill-21",
+  "skill-22",
+  "skill-23",
+  "skill-24",
+  "skill-25",
+  "skill-26",
+  "skill-27",
+  "skill-28",
+  "skill-29",
+  "skill-30",
+  "skill-31",
+  "skill-32",
+  "skill-33",
+  "skill-34",
+  "skill-35",
+  "skill-36",
+  "skill-37",
+  "skill-38",
+  "skill-39",
+  "skill-40",
+  "skill-41",
+  "skill-42",
+  "skill-43",
+  "skill-44",
+  "skill-45",
+  "skill-46",
+  "skill-47",
+  "skill-48",
+  "skill-49",
+  "skill-50",
+  "skill-51",
+  "skill-52",
+  "skill-53",
+  "skill-54",
+  "skill-55",
+  "skill-56",
+  "skill-57",
+  "skill-58",
+  "skill-59",
+  "skill-60",
+  "skill-61",
+  "skill-62",
+  "skill-63",
+  "skill-64",
+  "skill-65",
+  "skill-66",
+  "skill-67",
+  "skill-68",
+  "skill-69",
+  "skill-70",
+  "skill-71",
+  "skill-72",
+  "skill-73",
+  "skill-74",
+  "skill-75",
+  "skill-76",
+  "skill-77",
+  "skill-78",
+  "skill-79",
+  "skill-80",
+  "skill-81",
+  "skill-82",
+  "skill-83",
+  "skill-84",
+  "skill-85",
+  "skill-86",
+  "skill-87",
+  "skill-88",
+  "skill-89",
+  "skill-90",
+  "skill-91",
+  "skill-92",
+  "skill-93",
+  "skill-94",
+  "skill-95",
+  "skill-96",
+  "skill-97",
+  "skill-98",
+  "skill-99",
+  "skill-100",
+  "skill-101",
+  "skill-102",
+  "skill-103",
+  "skill-104",
+  "skill-105",
+  "skill-106",
+  "skill-107",
+  "skill-108",
+  "skill-109",
+  "skill-110",
+  "skill-111",
+  "skill-112",
+  "skill-113",
+  "skill-114",
+  "skill-115",
+  "skill-116",
+  "skill-117",
+  "skill-118",
+  "skill-119",
+  "skill-120",
+  "skill-121",
+  "skill-122",
+  "skill-123",
+  "skill-124",
+  "skill-125",
+  "skill-126",
+  "skill-127",
+  "skill-128",
+  "skill-129",
+  "skill-130",
+  "skill-131",
+  "skill-132",
+  "skill-133",
+  "skill-134",
+  "skill-135",
+  "skill-136",
+  "skill-137",
+  "skill-138",
+  "skill-139",
+  "skill-140",
+  "skill-141",
+  "skill-142",
+  "skill-143",
+  "skill-144",
+  "skill-145",
+  "skill-146",
+  "skill-147",
+  "skill-148",
+  "skill-149",
+  "skill-150",
+  "skill-151",
+  "skill-152",
+  "skill-153",
+  "skill-154",
+  "skill-155",
+  "skill-156",
+  "skill-157",
+  "skill-158",
+  "skill-159",
+  "skill-160",
+  "skill-161",
+  "skill-162",
+  "skill-163",
+  "skill-164",
+  "skill-165",
+  "skill-166",
+  "skill-167",
+  "skill-168",
+  "skill-169",
+  "skill-170",
+  "skill-171",
+  "skill-172",
+  "skill-173",
+  "skill-174",
+  "skill-175",
+  "skill-176",
+  "skill-177",
+  "skill-178",
+  "skill-179",
+  "skill-180",
+  "skill-181",
+  "skill-182",
+  "skill-183",
+  "skill-184",
+  "skill-185",
+  "skill-186",
+  "skill-187",
+  "skill-188",
+  "skill-189",
+  "skill-190",
+  "skill-191",
+  "skill-192",
+  "skill-193",
+  "skill-194",
+  "skill-195",
+  "skill-196",
+  "skill-197",
+  "skill-198",
+  "skill-199",
+  "skill-200",
+  "skill-201",
+  "skill-202",
+  "skill-203",
+  "skill-204",
+  "anthropic-skills:skill-1",
+  "anthropic-skills:skill-2",
+  "anthropic-skills:skill-3",
+  "anthropic-skills:skill-4",
+  "anthropic-skills:skill-5",
+  "anthropic-skills:skill-6",
+  "anthropic-skills:skill-7",
+  "anthropic-skills:skill-8"
+ ],
+ "mcp_servers": [
+  {
+   "name": "plugin:plugin-1:server-1",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:plugin-11:server-2",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-3",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-4",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-5",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-6",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-7",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-1:server-8",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-9",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-10",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-11",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-12",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-13",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-2:server-14",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-3:server-15",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-4:server-16",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-4:server-17",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-4:server-18",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-4:server-19",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-5:server-20",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-5:server-21",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-22",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-23",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-24",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-25",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-26",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-27",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-28",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-29",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-30",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-31",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-32",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-33",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-34",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-35",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-36",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-37",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-38",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-39",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-40",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-41",
+   "status": "connected",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-42",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-43",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-44",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-45",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-46",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-47",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-48",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-49",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-50",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-51",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-52",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-6:server-53",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-54",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-55",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-56",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-57",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-58",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-59",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-60",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-7:server-61",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-62",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-63",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-64",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-65",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-66",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-67",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-68",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-69",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-70",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-71",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-72",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-73",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-8:server-74",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-9:server-75",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-9:server-76",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-10:server-77",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-10:server-78",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-10:server-79",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-10:server-80",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-81",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-82",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-83",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-84",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-85",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-11:server-86",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-12:server-87",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-12:server-88",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-12:server-89",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-12:server-90",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-12:server-91",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-13:server-92",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-13:server-93",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-13:server-94",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-14:server-95",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-14:server-96",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-14:server-97",
+   "status": "needs-auth",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-14:server-98",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-15:server-99",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "plugin:synced-plugin-15:server-100",
+   "status": "failed",
+   "source": "plugin"
+  },
+  {
+   "name": "claude.ai connector-1",
+   "status": "connected",
+   "source": "claudeai"
+  }
+ ]
+}

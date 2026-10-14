@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1506" width="1200" height="1506" role="img" aria-labelledby="ht hd">
+<title id="ht">The held-out set: eight tasks no doctrine page was written from</title>
+<desc id="hd">A dot and bar chart of 15 runs in 13 rows on the eight tasks of the held-out set (Sonnet 5.5 high ran twice per row): correctness as dots, cost as bars. 7 October: the pages that ship since then, against the 29 September pages: Fable 5.1 low on the Fable page of 7 October (the cc fable seat): 94 at $11.33 (−4.2 against its control). Fable 5.1 low on the Fable page of 29 September: 98 at $11.95. Opus 5.5 high on the Opus 5.5 page of 7 October (the cc opus seat): 98 at $7.40 (±0.0 against its control). Opus 5.5 high on the Opus 5.5 page of 29 September: 98 at $7.01. 6 October: the 29 September pages against the pages before them: Fable 5.1 low on the Fable page of 29 September: 98 at $12.36 (±0.0 against its control). Fable 5.1 low on the Fable page of 15 September: 98 at $12.56. Opus 5.5 high on the Opus 5.5 page of 29 September: 98 at $8.14 (±0.0 against its control). Opus 5.5 high on the revised Opus 5.5 page of 22 September: 98 at $7.92. Opus 5.5 medium on the Opus 5.5 page of 29 September (the cc seat runs it on the 7 October page): 97 at $6.15. 6 October: Sonnet 5.5 with the Opus 5.5 page and without one: Sonnet 5.5 high on the Opus 5.5 page of 29 September, two runs: 97.9 at $4.68 and 97.9 at $4.48 (±0.0 against its control). Sonnet 5.5 high without a page, two runs (the cc sonnet seat): 97.9 at $4.72 and 97.9 at $4.02. Sonnet 5.5 max on the Opus 5.5 page of 29 September: 98 at $38.67 (+1.7 against its control). Sonnet 5.5 max without a page: 96 at $37.84. Correctness and cost for every setup that ran them, one fresh session per task, 6–7 October 2026. Hollow: the page it was set against, or without a page; filled: the newer page of a same-day pair, or alone. By the pre-registered rule a gap of 5 points or less is noise; twelve of the fifteen runs scored 97.9, shown as 98. Seat tags: the seat that has run that setup since 7 October, except cc, which runs Opus 5.5 medium on the 7 October page, measured here only on the 29 September page. The set is near its ceiling: the twelve runs at 97.9 each missed the same three checks on the one-unpushed task, so cost is what separates most setups. The pages were written from misses on the nine-task set; these eight tasks come from two other repos, built by agents that never read a page. Prose answers (the sessions-claim, review-decoys and audit-recall tasks) are judged blind; where the judge's verdict differs from the script's own count, the script alone reads: Opus 5.5 high on the Opus 5.5 page of 7 October, run 7 October: 92 (sessions-claim, review-decoys); Opus 5.5 high on the Opus 5.5 page of 29 September, run 7 October: 94 (sessions-claim); Sonnet 5.5 max without a page, run 6 October: 90 (review-decoys). Sonnet 5.5 high ran twice per setup (the recheck).</desc>
+<style>
+:root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+}
+:root[data-theme="dark"] { --bg:#16171a; --ink:#ececef; --muted:#a6a6ae; --line:#6e7078; --grid:#2a2c31; --hi:#2d3550; --opus:#8783eb; --o55:#d5befe; --fable:#ffbcc9; --sonnet:#c98a16; --s55:#229278; --gain:#7cc4f2; --loss:#ff9a6b; }
+text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif; fill: var(--ink); }
+.bg { fill: var(--bg); } .grid { stroke: var(--grid); stroke-width: 1; } .axis { stroke: var(--line); stroke-width: 1.5; }
+.halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.h{font-size:25px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:21px;font-weight:700;} .sub{font-size:17.5px;font-weight:400;fill:var(--muted);} .name{font-size:17.5px;font-weight:650;} .delta{font-size:16.5px;font-weight:400;fill:var(--muted);} .note{font-size:16.5px;font-weight:400;fill:var(--muted);} .tick{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:16.5px;font-weight:400;} .num{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:16.5px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:16.5px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:16.5px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:16.5px;font-weight:650;} .small{font-size:16.5px;font-weight:400;fill:var(--muted);} .th{font-size:17px;font-weight:650;} .thm{font-size:16.5px;font-weight:400;fill:var(--muted);} .td{font-size:17px;font-weight:400;} .tdn{font-size:17px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:17px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:17px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
+</style>
+<rect class="bg" x="0" y="0" width="1200" height="1506" rx="14"/>
+<line class="grid" x1="1140.0" x2="1140.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="1095.5" x2="1095.5" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="1051.0" x2="1051.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="1006.5" x2="1006.5" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="962.0" x2="962.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="772.0" x2="772.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="742.0" x2="742.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="712.0" x2="712.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="682.0" x2="682.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="652.0" x2="652.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="622.0" x2="622.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="592.0" x2="592.0" y1="227.2" y2="1314.8"/>
+<line class="grid" x1="562.0" x2="562.0" y1="227.2" y2="1314.8"/>
+<text class="h" x="50.0" y="52.0">The held-out set: eight tasks no doctrine page was written from</text>
+<text class="sub" x="50.0" y="84.0">Correctness and cost for every setup that ran them, one fresh session per task, 6–7 October 2026. Hollow: the page it</text>
+<text class="sub" x="50.0" y="108.1">was set against, or without a page; filled: the newer page of a same-day pair, or alone.</text>
+<text class="sub" x="50.0" y="135.2">By the pre-registered rule a gap of 5 points or less is noise; twelve of the fifteen runs scored 97.9, shown as 98.</text>
+<text class="axlabel" x="562.0" y="191.2">correctness</text>
+<text class="axlabel" x="790.0" y="191.2">score, gap</text>
+<text class="axlabel" x="410.0" y="191.2">seat</text>
+<text class="axlabel" x="962.0" y="191.2">cost</text>
+<text class="tick" x="562.0" y="217.2" text-anchor="middle">86</text>
+<text class="tick" x="622.0" y="217.2" text-anchor="middle">90</text>
+<text class="tick" x="682.0" y="217.2" text-anchor="middle">94</text>
+<text class="tick" x="742.0" y="217.2" text-anchor="middle">98</text>
+<text class="tick" x="962.0" y="217.2" text-anchor="middle">$0</text>
+<text class="tick" x="1051.0" y="217.2" text-anchor="middle">$20</text>
+<text class="tick" x="1140.0" y="217.2" text-anchor="middle">$40</text>
+<text class="grp halo" x="50.0" y="257.2">7 October: the pages that ship since then, against the 29 September pages</text>
+<text class="name" x="50.0" y="293.2">Fable 5.1 low</text>
+<text class="small" x="50.0" y="314.2">the Fable page of 7 October</text>
+<text class="seat" x="410.0" y="293.2" style="fill:var(--fable)">cc fable</text>
+<circle cx="678.2" cy="297.2" r="7.5" data-v="93.7500" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="298.2">94<tspan class="delta"> (−4.2)</tspan></text>
+<rect x="962" y="291.2" width="50.4" height="12" rx="2" style="fill:var(--fable)"/>
+<text class="cost halo" x="962.0" y="325.2">$11.33</text>
+<text class="name" x="50.0" y="363.2">Fable 5.1 low</text>
+<text class="small" x="50.0" y="384.2">the Fable page of 29 September</text>
+<circle class="casing" cx="740.7" cy="367.2" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="367.2" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<text class="num" x="790.0" y="368.2">98</text>
+<rect x="962" y="361.2" width="53.2" height="12" rx="2" style="fill:var(--bg);stroke:var(--fable);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="395.2">$11.95</text>
+<text class="name" x="50.0" y="433.2">Opus 5.5 high</text>
+<text class="small" x="50.0" y="454.2">the Opus 5.5 page of 7 October</text>
+<text class="seat" x="410.0" y="433.2" style="fill:var(--o55)">cc opus</text>
+<circle cx="740.7" cy="437.2" r="7.5" data-v="97.9167" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="438.2">98<tspan class="delta"> (±0.0)</tspan></text>
+<rect x="962" y="431.2" width="32.9" height="12" rx="2" style="fill:var(--o55)"/>
+<text class="cost halo" x="962.0" y="465.2">$7.40</text>
+<text class="name" x="50.0" y="503.2">Opus 5.5 high</text>
+<text class="small" x="50.0" y="524.2">the Opus 5.5 page of 29 September</text>
+<circle class="casing" cx="740.7" cy="507.2" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="507.2" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<text class="num" x="790.0" y="508.2">98</text>
+<rect x="962" y="501.2" width="31.2" height="12" rx="2" style="fill:var(--bg);stroke:var(--o55);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="535.2">$7.01</text>
+<line class="grid" x1="50" x2="1150" y1="555.2" y2="555.2"/>
+<text class="grp halo" x="50.0" y="585.2">6 October: the 29 September pages against the pages before them</text>
+<text class="name" x="50.0" y="621.2">Fable 5.1 low</text>
+<text class="small" x="50.0" y="642.2">the Fable page of 29 September</text>
+<circle cx="740.7" cy="625.2" r="7.5" data-v="97.9167" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="626.2">98<tspan class="delta"> (±0.0)</tspan></text>
+<rect x="962" y="619.2" width="55.0" height="12" rx="2" style="fill:var(--fable)"/>
+<text class="cost halo" x="962.0" y="653.2">$12.36</text>
+<text class="name" x="50.0" y="691.2">Fable 5.1 low</text>
+<text class="small" x="50.0" y="712.2">the Fable page of 15 September</text>
+<circle class="casing" cx="740.7" cy="695.2" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="695.2" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<text class="num" x="790.0" y="696.2">98</text>
+<rect x="962" y="689.2" width="55.9" height="12" rx="2" style="fill:var(--bg);stroke:var(--fable);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="723.2">$12.56</text>
+<text class="name" x="50.0" y="761.2">Opus 5.5 high</text>
+<text class="small" x="50.0" y="782.2">the Opus 5.5 page of 29 September</text>
+<circle cx="740.7" cy="765.2" r="7.5" data-v="97.9167" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="766.2">98<tspan class="delta"> (±0.0)</tspan></text>
+<rect x="962" y="759.2" width="36.2" height="12" rx="2" style="fill:var(--o55)"/>
+<text class="cost halo" x="962.0" y="793.2">$8.14</text>
+<text class="name" x="50.0" y="831.2">Opus 5.5 high</text>
+<text class="small" x="50.0" y="852.2">the revised Opus 5.5 page</text>
+<text class="small" x="50.0" y="875.0">of 22 September</text>
+<circle class="casing" cx="740.7" cy="835.2" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="835.2" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<text class="num" x="790.0" y="836.2">98</text>
+<rect x="962" y="829.2" width="35.2" height="12" rx="2" style="fill:var(--bg);stroke:var(--o55);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="863.2">$7.92</text>
+<text class="name" x="50.0" y="913.0">Opus 5.5 medium</text>
+<text class="small" x="50.0" y="934.0">the Opus 5.5 page of 29 September</text>
+<text class="seat" x="410.0" y="913.0" style="fill:var(--o55)">cc</text>
+<circle cx="730.3" cy="917.0" r="7.5" data-v="97.2222" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="918.0">97</text>
+<rect x="962" y="911.0" width="27.4" height="12" rx="2" style="fill:var(--o55)"/>
+<text class="cost halo" x="962.0" y="945.0">$6.15</text>
+<line class="grid" x1="50" x2="1150" y1="965.0" y2="965.0"/>
+<text class="grp halo" x="50.0" y="995.0">6 October: Sonnet 5.5 with the Opus 5.5 page and without one</text>
+<text class="name" x="50.0" y="1031.0">Sonnet 5.5 high</text>
+<text class="small" x="50.0" y="1052.0">the Opus 5.5 page of 29 September,</text>
+<text class="small" x="50.0" y="1074.8">two runs</text>
+<circle cx="740.7" cy="1024.8" r="7.5" data-v="97.9167" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<circle cx="740.7" cy="1045.2" r="7.5" data-v="97.9167" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="1036.0">97.9 and 97.9</text>
+<text class="delta" x="790.0" y="1057.0">(±0.0)</text>
+<rect x="962" y="1019.0" width="20.8" height="8" rx="2" style="fill:var(--s55)"/>
+<rect x="962" y="1043.0" width="19.9" height="8" rx="2" style="fill:var(--s55)"/>
+<text class="cost halo" x="962.0" y="1073.0">$4.68 and $4.48</text>
+<text class="name" x="50.0" y="1112.8">Sonnet 5.5 high</text>
+<text class="small" x="50.0" y="1133.8">without a page, two runs</text>
+<text class="seat" x="410.0" y="1112.8" style="fill:var(--s55)">cc sonnet</text>
+<circle class="casing" cx="740.7" cy="1106.5" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="1106.5" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<circle class="casing" cx="740.7" cy="1127.0" r="10.2" style="fill:var(--bg)"/><circle cx="740.7" cy="1127.0" r="7.5" data-v="97.9167" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<text class="num" x="790.0" y="1117.8">97.9 and 97.9</text>
+<rect x="962" y="1100.8" width="21.0" height="8" rx="2" style="fill:var(--bg);stroke:var(--s55);stroke-width:2"/>
+<rect x="962" y="1124.8" width="17.9" height="8" rx="2" style="fill:var(--bg);stroke:var(--s55);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="1154.8">$4.72 and $4.02</text>
+<text class="name" x="50.0" y="1192.8">Sonnet 5.5 max</text>
+<text class="small" x="50.0" y="1213.8">the Opus 5.5 page of 29 September</text>
+<circle cx="740.7" cy="1196.8" r="7.5" data-v="97.9167" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="num" x="790.0" y="1197.8">98<tspan class="delta"> (+1.7)</tspan></text>
+<rect x="962" y="1190.8" width="172.1" height="12" rx="2" style="fill:var(--s55)"/>
+<text class="cost halo" x="962.0" y="1224.8">$38.67</text>
+<text class="name" x="50.0" y="1262.8">Sonnet 5.5 max</text>
+<text class="small" x="50.0" y="1283.8">without a page</text>
+<circle class="casing" cx="714.7" cy="1266.8" r="10.2" style="fill:var(--bg)"/><circle cx="714.7" cy="1266.8" r="7.5" data-v="96.1806" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<text class="num" x="790.0" y="1267.8">96</text>
+<rect x="962" y="1260.8" width="168.4" height="12" rx="2" style="fill:var(--bg);stroke:var(--s55);stroke-width:2"/>
+<text class="cost halo" x="962.0" y="1294.8">$37.84</text>
+<line class="grid" x1="50" x2="1150" y1="1314.8" y2="1314.8"/>
+<text class="tick" x="562.0" y="1338.8" text-anchor="middle">86</text>
+<text class="tick" x="622.0" y="1338.8" text-anchor="middle">90</text>
+<text class="tick" x="682.0" y="1338.8" text-anchor="middle">94</text>
+<text class="tick" x="742.0" y="1338.8" text-anchor="middle">98</text>
+<text class="tick" x="962.0" y="1338.8" text-anchor="middle">$0</text>
+<text class="tick" x="1051.0" y="1338.8" text-anchor="middle">$20</text>
+<text class="tick" x="1140.0" y="1338.8" text-anchor="middle">$40</text>
+<circle class="casing" cx="62.5" cy="1385.4" r="9.2" style="fill:var(--bg)"/><circle cx="62.5" cy="1385.4" r="6.5" style="fill:var(--bg);stroke:var(--ink);stroke-width:2.5"/>
+<text class="legend" x="77.0" y="1390.8">the page it was set against, or without a page</text>
+<circle cx="62.5" cy="1416.2" r="6.5" style="fill:var(--ink);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="77.0" y="1421.6">the newer page of a same-day pair, or alone</text>
+<circle cx="481.8" cy="1416.2" r="6.5" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="496.3" y="1421.6">Opus 5.5</text>
+<circle cx="605.8" cy="1416.2" r="6.5" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="620.3" y="1421.6">Fable 5.1</text>
+<circle cx="731.9" cy="1416.2" r="6.5" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<text class="legend" x="746.4" y="1421.6">Sonnet 5.5</text>
+<text class="note" x="50.0" y="1453.6">Seat tags: the seat that has run that setup since 7 October, except cc, which runs Opus 5.5 medium on the 7 October page,</text>
+<text class="note" x="50.0" y="1476.4">measured here only on the 29 September page.</text>
+</svg>

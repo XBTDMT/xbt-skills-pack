@@ -10,7 +10,7 @@ done, a goal reached, or the whole project complete. The user's request: *update
 are up to date, accurate, factual and trackable, and tell the next agent everything it needs to know; a handoff a
 new thread can start from; an HTML overview of the project and of where we are today, with a file directory.*
 
-**Read `~/.claude/skills/closeout/UPDATING.md` first.** It holds the steps this skill shares with `/project-update`
+**Read `UPDATING.md` in this skill's base directory first.** It holds the steps this skill shares with `/project-update`
 — which doc holds which truth, the three summaries, memory, the skills' records (redman's ledgers, greenman's
 decisions, the commit gate), the pin and overview formats, the audit, the commit —
 and "§ X" below names a section of it. Work **in order**: first what only this session knows (it dies with the
@@ -22,8 +22,8 @@ write is one you observed in this session, with its command — or is marked "no
 
 1. **Write down what only this session knows** — § Note.
 2. **Memory: read it, then update it** — § Memory. Read the entries that touch this work.
-3. **Take stock** — § Take stock, including the skills' records (`facts` → `redman.ledgers`, `greenman`,
-   `pack_side_ledger`, `untracked_records`). Read only; nothing is written until step 6.
+3. **Take stock** — § Take stock, including the skills' records (`facts` → `doc_map`, `lanes`, `redman.ledgers`, `greenman`,
+   `pack_side_ledger`, `untracked_records`; the map's problems are reported first). Read only; nothing is written until step 6.
 4. **Name what closed**, in one line: the kind (gap, milestone, sprint, goal, whole project) and its name in the
    project's own tracking (row, sprint, milestone). Take it from your note and the tracking docs. If they do not
    make it clear — including when the tracking calls the unit done but a ruling or open item of the user's still
@@ -39,28 +39,35 @@ write is one you observed in this session, with its command — or is marked "no
    to done with its evidence (commit, test result, date); counts re-derived the project's way; the next unit becomes
    the current one; what this unit decided or taught (your note) is appended to the project's logs; a ruling the user made
    is one dated line in `CLAUDE.md`; a baseline doc the project lacks is created (§ Baseline); the writes of § The
-   skills' records: the commit gate installed, untracked records committed, redman rows carried and dropped,
-   `real fix owed` records onto *Not decided — for the user*, decision ids onto the closed item, passed S rows dropped. **Whole project
+   skills' records: the commit gate installed, untracked records committed, redman rows carried and dropped (only in
+   the closing lane's ledgers: another lane's wait for its own close-out), `real fix owed` records onto *Not decided —
+   for the user*, decision ids onto the closed item, passed S rows dropped. **Whole project
    closed:** its status says done, with the date and what "done" covered, and the handoff becomes the
    how-to-pick-it-up-again-later document.
-7. **Update everything that repeats them** — § Sources, then everything that repeats them.
-8. **Write the pin** — § Pin. `## Just closed` names this unit and its proof.
+7. **Update everything that repeats them** — § Sources, then everything that repeats them. Where the doc map declares
+   `figures:`, `$H figures . --write` runs first, so every span and generated table is refilled from its source (§ Figures).
+8. **Write the pin** — § Pin: the pin of the lane whose unit closed (`facts` → `pins`). `## Just closed` names this
+   unit and its proof.
 9. **Write the handoff**: `# <Project> — handoff (<date>)`, a `Supersedes` line if there was one, then
    *Where things stand* (one paragraph) · *Just closed, and the proof* · *Read in this order* · *Arrival block*
    (commands + what they printed today) · *What changed since the last handoff, and why* (from your note) ·
    *Where to look* (path → what it is, including which doc is the source of truth for what) · *Do not undo*
-   (things learned the hard way, each with its reason) · *Open items* (including any procedure owed from step 6) ·
-   *Start prompt* — a paste-ready block: the launch line the project already uses (its last handoff or
-   `CLAUDE.md`; else `cd <folder> && claude`), then a prompt that says what to read, to run the arrival block and
-   report the figures it actually sees, and what not to do without asking.
+   (things learned the hard way, each with its reason, each ending with its guard in parentheses: a test name, an eval
+   id or a command) · *Open items* (copied from `facts`: every open ledger row, every record awaiting a ruling or owing
+   a real fix, every *Now* item, plus any procedure owed from step 6; `audit` checks the list where a handoff is
+   declared) · *Start prompt* — a paste-ready block: the launch line from `CLAUDE.md`, else the project's last handoff;
+   else two lines, `cd <folder>` and `claude --model <the seat's full model id>` (never `cd … &&`, never a bare
+   `claude`, whose model is whatever `/model` last wrote). The arrival block never begins with `cd … &&`: the session
+   is already in the folder. Then a prompt that says what to read, to run the arrival block and report the figures it
+   actually sees, and what not to do without asking.
 10. **Write the overview HTML** — § Overview.
 11. **Audit** before anything is committed — § Audit.
 12. **Commit** — § Commit, with `git commit -m "close-out: <what closed> …"`; then `$H stamp <pin>` marks
     that commit (`--keep-marker` only when the pin freezes its marker).
 13. **Report** in plain words, leading with what closed and its proof (or that it did not close, and what is
-    left); then each master doc changed and what was false in it; the memory entries added, changed or removed;
-    the two commits; the audit (0 fail; each warn and why it stays); the commit gate (installed, already there, or no
-    git); untracked records committed; redman rows carried or dropped; greenman records awaiting the user and `revisit:`
+    left); the doc map's problems, if any; then each master doc changed and what was false in it; the memory entries added, changed or removed;
+    the two commits; the audit (0 fail; N pre-existing broken, reported; each warn, whose it is and why it stays); the commit gate
+    (its `install-gate` state line; ran on the last commit: yes, no or no commit); untracked records committed; redman rows carried or dropped; greenman records awaiting the user and `revisit:`
     conditions that fired; open rows in the pack's side ledger; any operation that was refused; what is in flight
     that is not yours; the user's open questions.
 

@@ -1,0 +1,32 @@
+{
+ "parentUuid": "00000000-0000-4000-8000-000000000001",
+ "isSidechain": false,
+ "type": "system",
+ "subtype": "stop_hook_summary",
+ "hookCount": 2,
+ "hookInfos": [
+  {
+   "command": "<HOME>/other-tool/stop.sh",
+   "durationMs": 7
+  },
+  {
+   "command": "/usr/bin/python3 <PACK>/doc-guardrails/turn_check.py",
+   "durationMs": 49
+  }
+ ],
+ "hookErrors": [],
+ "hookAdditionalContext": [],
+ "preventedContinuation": false,
+ "stopReason": "",
+ "hasOutput": false,
+ "level": "suggestion",
+ "timestamp": "2026-09-23T02:22:38.018Z",
+ "uuid": "00000000-0000-4000-8000-000000000002",
+ "toolUseID": "00000000-0000-4000-8000-000000000003",
+ "userType": "external",
+ "entrypoint": "sdk-cli",
+ "cwd": "<case>/project",
+ "sessionId": "00000000-0000-4000-8000-000000000000",
+ "version": "2.1.280",
+ "gitBranch": "main"
+}

@@ -17,10 +17,12 @@ the escape valves: use them instead of overstating or stalling silently.
 
 ## The block
 
-End the turn with this, verbatim in shape. The title is a bare line reading exactly `ELI5 v5` —
-no heading marks, no bold, no emoji (it stays greppable across transcripts). The number is the block's version: it
-changes whenever a line is added, moved or reworded. Receipts before v3 were titled plain `ELI5`; v3 added the version,
-v4 the deep-run, mixed-turn and ruling forms of the Redman and Greenman lines; v5 (2026-09-22, the user's order) groups
+End the turn with this, verbatim in shape. The block is a format the user asked for: a doctrine layer's rules for the
+final message (no bullet fragments, no bolded labels, no arrow chains) govern the prose above it, not the block. The
+title is a bare line reading exactly `ELI5 v5` — no heading marks, no bold, no emoji (it stays greppable across
+transcripts). The number is the block's version: it changes whenever a line is added, moved or relabelled; a new form
+on an existing line does not change it. Receipts before v3 were titled plain `ELI5`; v3 added the version,
+v4 the deep-run, mixed-turn and ruling forms of the Redman and Greenman lines; v5 (2026-09-22) groups
 the lines into four parts separated by blank lines, moves Fail beside Proof and Next beside Need from you, and closes
 with one sentence.
 
@@ -34,7 +36,7 @@ ELI5 v5
 - Files:
 
 - Redman: off | NA | filed N small → <ledger path> | held N — no edits allowed | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
-- Greenman: NA | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected | G-<n> (L): awaiting you — <question> | ruled by the user → <ledger path>
+- Greenman: NA | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected → <record path> | G-<n> (M): awaiting you — <question> → <record path> | G-<n> (L): awaiting you — <question> → <record path> | G-<n> (L): <chose> over <others> — delegated by the user → <record path> | G-<n> (<depth>): shortcut taken — real fix owed → <record path> | held — no edits allowed (<depth> call in the report) | ruled by the user → <ledger path>
 
 - Next:
 - Need from you: <one question, and how it serves the goal | none>
@@ -42,6 +44,10 @@ ELI5 v5
 - Goal: <macro id · micro id> — <one line> · goal changed: no | yes, <old goal → new goal>
 - In one sentence:
 ```
+
+A hook tells a running or resumed session, once per change, when a skill file it holds has changed — the skill's
+SKILL.md, or any other file of that skill the session read; read the file it names with the Read tool, in full (a
+shell read such as `cat` does not count as reading it).
 
 The four parts read in order: what happened (Did to Files), what the watchdogs saw (Redman, Greenman), what comes
 next (Next, Need from you), and the goal with the one-sentence close. The blank lines are part of the shape: they
@@ -58,6 +64,8 @@ pasted into any turn's block is worthless.
   coordinates were stale (and you flagged it)"), but a Why that is only "the user said so" reads as obedience, not
   understanding, and the user asked for the reason (2026-09-22). Do not restate Did.
 - **Result** — exactly one of `worked` / `failed` / `unclear`. `unclear` is a real answer; prefer it over a hopeful `worked`.
+  A step the turn owed that failed or was refused (a write the settings denied, a check that did not run) makes it
+  `unclear` when the rest was done, `failed` when the main work was not, never `worked`: the Fail line names that step.
 - **Proof** — the specific evidence: command + the key output line, `file:line`, test counts, a URL, a screenshot path. If you did not verify it, write `none — not verified`. Never cite output you did not see.
 - **Fail** — only when Result is `failed` or `unclear`: what broke, plus a *durable* fix (a mechanism, not "remember to…"). It sits directly under Proof so the failure and its evidence are read together. Omit the whole line when it worked.
 - **Files** — paths created/edited/deleted this turn, comma-separated, or `none`.
@@ -66,7 +74,8 @@ pasted into any turn's block is worthless.
   enough to pick up cold); `held N — no edits allowed` when findings came up but the task forbade edits, so they are in
   the report and not in a ledger; `big: <finding> → <ledger path> — now or later?` when a big one came up: it is **filed first,
   as a row, and the line names the ledger it went to** (a big finding that reaches the user only as a question was never
-  recorded; every finding, big or small, is a row), then asked (the same ask goes in Need from you), followed by
+  recorded; every finding, big or small, is a row (unless the task forbids edits: then even a big finding is held,
+  counted in `held N`)), then asked (the same ask goes in Need from you), followed by
   `+N small → <ledger path>` if small ones were filed too; `deep run <path>: paused, N for
   you` · `converged` · `NOT CONVERGED, N open` for a `/redman <path>` run. A turn that filed to the project's ledger
   and the pack's side ledger names both paths. Nothing filed is `NA`, never `filed 0 small`. Always present, so a
@@ -74,9 +83,18 @@ pasted into any turn's block is worthless.
 - **Greenman** — always directly under Redman, and always present (greenman is on all the time, so it has no
   `off`). `NA` when no real choice came up this turn (never `decided 0 small`); `decided N small → <ledger path>` when only small calls were
   made (never listed); `G-<n> (M): <chose> over <the others>, <shortcut> rejected` when a medium decision was made
-  and acted on; `G-<n> (L): awaiting you — <the question>` when a large one stopped for the user (the same question goes
+  and acted on; `G-<n>` is the record's id as its project or lane writes it (a lane with `decision ids: G-A<n>`
+  writes `G-A<n>`, its letter before the number); `G-<n> (L): awaiting you — <the question>` when a large one stopped for the user (the same question goes
   in Need from you); `ruled by the user → <ledger path>` (with `G-<n>` at M or L) when the user overruled a pushback and
-  the ruling was recorded. Several decisions in one turn: the highest-depth one, then `+N more → <ledger path>`.
+  the ruling was recorded. Every form that names a `G-<n>` ends `→ <record path>`, the `G-<n>-<slug>.md` file greenman
+  wrote for the call, so an id with no record behind it shows; a record outside this checkout (a build worktree's,
+  not yet merged) is named by its absolute path, which the end-of-turn check accepts as the record.
+  `G-<n> (M): awaiting you — <the question>` when a medium call asks instead of acting, because its route is not
+  reversible or not in scope (the question goes in Need from you). `G-<n> (L): <chose> over <the others> — delegated by the user` when a large call was made and acted on because
+  the user plainly delegated it; it stays L. `G-<n> (<depth>): shortcut taken — real fix owed` when a labelled shortcut
+  was taken at the call's depth and the real fix is still owed. `held — no edits allowed (<depth> call in the report)`
+  when a call was made under a task that forbids edits: no row or file was written, and the call is in the report.
+  Several decisions in one turn: the highest-depth one, then `+N more → <ledger path>`.
 - **Next** — the single next action, or `nothing — waiting on you`.
 - **Need from you** — at most **one** question, or `none`. If two things need deciding, ask the one that blocks, and put the other in Next.
   **The question connects to the Goal line**: it says in a few words how answering it serves the goal ("push the chart
@@ -126,3 +144,6 @@ call, not after — otherwise the turn ends with no receipt.
   one exception is a turn ending in a question tool, where it goes just before the call.
 - Plain language. No jargon except the names of things the user owns.
 - The block never replaces the normal answer — it follows it.
+- The end-of-turn receipt check holds a turn once when its block breaks this shape (a line out of order, a
+  Fail line beside `worked`, an empty Proof, a missing line) and names each error: rewrite the block, keeping every
+  fact it reported.

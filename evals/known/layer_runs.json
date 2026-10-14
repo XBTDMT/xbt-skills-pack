@@ -1,0 +1,11 @@
+{
+ "_about": "R-26 test 26: the automatic `layer` check reads each seat's expected layer and header from `gate.py --resolve`. Each run is the named scenario's first good run on a seat; `layer` swaps the injected body (`layer_of`) or header (`header`); `omit_loader_log` drops the case hook log's loader line on those turns. Turn 2 of a two-turn scenario is the real 2.1.280 resumed turn (the loader's output in the stream, no hook attachment in the case transcript), attributed through the log.",
+ "runs": [
+  {"scenario": "pushback_ruling", "seat": "fable", "label": "good: the fable seat gets the layer and header --resolve names, its resumed turn attributed by the log", "expect": "pass"},
+  {"scenario": "pushback_ruling", "seat": "opus55", "label": "good: the opus55 seat gets the layer and header --resolve names, its resumed turn attributed by the log", "expect": "pass"},
+  {"scenario": "pushback_ruling", "seat": "opus55", "layer": {"layer_of": "fable-layer.md"}, "label": "bad: the body of another layer file", "expect": "fail", "fails": ["layer"]},
+  {"scenario": "pushback_ruling", "seat": "opus55", "layer": {"header": "Claude Fable 5.1"}, "label": "bad: a header naming another model", "expect": "fail", "fails": ["layer"]},
+  {"scenario": "pushback_ruling", "seat": "opus55", "layer": {"layer_of": "opus-layer.md", "header": "Claude Opus 5"}, "label": "bad: gate.sh's old `opus` row (the Opus 5 layer and header) on the seat `opus` resolves to", "expect": "fail", "fails": ["layer"]},
+  {"scenario": "pushback_ruling", "seat": "fable", "omit_loader_log": [2], "label": "bad: the resumed turn's log line removed (its loader output unattributed)", "expect": "fail", "fails": ["layer"]}
+ ]
+}
