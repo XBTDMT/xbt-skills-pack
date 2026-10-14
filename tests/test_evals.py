@@ -35,6 +35,17 @@ SPEC = json.loads((Path(__file__).resolve().parent.parent / "evals" / "scenarios
 CLI_EXT = ".cmd" if os.name == "nt" else ""
 
 
+def remove_tree(path):
+    """shutil.rmtree of a folder that may be gone already, also on Windows, where git's object files are read-only
+    and os.unlink refuses them (WinError 5)."""
+    if not os.path.lexists(path):
+        return
+    for p in Path(path).rglob("*"):
+        if p.is_file() and not p.is_symlink():
+            os.chmod(p, 0o600)
+    shutil.rmtree(path)
+
+
 def write_fake_cli(path, version, lines=()):
     """A fake claude at `path` (+ CLI_EXT): `--version` prints `<version> (Claude Code)`, anything else prints `lines`,
     one per line. A shell script on macOS and Linux; a batch file on Windows. Returns its path."""
@@ -2370,7 +2381,10 @@ class BatchBinary(unittest.TestCase):
         resolved = Path(str(name) + CLI_EXT)
         for action, new in ((lambda: self.fake(name, "2.1.282"), "2.1.282"), (lambda: resolved.unlink(), "missing")):
             self.fake(name, "2.1.281")                                    # each round starts on 2.1.281
-            shutil.rmtree(self.tmp / "out", ignore_errors=True)
+            # gone for certain: git's read-only objects survive rmtree(ignore_errors=True) on Windows, and a case
+            # folder left behind fails the next round's build before any launch
+            remove_tree(self.tmp / "out")
+            self.assertFalse((self.tmp / "out").exists())
             grades, changed, calls = self.batch(action)
             self.assertEqual(changed, ("2.1.281", new))
             self.assertEqual(len(self.launches(calls)), 2)               # nothing launched after the change
@@ -3173,7 +3187,10 @@ class Isolation(unittest.TestCase):
         granted, _, _ = self.launches(dict(plain, id="q", allowed_tools=["Workflow"]))
         self.assertEqual(len(granted), 2)
         for before, after in zip(cmds, granted):
-            after = [a.replace("/q-fable/", "/p-fable/").replace("-q-fable-", "-p-fable-") for a in after]
+            # the case folder's name, wherever a path names it: between separators of either kind (…\q-fable\scratch
+            # on Windows), and in the projects folder's name
+            after = [re.sub(r"([\\/])q-fable([\\/])", r"\1p-fable\2", a).replace("-q-fable-", "-p-fable-")
+                     for a in after]
             after.remove("Workflow")
             self.assertEqual(after, before)
 
@@ -3369,7 +3386,9 @@ class SkillChangedKnownRuns(unittest.TestCase):
         _, case = self.graded(s, known_of(s, "fixes R-1"))
         summary = [json.loads(l) for l in (case / "transcripts" / "known.jsonl").read_text(encoding="utf-8").splitlines()
                    if '"stop_hook_summary"' in l]
-        self.assertTrue(any(i["command"].endswith("eli5/receipt_check.py") for r in summary for i in r["hookInfos"]))
+        # by the grader's own suffix rule, which reads a Windows path's separators as "/"
+        self.assertTrue(any(evals.ends_with_script(i["command"], "eli5/receipt_check.py") for r in summary
+                            for i in r["hookInfos"]))
         never = known_of(s, "never ran")
         self.assertTrue(any(h.get("stream") and h["event"] == "Stop" for t in never["turns"] for h in t.get("hooks") or []))
 
