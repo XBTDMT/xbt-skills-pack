@@ -841,5 +841,104 @@ class OutsideSequence(Base):
                 self.assertEqual(error["where"], "CLAUDE.md:9")
 
 
+# ---------------------------------------------------------------------------------------------------- range rows
+
+RANGE_MAIN_LEDGER = (GREENMAN_HEAD + "| d | G-852 | a ruling before the folder | L | decided |\n"
+                     "| d | G-13 .. G-15 | void: cited, never recorded | — | decided — void |\n")
+RANGE_LANE_LEDGER = (GREENMAN_HEAD + "| d | G-1 | an audit call | M | decided |\n"
+                     "| d | G-40–G-46 | void: cited on receipts, never recorded | — | decided — void |\n"
+                     "| d | G-A53-G-A55 | void | — | decided — void |\n"
+                     "| d | G-A60..G-A62 | void | — | decided — void |\n"
+                     "| d | G-47–G-A49 | across two forms: not a range | — | decided |\n"
+                     "| d | G-58–G-56 | descending: not a range | — | decided |\n")
+
+
+class RangeRows(Base):
+    """One ledger row may record a run of ids together (a lane that voided G-40–G-46, quoted and never recorded):
+    its id cell is a range, `G-<a>–G-<b>`, `G-<a>-G-<b>` or `G-<a>..G-<b>`, both ends one form, ascending, and it
+    records every id in it, for the receipt check, a citation, the branch lookup and the next id alike. Known-bad
+    for the reading that took only a single id per cell: G-46 read unresolved, and a voided number could be minted
+    again. A doc map's `decision ids outside sequence` never stands in for a record."""
+
+    def build(self, claude_md=OUTSIDE_MAIN):
+        files = {"CLAUDE.md": claude_md, "README.md": "# p\n", "knowledge/00-PROJECT-ROADMAP.md": ROADMAP_ROWS,
+                 "knowledge/audit/AUDIT-ROADMAP.md": LANE_ROADMAP,
+                 "knowledge/greenman/LEDGER.md": RANGE_MAIN_LEDGER,
+                 "knowledge/audit/greenman/LEDGER.md": RANGE_LANE_LEDGER}
+        for n in range(7, 13):
+            files[f"knowledge/greenman/G-{n}-main-record.md"] = f"# G-{n}\nroadmap: none — a record\n"
+        return self.project(files)
+
+    def test_a_range_cell_is_read_as_each_id_in_it(self):
+        self.assertEqual(closeout.ledger_row_ids(
+            "| id | x |\n|---|---|\n| G-40–G-42 | en dash |\n| G-5-G-6 | hyphen |\n| G-A1..G-A2 | dots |\n"
+            "| G-8 .. G-9 | spaced |\n| G-1–G-A3 | two forms |\n| G-9–G-7 | descending |\n| G-11 | one |\n"
+            "| G-20–G-20 | one-id range |\n"),
+            [(3, "G-40"), (3, "G-41"), (3, "G-42"), (4, "G-5"), (4, "G-6"), (5, "G-A1"), (5, "G-A2"),
+             (6, "G-8"), (6, "G-9"), (9, "G-11"), (10, "G-20")])
+        self.assertEqual(closeout.id_range("G-40–G-46", closeout.LEDGER_RANGE_SEPS),
+                         [f"G-{n}" for n in range(40, 47)])
+        self.assertIsNone(closeout.id_range("G-40–G-46"))               # the doc map's form is `..` alone
+        self.assertEqual(closeout.id_range("G-1..G-3"), ["G-1", "G-2", "G-3"])
+
+    def test_a_range_row_records_every_id_in_it(self):
+        self.build()
+        ids = closeout.decision_ids(self.root)
+        self.assertLessEqual({f"G-{n}" for n in range(40, 47)} | {"G-A53", "G-A54", "G-A55", "G-A60", "G-A61",
+                                                                  "G-A62", "G-13", "G-14", "G-15"}, ids)
+        self.assertFalse({"G-39", "G-47", "G-48", "G-49", "G-A49", "G-56", "G-57", "G-58", "G-A40", "G-A46",
+                          "G-A56", "G-A59", "G-A63", "G-16"} & ids)
+        self.assertLessEqual({"G-40", "G-46", "G-A54"}, closeout.decision_ids(self.root, lane="audit"))
+        self.assertNotIn("G-14", closeout.decision_ids(self.root, lane="audit"))      # main's range, not the lane's
+        self.assertEqual(closeout.resolve_decision_id(self.root, "G-44", "knowledge/audit/a-note.md"),
+                         "knowledge/audit/greenman/LEDGER.md:4")
+        self.assertEqual(closeout.resolve_decision_id(self.root, "G-14", "knowledge/x-spec.md"),
+                         "knowledge/greenman/LEDGER.md:4")
+        self.assertIsNone(closeout.resolve_decision_id(self.root, "G-44", "knowledge/x-spec.md"))   # not main's
+        self.assertIsNone(closeout.resolve_decision_id(self.root, "G-A46", "knowledge/audit/a-note.md"))
+
+    def test_an_id_declared_outside_the_sequence_resolves_only_with_a_record(self):
+        """G-46 is in the lane's declared G-1..G-52 and in its range row: it resolves. G-50 is declared and has no
+        record, G-6 is declared in main and has none: both stay unresolved, as a citation of one does. G-A46 has the
+        lane's letter, which the plain range G-40–G-46 does not cover."""
+        self.build()
+        self.assertEqual(self.problems(level="ERROR"), [])
+        want = ["G-46", "G-852", "G-14", "G-6", "G-50", "G-A46", "G-47", "G-16"]
+        self.assertEqual(closeout.resolved_decision_ids(self.root, want), {"G-46", "G-852", "G-14"})
+        self.setUp()
+        self.build(OUTSIDE_MAIN.replace("decision ids outside sequence: G-6, G-852\n", "")
+                   .replace("decision ids outside sequence: G-1..G-52\n", ""))
+        self.assertEqual(closeout.resolved_decision_ids(self.root, want), {"G-46", "G-852", "G-14"})   # the record
+
+    def test_a_range_row_on_a_branch_resolves_and_an_old_cache_is_not_trusted(self):
+        closeout._BRANCH_IDS.clear()
+        self.build()
+        git(self.root, "checkout", "-q", "-b", "audit-void")
+        self.write("knowledge/audit/greenman/LEDGER.md",
+                   RANGE_LANE_LEDGER + "| d | G-70–G-72 | void on the lane's branch | — | decided — void |\n")
+        git(self.root, "commit", "-qam", "void on the branch")
+        git(self.root, "checkout", "-q", "main")
+        self.assertNotIn("G-71", closeout.decision_ids(self.root))
+        cache = self.tmp / "state" / "decision-ids"
+        self.assertEqual(closeout.resolved_decision_ids(self.root, ["G-71", "G-73"], cache=cache), {"G-71"})
+        # a cache written by the reader that took one id per cell holds the same heads without the range's ids
+        (where,) = list(cache.iterdir())
+        data = json.loads(where.read_text(encoding="utf-8"))
+        old = {"version": 1, "common": data["common"], "folders": data["folders"],
+               "heads": {k: [i for i in v if not re.fullmatch(r"G-(4[0-6]|7[0-2]|1[3-5]|A5[3-5]|A6[0-2])", i)]
+                         for k, v in data["heads"].items()}}
+        where.write_text(json.dumps(old), encoding="utf-8")
+        closeout._BRANCH_IDS.clear()                                    # a new process: only the file is left
+        self.assertIn("G-71", closeout.branch_decision_ids(self.root, cache))
+
+    def test_a_range_row_sets_the_next_id(self):
+        """No number a range row records is minted again: the lane's G-A60..G-A62 sets its floor, main's
+        G-13 .. G-15 sets main's, and main's declared G-852 still does not."""
+        self.build()
+        lanes = closeout.facts(self.root)["lanes"]
+        self.assertEqual(lanes["main"]["next_decision_id"], "G-16")
+        self.assertEqual(lanes["audit"]["next_decision_id"], "G-A63")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -153,6 +153,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-10-11 | 49 | **49 / 49** | Opus 5.5 22/22, Fable 27/27: the complete pass, in fresh sessions on the pack as it ships; full_flow passes with its /project-update receipt in shape, and the live receipt check ran 91 times across the 49 sessions without holding one |
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set on the pack as it ships, on the reviewed Claude Code 2.1.295 put first on PATH for the batch (the local CLI had moved to 2.1.299): every case passes, closeout_records among them, whose run table now matches each failure by scenario and seat |
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set after the three Windows fix rounds, on the pack as it ships (main 19a39a5), on the reviewed Claude Code 2.1.295 first on PATH: every case passes, so the shipped skill and loader changes those rounds made are measured |
+| 2026-10-14 | 19 (quick) | **19 / 19** | the quick set after closeout.py's ledger reader learned to read a row that records a range of decision ids, on the pack as it ships (main 3eecd53), on the reviewed Claude Code 2.1.295 first on PATH: every case passes, so the shipped skill change is measured |
 
 plus 62 targeted runs (`--only`), 70/102 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -586,8 +587,8 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->523<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.17<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->528<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$9.62<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its
 snapshot after every turn (`record.json`), with the run's `grades.json` beside them. Nothing is uploaded anywhere.

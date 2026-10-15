@@ -45,7 +45,9 @@ roadmap: none — the project's greenman ledger; each row names its own roadmap 
 ```
 
 Columns: date · id (`G-<n>` for M and L; `S` for a small call) · the choice · depth · status · chose · rejected, and
-which were shortcuts · `roadmap:` · revisit. Rows dated, rewritten in place. An S row is the whole record of that
+which were shortcuts · `roadmap:` · revisit. One row may record a run of ids together (ids quoted and never recorded,
+voided as a group): its id cell is a range, `G-<a>–G-<b>`, `G-<a>-G-<b>` or `G-<a>..G-<b>`, both ends one form, and it
+records every id in it, so a citation of one resolves and none is minted again. Rows dated, rewritten in place. An S row is the whole record of that
 call; `/closeout` drops S rows it has passed. M and L rows stay: they index the `G-` files. `facts` reads the status
 column too, so an S row marked `shortcut taken — real fix owed` still surfaces at close-out. `/closeout` reads the
 ledger by its header names (`id`, `status`, `the choice`, `roadmap`): keep the header row, keep every row inside the

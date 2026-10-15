@@ -1634,21 +1634,36 @@ KEYS = {
 }
 OUTSIDE_KEY = "decision ids outside sequence"
 OUTSIDE_ONE_RE = re.compile(r"^G-([A-Z]{0,4})(\d+)$")
-OUTSIDE_RANGE_RE = re.compile(r"^G-([A-Z]{0,4})(\d+)[ \t]*\.\.[ \t]*G-([A-Z]{0,4})(\d+)$")
+ID_RANGE_RE = re.compile(r"^G-([A-Z]{0,4})(\d+)[ \t]*(\.\.|–|-)[ \t]*G-([A-Z]{0,4})(\d+)$")
 OUTSIDE_RANGE_MAX = 100000
+LEDGER_RANGE_SEPS = ("..", "–", "-")   # a ledger row's id cell: `G-<a>..G-<b>`, `G-<a>–G-<b>` (en dash), `G-<a>-G-<b>`
+
+
+def id_range(text, seps=("..",)):
+    """The ids, ascending, of one range of decision ids `G-<P><a><sep>G-<P><b>` (`sep` one of `seps`; the doc map's
+    form is `..` alone), or None when the text is not one: both ends carry the same letters (`G-<a>..G-A<b>` is not a
+    range), a <= b, at most OUTSIDE_RANGE_MAX apart. The doc map's `decision ids outside sequence` and a ledger row
+    whose id cell is a range read it here."""
+    m = ID_RANGE_RE.match(text)
+    if not m or m.group(3) not in seps or m.group(1) != m.group(4):
+        return None
+    a, b = int(m.group(2)), int(m.group(5))
+    if a > b or b - a > OUTSIDE_RANGE_MAX:
+        return None
+    return [f"G-{m.group(1)}{n}" for n in range(a, b + 1)]
 
 
 def parse_outside(value):
     """(ids, bad entries) of a `decision ids outside sequence` value: ids (`G-<n>`) and ranges (`G-<a>..G-<b>`, one form,
-    ascending), comma-separated."""
+    ascending; id_range), comma-separated. Listing an id there never records it: a citation of one resolves only in a
+    record or ledger row of its section's folder."""
     ids, bad = set(), []
     for entry in _entries(value or ""):
-        one, rng = OUTSIDE_ONE_RE.match(entry), OUTSIDE_RANGE_RE.match(entry)
+        one, rng = OUTSIDE_ONE_RE.match(entry), id_range(entry)
         if one:
             ids.add(f"G-{one.group(1)}{int(one.group(2))}")
-        elif rng and rng.group(1) == rng.group(3) and int(rng.group(2)) <= int(rng.group(4)) \
-                and int(rng.group(4)) - int(rng.group(2)) <= OUTSIDE_RANGE_MAX:
-            ids.update(f"G-{rng.group(1)}{n}" for n in range(int(rng.group(2)), int(rng.group(4)) + 1))
+        elif rng is not None:
+            ids.update(rng)
         else:
             bad.append(entry)
     return ids, bad
@@ -2457,6 +2472,7 @@ def _ro_git(root, *args):
 
 
 _BRANCH_IDS = {}   # (folders, commit) -> ids: this process's memo of commit_decision_ids
+BRANCH_CACHE_VERSION = 2   # the reader's version: 2 reads a range row's ids; a file of another version is read again
 
 
 def commit_decision_ids(top, commit, folders):
@@ -2511,7 +2527,7 @@ def branch_decision_ids(folder, cache=None):
         where = Path(cache) / f"{zlib.crc32(common.encode('utf-8', 'surrogateescape')):08x}.json"
         try:
             data = json.loads(where.read_text(encoding="utf-8"))
-            if data.get("version") == 1 and data.get("common") == common and data.get("folders") == spec:
+            if data.get("version") == BRANCH_CACHE_VERSION and data.get("common") == common and data.get("folders") == spec:
                 saved = {k: set(v) for k, v in data["heads"].items()}
         except (OSError, ValueError, TypeError, KeyError, AttributeError):
             saved = {}
@@ -2529,7 +2545,7 @@ def branch_decision_ids(folder, cache=None):
         try:
             where.parent.mkdir(parents=True, exist_ok=True)
             tmp = where.parent / f".{where.name}.{os.getpid()}.tmp"
-            tmp.write_text(json.dumps({"version": 1, "common": common, "folders": spec,
+            tmp.write_text(json.dumps({"version": BRANCH_CACHE_VERSION, "common": common, "folders": spec,
                                        "heads": {k: sorted(v) for k, v in now.items()}}), encoding="utf-8")
             os.replace(tmp, where)
         except OSError:
@@ -2564,11 +2580,20 @@ _TABLE_SEP_RE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
 _DECISION_ID_RE = re.compile(r"G-[A-Z]{0,4}\d+")
 
 
+def _cell_ids(cell):
+    """The decision ids one id cell records: the id it is, or every id of the range it is (id_range, in a ledger's
+    spellings LEDGER_RANGE_SEPS: one row may record a run of ids together, ids voided as a group); else none."""
+    if _DECISION_ID_RE.fullmatch(cell):
+        return [cell]
+    return id_range(cell, LEDGER_RANGE_SEPS) or []
+
+
 def ledger_row_ids(text):
     """[(line number, id)] of a decision ledger's rows, read by the header's `id` column wherever it stands (a ledger
     is read by column name, and one may put `id` first, another second). A table whose header has no
     `id` column, and rows before any header, fall back to the first two cells. A header is a `|` line followed by a
-    separator row, as ledger_table reads it."""
+    separator row, as ledger_table reads it. A cell that is a range (`G-<a>–G-<b>`) gives each id in it, at its row's
+    line (_cell_ids)."""
     lines = text.splitlines()
     out, col = [], None
     for n, line in enumerate(lines, 1):
@@ -2580,7 +2605,7 @@ def ledger_row_ids(text):
             continue
         cells = _cells(line)
         cands = cells[:2] if col is None else cells[col:col + 1]
-        out += [(n, c) for c in cands if _DECISION_ID_RE.fullmatch(c)]
+        out += [(n, i) for c in cands for i in _cell_ids(c)]
     return out
 
 
@@ -2768,10 +2793,12 @@ def _decision_numbers(text_names, letters, outside=()):
 
 
 def _ledger_ids(text):
+    """Every decision id any cell of a ledger's table lines records, a range cell's ids included (_cell_ids), so no
+    number a row records is minted again."""
     ids = []
     for line in text.splitlines():
         if line.lstrip().startswith("|"):
-            ids += [c for c in _cells(line) if re.fullmatch(r"G-[A-Z]{0,4}\d+", c)]
+            ids += [i for c in _cells(line) for i in _cell_ids(c)]
     return ids
 
 
