@@ -12,12 +12,13 @@ Two different things are measured, and they are not the same claim:
    when they stop working.
 2. **Does the optional doctrine layer produce better outcomes than running without it?** Measured on the nine-task
    set, which the doctrine pages were written from, each configuration with a page and without one; and on a held-out
-   set of eight tasks no page was written from, where the 29 September and 7 October page revisions were each measured
+   set of eight tasks no page was written from, where the 29 September, 7 October and 19 October page revisions were each measured
    against the page they replaced, Opus 5.5 medium ran the 29 September page with no control run, and Sonnet 5.5 ran
    with the Opus 5.5 page and without one. Answer: on the nine-task set the page scored better than running without one on some configurations, better by just past
    the noise rule on others, and level within noise on the rest; <!-- fig:doctrine.nine.pairs_lower -->4<!-- /fig --> of the <!-- fig:doctrine.nine.pairs -->15<!-- /fig --> pairs went the wrong way, all within
-   noise, the largest Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->. The verdicts per configuration are below. On the held-out set every setup scored level within noise of the others,
-   and cost is what separates them.
+   noise, the largest Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->. The verdicts per configuration are below. On the held-out set every page scored level within noise of the page it was
+   set against by the judge's scores (by the script alone Opus 5's 19 October page is <!-- fig:doctrine.held.script_gap.opus5_oct26 -->−5.7<!-- /fig -->, just past the rule),
+   and cost is what separates the setups most.
 
 Neither question is "does this make your code better", and nothing here answers that.
 
@@ -154,8 +155,9 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set on the pack as it ships, on the reviewed Claude Code 2.1.295 put first on PATH for the batch (the local CLI had moved to 2.1.299): every case passes, closeout_records among them, whose run table now matches each failure by scenario and seat |
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set after the three Windows fix rounds, on the pack as it ships (main 19a39a5), on the reviewed Claude Code 2.1.295 first on PATH: every case passes, so the shipped skill and loader changes those rounds made are measured |
 | 2026-10-14 | 19 (quick) | **19 / 19** | the quick set after closeout.py's ledger reader learned to read a row that records a range of decision ids, on the pack as it ships (main 3eecd53), on the reviewed Claude Code 2.1.295 first on PATH: every case passes, so the shipped skill change is measured |
+| 2026-10-26 | 19 (quick) | **19 / 19** | after the Fable and Opus 5 pages gained the full-path rule |
 
-plus 62 targeted runs (`--only`), 70/102 cases passed; every run is in `evals/RUNS.jsonl`
+plus 64 targeted runs (`--only`), 70/104 cases passed; every run is in `evals/RUNS.jsonl`
 
 <!-- /fig-table -->
 
@@ -201,6 +203,9 @@ anything.
   work done without them. That control has since run; its results are in *The skills with and without* below.
 - One session per case per run. Sessions are not deterministic; a single pass is weak evidence for any one case,
   and the targeted re-runs (`--only`, counted under the run table) are where a specific behaviour was checked harder.
+  `--confirm <run>` re-runs only the cases a run failed, four fresh sessions each, and `--repeat N` runs any
+  selection N times; each case then gets one verdict (held, flaky or fails), recorded apart from the quick and
+  full results.
 - It runs on a few small codebases — real repositories with git, a plan and source files, but small ones.
 - Two model seats, one person's design of the scenarios.
 
@@ -311,7 +316,7 @@ lie within <!-- fig:doctrine.effort.opus55_bare_spread -->2.3<!-- /fig --> point
 below, with one clause added for readers without the superpowers plugin: the rule that its brainstorming settles what
 is built applies only when that plugin is installed.
 
-Sonnet 5.5 has no page of its own: the loader gives it the Opus 5 page (`opus-layer.md`, its 15 September version).
+Sonnet 5.5 has no page of its own: the loader gives it the Opus 5 page (`opus-layer.md`; these runs had its 15 September version).
 On <!-- fig:doctrine.when.sonnet55_opus5_page -->30 September and 5 October<!-- /fig --> it ran without a page and with that page: <!-- fig:doctrine.SNQ.score -->93<!-- /fig --> against <!-- fig:doctrine.SNQD.score -->93<!-- /fig --> at high effort
 (<!-- fig:doctrine.gap.SNQD_SNQ -->−0.7<!-- /fig -->: <!-- fig:doctrine.verdict.SNQD_SNQ -->level within noise<!-- /fig -->), <!-- fig:doctrine.SNZ.score -->93<!-- /fig --> against <!-- fig:doctrine.SNZD.score -->91<!-- /fig --> at max (<!-- fig:doctrine.gap.SNZD_SNZ -->−2.1<!-- /fig -->: <!-- fig:doctrine.verdict.SNZD_SNZ -->level within noise<!-- /fig -->), where
 the page's delegation rule spawned <!-- fig:doctrine.SNZD.agents -->9<!-- /fig --> agents. On <!-- fig:doctrine.when.sonnet55_opus55_page -->5 October<!-- /fig --> it ran without a page again and with the Opus 5.5
@@ -355,26 +360,38 @@ none of the synced skills listed.*
 ### A held-out set: eight tasks no doctrine page was written from
 
 A second set of eight tasks, built in two other repositories by agents that never read a page, was run
-<!-- fig:doctrine.heldout_runs -->15<!-- /fig --> times on <!-- fig:doctrine.when.heldout -->6–7 October<!-- /fig --> 2026, each run one setup (the 29 September pages ran on both days), one fresh
-session per task. The prose answers of three tasks were scored by a blind judge: an agent that read each task's
+<!-- fig:doctrine.heldout_runs -->19<!-- /fig --> times on <!-- fig:doctrine.when.heldout -->6–7, 23 and 25 October<!-- /fig --> 2026, each run one setup (the 29 September pages ran on both 6 and 7 October), one fresh
+session per task. The four runs of the 19 October pages and their controls ran their first two tasks on 23 October
+and the rest on 25 October. They ran under different conditions from the earlier runs: as a second user on the same
+machine, one that cannot read the author's stored credentials, on Claude Code 2.1.303 (the 7 October runs had 2.1.293), with the
+prompts' and two task repositories' paths rewritten to that user's home, the database ports and Docker closed to it,
+and without the account's synced skills (see the limits below). Two runs of 7 October rescored under those conditions
+to their recorded <!-- fig:doctrine.HX5.score -->94<!-- /fig --> and <!-- fig:doctrine.HX5C.score -->98<!-- /fig --> before the first of those tasks ran and again after the last; HX5's first rescore had read 86, until
+the two task repositories that name the author's home were moved to that user's. A first launch of those
+runs, on 21 October, was voided because its sessions could reach the author's stored credentials, and rerun this
+way. The prose answers of three tasks were scored by a blind judge: an agent that read each task's
 answer key and the answers shuffled under labels, the key from label to run held apart; one of those tasks' three
 checks, on the repository, stayed the script's, and every other task is the script's. Once, in the Sonnet 5.5
 recheck's packet, an answer's first line named its model and doctrine state (the prompts ask for it); the judge set it
 aside, and the next packet stripped that line. The rule, set before the run: with one run per task, a gap of
-<!-- fig:doctrine.held.rule -->5<!-- /fig --> points or less is level within noise. Every setup scored <!-- fig:doctrine.held.score_range -->94–98<!-- /fig -->, so on these tasks neither the
-page nor the model separates the setups on correctness, and what differs is cost: <!-- fig:doctrine.held.cost.sonnet55_high -->$4.02–$4.72<!-- /fig --> for the eight
-tasks on Sonnet 5.5 high, <!-- fig:doctrine.held.cost.opus55_medium -->$6.15<!-- /fig --> on Opus 5.5 medium, <!-- fig:doctrine.held.cost.opus55_high -->$7.01–$8.14<!-- /fig --> on Opus 5.5 high, <!-- fig:doctrine.held.cost.fable_low -->$11.33–$12.56<!-- /fig --> on
-Fable 5.1 low, and <!-- fig:doctrine.held.cost.sonnet55_max -->$37.84–$38.67<!-- /fig --> on Sonnet 5.5 at max effort. Sonnet 5.5 high scored the same with the Opus 5.5 page as
-without one. The set is near its ceiling: <!-- fig:doctrine.held.ceiling_runs -->12<!-- /fig --> of the <!-- fig:doctrine.heldout_runs -->15<!-- /fig --> runs scored <!-- fig:doctrine.held.ceiling_exact -->97.9<!-- /fig -->, each missing the same
+<!-- fig:doctrine.held.rule -->5<!-- /fig --> points or less is level within noise. Every setup scored <!-- fig:doctrine.held.score_range -->91–98<!-- /fig -->, and by the judge's scores no page scored apart from the page it was set
+against by more than the rule, so on these tasks the page does not separate the setups on correctness; what differs
+most is cost: <!-- fig:doctrine.held.cost.sonnet55_high -->$4.02–$4.72<!-- /fig --> for the eight
+tasks on Sonnet 5.5 high, <!-- fig:doctrine.held.cost.opus55_medium -->$6.15<!-- /fig --> on Opus 5.5 medium, <!-- fig:doctrine.held.cost.opus55_high -->$7.01–$8.14<!-- /fig --> on Opus 5.5 high, <!-- fig:doctrine.held.cost.opus5_high -->$18.82–$20.47<!-- /fig --> on Opus 5 high, <!-- fig:doctrine.held.cost.fable_low -->$9.41–$12.56<!-- /fig --> on
+Fable 5.1 low ($9.41 and $9.69 are the runs of 23 and 25 October, as are both Opus 5 runs; those sessions listed about 50
+skills, not about 250), and <!-- fig:doctrine.held.cost.sonnet55_max -->$37.84–$38.67<!-- /fig --> on Sonnet 5.5 at max effort. Sonnet 5.5 high scored the same with the Opus 5.5 page as
+without one. The set is near its ceiling: <!-- fig:doctrine.held.ceiling_runs -->12<!-- /fig --> of the <!-- fig:doctrine.heldout_runs -->19<!-- /fig --> runs scored <!-- fig:doctrine.held.ceiling_exact -->97.9<!-- /fig -->, each missing the same
 <!-- fig:doctrine.held.ceiling_misses -->3<!-- /fig --> checks of one task, one-unpushed, and nothing else, which is why cost is what
 separates most setups.
 
 The scores are the judge's where it read the prose differently from the script's own count, which happened in
-<!-- fig:doctrine.held.judged_runs -->3<!-- /fig --> runs, each time passing what the script had failed. By the script alone Opus 5.5 high scored
+<!-- fig:doctrine.held.judged_runs -->6<!-- /fig --> runs, each time passing what the script had failed. By the script alone Opus 5.5 high scored
 <!-- fig:doctrine.HQT4.script_score -->92<!-- /fig --> on the 7 October page and <!-- fig:doctrine.HQT4C.script_score -->94<!-- /fig --> on the 29 September page it replaced (both run on 7 October), level
 either way; and Sonnet 5.5 max without a page scored <!-- fig:doctrine.HSZB.script_score -->90<!-- /fig -->, because on review-decoys the script gave half marks to a review that
 cited a line in bold, a scorer gap the run's own record names. Counted that way, the Opus 5.5 page would be
-<!-- fig:doctrine.held.script_gap.sonnet55_max -->+8.0<!-- /fig --> ahead at max (<!-- fig:doctrine.held.script_verdict.sonnet55_max -->better<!-- /fig --> by the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule), not <!-- fig:doctrine.held.gap.sonnet55_max -->+1.7<!-- /fig -->. The judge was registered before the
+<!-- fig:doctrine.held.script_gap.sonnet55_max -->+8.0<!-- /fig --> ahead at max (<!-- fig:doctrine.held.script_verdict.sonnet55_max -->better<!-- /fig --> by the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule), not <!-- fig:doctrine.held.gap.sonnet55_max -->+1.7<!-- /fig -->. By the script alone, too, Fable's 19 October page scored <!-- fig:doctrine.HX6.script_score -->89<!-- /fig --> against <!-- fig:doctrine.HX6C.score -->91<!-- /fig --> for the 7 October page,
+level either way, and Opus 5's 19 October page <!-- fig:doctrine.HO1.script_score -->88<!-- /fig --> against <!-- fig:doctrine.HO1C.script_score -->93<!-- /fig --> for its 15 September page: that pair would be
+<!-- fig:doctrine.held.script_gap.opus5_oct26 -->−5.7<!-- /fig --> (<!-- fig:doctrine.held.script_verdict.opus5_oct26 -->worse, just past the 5-point rule<!-- /fig -->), not <!-- fig:doctrine.held.gap.opus5_oct26 -->−3.1<!-- /fig -->. The judge was registered before the
 7 October runs and the Sonnet 5.5 recheck; for the first runs, of 6 October, it was brought in after they were
 scored, when two scorer defects had been found, as the record written after those runs says. Its verdicts are those
 tasks' scores for every run, and the verdicts on this page are by them.
@@ -383,16 +400,23 @@ The engineer seat, `cc`, runs Opus 5.5 at medium effort on its 7 October page, a
 effort only; at medium it ran the 29 September page, once and with no control run (the <!-- fig:doctrine.held.cost.opus55_medium -->$6.15<!-- /fig --> run above).
 
 The 29 September pages went live on 6 October, after this set showed no loss (Opus 5.5's after a repeat of its max
-run's Wide audit as well), and the 7 October pages replaced them on 7 October. The pages that ship since 7 October
-are the 7 October pages (Opus 5 keeps its 15 September page); the
+run's Wide audit as well), and the 7 October pages replaced them on 7 October. Fable's and Opus 5's 19 October pages replaced theirs on
+26 October, after this set showed no loss: each is its earlier page with one paragraph added, to write a path out in
+full (no `cd` into the current folder, no `cd … &&` in front of a git command, no `~` and no shell variable in a path),
+because a non-interactive permission check refuses those and a refusal ends the task. The prediction registered for
+them was "within a point of their controls"; Fable's held it and Opus 5's, at <!-- fig:doctrine.held.gap.opus5_oct26 -->−3.1<!-- /fig -->, did not, though it held by the
+<!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule that decided the promotion. The four runs cost $58.39 against about $53 priced, the voided launch excluded. The pages that ship since 26 October are those two and Opus 5.5's
+7 October page; the
 copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only where that plugin
 is installed. The Opus 5 page's copy also changes five more sentences: where the author's page records the author's own
 standing opt-in to agents, the copy reads "Installing this file is the opt-in to multi-agent work"; the sentence that
 named the author says "the user"; superpowers' "invoke a skill before any response" rule is said to hold "where it
 applies"; the sentence on the enabled plugins adds "if any" and leaves out the author's account of the plugins switched
-off; and the next one looks for the plugin catalog under `CLAUDE_CONFIG_DIR` when that is set. On this set Fable's 7 October
+off; and the next one looks for the plugin catalog under `CLAUDE_CONFIG_DIR` when that is set. On this set Fable's 19 October page scored <!-- fig:doctrine.HX6.score -->91<!-- /fig --> against <!-- fig:doctrine.HX6C.score -->91<!-- /fig --> for the 7 October page it replaced
+(<!-- fig:doctrine.held.gap.fable_oct26 -->±0.0<!-- /fig -->: <!-- fig:doctrine.held.verdict.fable_oct26 -->level within noise<!-- /fig -->), and Opus 5's <!-- fig:doctrine.HO1.score -->92<!-- /fig --> against <!-- fig:doctrine.HO1C.score -->95<!-- /fig --> for its 15 September page (<!-- fig:doctrine.held.gap.opus5_oct26 -->−3.1<!-- /fig -->:
+<!-- fig:doctrine.held.verdict.opus5_oct26 -->level within noise<!-- /fig -->); before them, Fable's 7 October
 page scored <!-- fig:doctrine.HX5.score -->94<!-- /fig --> against <!-- fig:doctrine.HX5C.score -->98<!-- /fig --> for the 29 September page it replaced (<!-- fig:doctrine.held.gap.fable_oct7 -->−4.2<!-- /fig -->: <!-- fig:doctrine.held.verdict.fable_oct7 -->level within noise<!-- /fig -->), and Opus 5.5's <!-- fig:doctrine.HQT4.score -->98<!-- /fig --> against <!-- fig:doctrine.HQT4C.score -->98<!-- /fig -->
-(<!-- fig:doctrine.held.gap.opus55_oct7 -->±0.0<!-- /fig -->: <!-- fig:doctrine.held.verdict.opus55_oct7 -->level within noise<!-- /fig -->), by the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule. The 7 October pages have not run the nine-task set; the charts above show the page each run used.
+(<!-- fig:doctrine.held.gap.opus55_oct7 -->±0.0<!-- /fig -->: <!-- fig:doctrine.held.verdict.opus55_oct7 -->level within noise<!-- /fig -->), by the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule. Neither the 7 October nor the 19 October pages have run the nine-task set; the charts above show the page each run used.
 
 <a href="heldout.svg"><picture><source media="(max-width: 1279px)" srcset="heldout-narrow.svg"><img src="heldout.svg" alt="The held-out set: eight tasks no doctrine page was written from"></picture></a>
 
@@ -407,8 +431,10 @@ page scored <!-- fig:doctrine.HX5.score -->94<!-- /fig --> against <!-- fig:doct
   22 September page, twice on 22 September (<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> and <!-- fig:doctrine.QT2.exact -->96.4<!-- /fig -->); Opus 5.5 medium on the revised 22 September page
   (<!-- fig:doctrine.PT2.exact -->95.3<!-- /fig --> on 22 September, <!-- fig:doctrine.PT3C.exact -->97.8<!-- /fig --> on <!-- fig:doctrine.when.PT3C -->30 September and 5 October<!-- /fig -->); Opus 5 high on the 15 September page
   (<!-- fig:doctrine.V4C.exact -->95.1<!-- /fig --> on <!-- fig:doctrine.when.V4C -->29 September<!-- /fig -->, <!-- fig:doctrine.V5C.exact -->95.9<!-- /fig --> on <!-- fig:doctrine.when.V5C -->30 September<!-- /fig -->); and Sonnet 5.5 without a page at high and max. On the
-  held-out set: Sonnet 5.5 high with the page and without, twice each, and the 29 September pages of Fable 5.1 low and
-  Opus 5.5 high, once on each day. One task is a ninth of a run's score on the nine-task set (an eighth on the held-out set), so a single session that goes differently
+  held-out set: Sonnet 5.5 high with the page and without, twice each, the 29 September pages of Fable 5.1 low and
+  Opus 5.5 high, once on each day; and Fable's 7 October page, on 7 October (<!-- fig:doctrine.HX5.score -->94<!-- /fig -->) and again as the control
+  of <!-- fig:doctrine.when.oct26 -->23 and 25 October<!-- /fig --> (<!-- fig:doctrine.HX6C.score -->91<!-- /fig -->), under that run's other conditions, so not a repeat in the same
+  environment. One task is a ninth of a run's score on the nine-task set (an eighth on the held-out set), so a single session that goes differently
   moves a run by several points: on the nine-task set the same setup run twice side by side moved by up to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig -->
   points, and a setup run again on another day by up to <!-- fig:doctrine.nine.cross_day -->4.2<!-- /fig -->. A gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> points or less there is level within
   noise, not a small win or loss (in the first table, Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->), and one under a point past it is only "just
@@ -416,10 +442,11 @@ page scored <!-- fig:doctrine.HX5.score -->94<!-- /fig --> against <!-- fig:doct
 - It measured the **doctrine layer**, not the skills. Whether the skills were present depends on the run's date,
   never on a doctrine arm: the runs of <!-- fig:doctrine.when.first -->2–3 September<!-- /fig --> had none of them present; the runs of <!-- fig:doctrine.when.skills_present -->14–15 and 22 September<!-- /fig -->
   had them present in both arms of every doctrine comparison (each session's list of available skills names them);
-  and every one of the <!-- fig:doctrine.later.runs -->47<!-- /fig --> runs from <!-- fig:doctrine.when.later -->29–30 September and 5–7 October<!-- /fig -->, nine-task and held-out, and the
+  and every one of the <!-- fig:doctrine.later.runs -->51<!-- /fig --> runs from <!-- fig:doctrine.when.later -->29–30 September, 5–7, 23 and 25 October<!-- /fig -->, nine-task and held-out, and the
   <!-- fig:doctrine.later.reruns -->10<!-- /fig --> partial reruns of a few tasks each that the page-revisions chart cites, was launched with the skills
   present on every task (the launch logs record it), and every session's transcript lists this pack's 7 skills among
-  the 239 to 256 it lists, the account's synced ones included. So each difference above is the page's, in that run's environment (the same on <!-- fig:doctrine.when.first -->2–3 September<!-- /fig -->),
+  the 239 to 256 it lists, the account's synced ones included (the held-out runs of <!-- fig:doctrine.when.oct26 -->23 and 25 October<!-- /fig -->, made as a
+  second user without the account's synced skills, among 49 to 53). So each difference above is the page's, in that run's environment (the same on <!-- fig:doctrine.when.first -->2–3 September<!-- /fig -->),
   and the correctness-and-cost chart shows both environments; what the skills themselves change is the
   control run below.
 - Model behaviour changes with model versions. These numbers are from September and October 2026 on the models named.
@@ -576,19 +603,20 @@ CLAUDE_CONFIG_DIR=~/.claude-evals claude auth login   # once: that folder's own 
 python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 python3 evals/run.py --recheck <run dir>  # grade a finished run again without spending anything
+python3 evals/run.py --confirm <run>      # re-run only that run's failed cases, four sessions each, one verdict per case
 ```
 
 Each batch rebuilds the sealed folder (`--build-sealed` only builds it ahead of the login), then checks it before
 any session starts. The doctrine link points at `~/.claude/doctrine` whatever `CLAUDE_CONFIG_DIR` says, so install
 the doctrine there; without it the doctrine's hooks do not resolve and the runner refuses. The runner also refuses
-unless `claude --version` is Claude Code <!-- fig:eval.sealed.cli_version -->2.1.295<!-- /fig -->, the version the sealed environment's lists of bundled
+unless `claude --version` is Claude Code <!-- fig:eval.sealed.cli_version -->2.1.303<!-- /fig -->, the version the sealed environment's lists of bundled
 skills and built-in plugins were reviewed on (`cli_version` in `evals/sealed.json`), naming both versions: run that
 version to reproduce the runs on this page. `--probe` launches on another version and grades each case's `sealed`
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->528<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.62<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->544<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.28<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its
 snapshot after every turn (`record.json`), with the run's `grades.json` beside them. Nothing is uploaded anywhere.

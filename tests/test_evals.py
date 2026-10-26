@@ -2376,6 +2376,39 @@ class BatchBinary(unittest.TestCase):
                                  text=True)
         self.assertTrue(by_name.stdout.startswith("2.1.282"))
 
+    def test_a_repeated_case_gets_one_folder_and_one_grade_per_session(self):
+        cli = os.path.realpath(str(self.claude))
+        s = self.scenarios[0]
+        grades, changed = evals.run_batch(evals.with_repeats([(s, "fable")], 2), SPEC, self.tmp / "out", self.config,
+                                          cli, evals.cli_version_of(cli), parallel=2)
+        self.assertIsNone(changed)
+        self.assertEqual(sorted(p.name for p in (self.tmp / "out").iterdir()), ["c1-fable-r1", "c1-fable-r2"])
+        self.assertEqual([(g["scenario"], g["seat"], g["repeat"]) for g in grades], [("c1", "fable", 1), ("c1", "fable", 2)])
+        for k in (1, 2):
+            rec = json.loads((self.tmp / "out" / f"c1-fable-r{k}" / "record.json").read_text(encoding="utf-8"))
+            self.assertEqual((rec["scenario"], rec["seat"]), ("c1", "fable"))
+
+    def test_a_case_keeps_its_record_after_every_turn_so_a_cut_off_case_is_never_lost(self):
+        cli = os.path.realpath(str(self.claude))
+        real, launches = subprocess.run, []
+
+        def cut_after_turn_1(cmd, *a, **kw):
+            if cmd and "-p" in cmd:
+                launches.append(cmd)
+                if len(launches) == 2:
+                    raise KeyboardInterrupt   # the machine goes down in turn 2
+            return real(cmd, *a, **kw)
+        case = self.tmp / "out" / "c2-fable-r3"
+        with mock.patch.object(evals.subprocess, "run", cut_after_turn_1), self.assertRaises(KeyboardInterrupt):
+            evals.run_case(case, self.scenarios[1], "fable", SPEC["prompts"], self.config, cli,
+                           evals.cli_version_of(cli), repeat=3)
+        rec = json.loads((case / "record.json").read_text(encoding="utf-8"))
+        self.assertEqual((len(rec["turns"]), rec["repeat"]), (1, 3))
+        self.assertTrue(rec["not_completed"].startswith("interrupted"), rec["not_completed"])
+        g = evals.grade(case, self.scenarios[1])
+        self.assertFalse(g["passed"])
+        self.assertEqual((g["repeat"], g["not_completed"]), (3, rec["not_completed"]))
+
     def test_a_changed_binary_stops_the_batch(self):
         name = self.versions / "2.1.281"
         resolved = Path(str(name) + CLI_EXT)
@@ -2488,6 +2521,27 @@ class Modes(unittest.TestCase):
         self.assertIn("syncClaudeAiPlugins false, syncClaudeAiSkills false, disableClaudeAiConnectors true", text)
         self.assertIn("Stop", text)
         self.assertIn("runner", text)
+
+
+    def test_login_seals_the_folder_first_then_prints_the_login(self):
+        """Known-bad first (redman 2026-10-21): after the Mac rebuild the sealed settings.json was missing, the login
+        ran with account sync on, and 677 synced files landed in the sealed folder. --login builds the folder (sync
+        off) before anyone logs in, prints the one login command, and launches nothing itself."""
+        code, text, launches = self.main("--login")
+        self.assertEqual((code, launches), (0, []), text)
+        settings = json.loads((self.config / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(evals.sealed_settings_problems(settings), [])
+        self.assertIn(f"CLAUDE_CONFIG_DIR={self.config} DISABLE_AUTOUPDATER=1 ", text)
+        self.assertIn(" /login", text)
+
+    def test_login_refuses_when_sync_already_reached_the_folder(self):
+        synced = self.config / "plugins" / "synced" / "acct" / "x" / "SKILL.md"
+        synced.parent.mkdir(parents=True)
+        synced.write_text("x", encoding="utf-8")
+        code, text, launches = self.main("--login")
+        self.assertEqual((code, launches), (2, []), text)
+        self.assertIn("account sync reached the sealed folder", text)
+        self.assertNotIn("/login", text)
 
 
 class CaseCost(unittest.TestCase):
@@ -3012,6 +3066,16 @@ class Permissions(unittest.TestCase):
         self.assertEqual(evals.permission_flags(["Read"], []), ["--allowedTools", "Read", "--disallowedTools",
                                                                 "Bash(git push:*)"])
 
+    def test_a_session_folder_denies_its_transcripts_and_leaves_its_memory_writable(self):
+        # known-bad (redman 2026-10-21): the session folder shared the skill folders' whole-folder deny, so every
+        # full_flow session on Fable was refused writing its memory/ at /closeout ("a directory that is denied")
+        flags = evals.permission_flags(["Read"], ["/a/skills"], ["/c/projects/-p"])
+        deny = flags[flags.index("--disallowedTools") + 1:flags.index("--add-dir")]
+        self.assertEqual(deny, ["Bash(git push:*)", "Write(//a/skills/**)", "Edit(//a/skills/**)",
+                                "Write(//c/projects/-p/**/*.jsonl)", "Edit(//c/projects/-p/**/*.jsonl)"])
+        self.assertNotIn("Edit(//c/projects/-p/**)", deny)
+        self.assertEqual(flags[flags.index("--add-dir") + 1:], ["/a/skills", "/c/projects/-p"])
+
     def test_session_dirs_are_claude_codes_folder_for_the_project_in_the_sealed_config(self):
         with tempfile.TemporaryDirectory() as tmp:
             config, proj = Path(tmp) / "sealed", Path(tmp) / "my_proj"
@@ -3098,7 +3162,7 @@ class Isolation(unittest.TestCase):
         for d in add_dirs:
             self.assertTrue(self.allowed(d, case), d)
         for pattern in deny[1:]:                                           # after `Bash(git push:*)`
-            ruled = re.sub(r"^\w+\(/|/\*\*\)$", "", pattern)               # the rule's path: /x/y; /c/x/y on Windows
+            ruled = re.sub(r"^\w+\(/|/\*\*(/\*\.jsonl)?\)$", "", pattern)   # the rule's path: /x/y; /c/x/y on Windows
             if os.name == "nt":
                 ruled = re.sub(r"^/([a-z])/", lambda m: m.group(1).upper() + ":\\", ruled)
             self.assertTrue(self.allowed(ruled, case), pattern)
@@ -3170,12 +3234,12 @@ class Isolation(unittest.TestCase):
         plain = {"id": "p", "turns": ["SMALL", "SMALL"], "seats": ["fable"], "checks": []}
         cmds, rec, case = self.launches(plain)
         proj, scratch = case / "project", case / "scratch"
-        readable = evals.skill_dirs(self.config) + evals.session_dirs(proj, self.config)
+        readable, sessions = evals.skill_dirs(self.config), evals.session_dirs(proj, self.config)
         self.assertEqual(len(cmds), 2)
         for n, cmd in enumerate(cmds):                                           # today's command, spelled out
             self.assertEqual(cmd, [str(self.tmp / "claude-bin"), "-p", SPEC["prompts"].get("SMALL", "SMALL"),
                                    *(["--resume", "s1"] if n else []), *evals.SEATS["fable"],
-                                   "--permission-mode", "acceptEdits", *evals.permission_flags(evals.ALLOWED, readable),
+                                   "--permission-mode", "acceptEdits", *evals.permission_flags(evals.ALLOWED, readable, sessions),
                                    "--add-dir", str(scratch),
                                    "--append-system-prompt", f"Scratchpad directory: {scratch} — use it for temporary files "
                                    f"(a worklist, a note, intermediate output); write the path literally, without shell "
@@ -3664,10 +3728,39 @@ class RunLog(unittest.TestCase):
         self.assertEqual((r["run"], r["selection"], r["pack_sha"], r["result"], r["cost"], r["layer_ok"]),
                          ("20260928-120000", "only", "a" * 40, "1/1", 0.25, None))
 
+    def test_a_logged_run_refills_the_run_tables_and_nothing_else(self):
+        """Known-bad first (redman 2026-10-21): a graded run used to leave the evidence page's runs table stale, so
+        the next batch's suite gate failed test_this_repos_figures_hold until `figures --write` ran by hand. log_run
+        now refills the tables built from the run log it wrote to, in that log's repo, and touches no span."""
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "closeout"))
+        import closeout
+        out = self.mkrun("20261021-233320", [("alpha-fable", [("2.1.303", 0.25)])])
+        grades = json.loads((out / "grades.json").read_text())
+        proj = self.tmp / "logproj"
+        (proj / "evals").mkdir(parents=True)
+        runs = proj / "evals" / "RUNS.jsonl"
+        runs.write_text("", encoding="utf-8")
+        (proj / "tools").mkdir()
+        (proj / "tools" / "figures.json").write_text(json.dumps({"docs": ["evidence.md"], "figures": {}, "tables": {
+            "runs": {"file": "evals/RUNS.jsonl", "where": {"selection": ["full", "quick", "seat"]},
+                     "summary_of": {"selection": "only"}, "columns": ["date", "cases_label", "result_label",
+                                                                      "failed_note"]}}}), encoding="utf-8")
+        (proj / "CLAUDE.md").write_text("# p\n\n## Doc map\nfigures: tools/figures.json\n", encoding="utf-8")
+        span = "Stated elsewhere: <!-- fig:not.a.run.figure -->7<!-- /fig -->.\n"
+        (proj / "evidence.md").write_text("### Every full, quick and seat run\n\n<!-- fig-table:runs -->\n"
+                                          "<!-- /fig-table -->\n\n" + span, encoding="utf-8")
+        with mock.patch.object(evals, "RUNS_FILE", runs):
+            evals.log_run(out, self.root, grades, "full", pack_sha="c" * 40)
+        text = (proj / "evidence.md").read_text(encoding="utf-8")
+        self.assertIn("| 2026-10-21 |", text)
+        self.assertTrue(text.endswith(span), "a span the run log does not own was rewritten")
+        found = closeout.figures_findings(proj)
+        self.assertEqual([f for f in found if f[3] == "fig-table:runs" and f[0] != "OK"], [])
+
     def test_the_launch_path_logs_the_run(self):
         """main() appends the record after the report; --dry-run appends nothing."""
         def batch(cases, spec, out, *a, **k):
-            self.assertEqual([(s["id"], st) for s, st in cases], [("refusal", "fable")])
+            self.assertEqual([(s["id"], st, k) for s, st, k in cases], [("refusal", "fable", 0)])
             return [dict(self.case(out, "refusal-fable", [("2.1.283", 0.1)]), results=[])], None
         (self.tmp / "bin").mkdir()
         write_fake_cli(self.tmp / "bin" / "claude", "2.1.283")
@@ -3727,6 +3820,153 @@ class RunLog(unittest.TestCase):
         self.assertEqual(last("--only", "pushback_ruling", "--seat", "opus55"),
                          "last run of this selection: none recorded for these cases")
 
+
+
+class Repeats(unittest.TestCase):
+    """A case run several times in one batch: one session per case cannot tell a broken case from a flake,
+    so a failure is settled by fresh repeats of that case alone, and each case's repeats get one verdict."""
+
+    def g(self, sid, seat, k, passed, not_run=None):
+        d = {"scenario": sid, "seat": seat, "repeat": k, "passed": passed, "cost": 0.5, "results": []}
+        if not_run:
+            d["not_run"] = not_run
+        return d
+
+    def test_repeats_expand_each_case_and_name_its_folders(self):
+        s = {"id": "c1"}
+        self.assertEqual(evals.with_repeats([(s, "fable")], 1), [(s, "fable", 0)])
+        self.assertEqual(evals.with_repeats([(s, "fable")], 3), [(s, "fable", 1), (s, "fable", 2), (s, "fable", 3)])
+        self.assertEqual(evals.case_name("c1", "fable"), "c1-fable")              # a one-session batch: unchanged
+        self.assertEqual(evals.case_name("c1", "fable", 2), "c1-fable-r2")
+        self.assertEqual(evals.case_name_of({"scenario": "c1", "seat": "fable", "repeat": 3}), "c1-fable-r3")
+        self.assertEqual(evals.case_name_of({"scenario": "c1", "seat": "fable"}), "c1-fable")
+
+    def test_the_upper_bound_on_a_failure_rate(self):
+        self.assertAlmostEqual(evals.failure_rate_upper(0, 4), 1 - 0.05 ** 0.25, places=4)   # 52.7%
+        self.assertAlmostEqual(evals.failure_rate_upper(0, 24), 1 - 0.05 ** (1 / 24), places=4)
+        u = evals.failure_rate_upper(1, 4)                                        # one-sided Clopper-Pearson
+        tail = sum(__import__("math").comb(4, i) * u ** i * (1 - u) ** (4 - i) for i in range(2))
+        self.assertAlmostEqual(tail, 0.05, places=4)
+        self.assertEqual(evals.failure_rate_upper(4, 4), 1.0)
+
+    def test_each_case_gets_one_verdict_from_its_repeats(self):
+        grades = [self.g("a", "fable", k, True) for k in (1, 2, 3, 4)]
+        grades += [self.g("b", "fable", 1, False)] + [self.g("b", "fable", k, True) for k in (2, 3, 4)]
+        grades += [self.g("c", "opus55", 1, False), self.g("c", "opus55", 2, False)] + \
+                  [self.g("c", "opus55", k, True) for k in (3, 4)]
+        grades += [self.g("d", "fable", 1, True), self.g("d", "fable", 2, False, not_run="skipped: an API error")]
+        v = {(x["scenario"], x["seat"]): x for x in evals.repeat_verdicts(grades)}
+        self.assertEqual((v[("a", "fable")]["failed"], v[("a", "fable")]["runs"], v[("a", "fable")]["verdict"]),
+                         (0, 4, "held"))
+        self.assertEqual(v[("b", "fable")]["verdict"], "flaky")
+        self.assertEqual(v[("c", "opus55")]["verdict"], "fails")
+        self.assertEqual((v[("d", "fable")]["runs"], v[("d", "fable")]["not_run"]), (1, 1))   # a NOT RUN measured nothing
+        self.assertEqual(evals.repeat_verdicts([self.g("a", "fable", 0, True)]), [])        # no repeats, no verdicts
+
+    def test_the_report_prints_each_verdict(self):
+        grades = [self.g("a", "fable", k, True) for k in (1, 2, 3, 4)] + \
+                 [self.g("b", "fable", 1, False)] + [self.g("b", "fable", k, True) for k in (2, 3, 4)]
+        with tempfile.TemporaryDirectory() as t, contextlib.redirect_stdout(io.StringIO()) as out:
+            ok = evals.report(grades, Path(t))
+        text = out.getvalue()
+        self.assertFalse(ok)
+        self.assertIn("repeats: a fable — 0 of 4 failed: held (failure rate below 53% at 95%)", text)
+        self.assertIn("repeats: b fable — 1 of 4 failed: flaky, read the failing transcript", text)
+
+    def test_a_repeat_run_is_recorded_apart_from_the_quick_and_full_sets(self):
+        with tempfile.TemporaryDirectory() as t:
+            run = Path(t) / "runs" / "20261018-120000"
+            run.mkdir(parents=True)
+            grades = [self.g("a", "fable", k, k != 2) for k in (1, 2)]
+            costs = {evals.case_name_of(x): (0.5, None, None) for x in grades}
+            self.assertEqual(sorted(costs), ["a-fable-r1", "a-fable-r2"])
+            r = evals.run_record(run, Path(t) / "runs", grades, "quick", costs=costs)
+        self.assertEqual((r["selection"], r["cases"], r["passed"], r["published"]), ("repeat", 2, 1, False))
+        self.assertEqual(evals.derive_selection(run, grades), "repeat")
+
+    def test_case_costs_read_each_repeat_folder(self):
+        with tempfile.TemporaryDirectory() as t:
+            run = Path(t)
+            for k in (1, 2):
+                c = run / f"a-fable-r{k}"
+                c.mkdir()
+                text = json.dumps({"type": "result", "result": "done", "total_cost_usd": 0.25 * k}) + "\n"
+                (c / "turn1.jsonl").write_text(text, encoding="utf-8")
+                (c / "record.json").write_text(json.dumps({"scenario": "a", "seat": "fable",
+                                                           "turns": [evals.parse_stream(text)]}), encoding="utf-8")
+            costs = evals.case_costs(run, [self.g("a", "fable", 1, True), self.g("a", "fable", 2, True)])
+        self.assertEqual({k: v[0] for k, v in costs.items()}, {"a-fable-r1": 0.25, "a-fable-r2": 0.5})
+
+    def main(self, *argv, runs=None):
+        seen = {}
+
+        def batch(cases, spec, out, *a, **k):
+            seen["cases"] = [(s["id"], st, n) for s, st, n in cases]
+            return [self.g(s["id"], st, n, True) for s, st, n in cases], None
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name) / "runs"
+        for rel, grades in (runs or {}).items():
+            (root / rel).mkdir(parents=True)
+            (root / rel / "grades.json").write_text(json.dumps(grades), encoding="utf-8")
+        bin_ = Path(tmp.name) / "bin"
+        bin_.mkdir()
+        write_fake_cli(bin_ / "claude", "2.1.283")
+        import selftest as st
+        with mock.patch.object(evals, "RUNS_FILE", Path(tmp.name) / "RUNS.jsonl"), \
+                mock.patch.object(evals, "run_batch", batch), \
+                mock.patch.object(evals, "preflight", lambda *a, **k: (0, "")), \
+                mock.patch.object(evals, "build_sealed", lambda *a, **k: None), \
+                mock.patch.object(evals, "log_run", lambda *a, **k: seen.setdefault("logged", a[3])), \
+                mock.patch.object(st, "main", lambda argv=None, quiet=False: 0), \
+                mock.patch.dict(os.environ, {"PATH": f"{bin_}{os.pathsep}{os.environ['PATH']}"}), \
+                contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
+            code = evals.main(list(argv) + ["--out", str(root), "--config", str(Path(tmp.name) / "c")])
+        return code, seen, out.getvalue() + err.getvalue()
+
+    def test_a_regraded_repeat_run_keeps_each_sessions_repeat_number(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        run = Path(tmp.name) / "20261019-012420"
+        text = json.dumps({"type": "result", "result": "done", "total_cost_usd": 0.1}) + "\n"
+        for name, extra in (("refusal-fable-r1", {"repeat": 1}), ("refusal-fable-r2", {})):   # r2: written before
+            c = run / name                                                                   # records kept it
+            c.mkdir(parents=True)
+            (c / "turn1.jsonl").write_text(text, encoding="utf-8")
+            (c / "record.json").write_text(json.dumps(dict({"scenario": "refusal", "seat": "fable",
+                                                             "turns": [evals.parse_stream(text)],
+                                                             "snapshots": [{}, {}]}, **extra)), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            evals.main(["--recheck", str(run)])
+        self.assertIn("repeats: refusal fable — ", out.getvalue())
+        self.assertIn(" of 2 failed", out.getvalue())
+
+    def test_repeat_runs_each_selected_case_n_times(self):
+        code, seen, _ = self.main("--only", "refusal", "--seat", "fable", "--repeat", "3")
+        self.assertEqual(code, 0)
+        self.assertEqual(seen["cases"], [("refusal", "fable", k) for k in (1, 2, 3)])
+        self.assertEqual(seen["logged"], "repeat")
+
+    def test_repeat_refuses_a_count_outside_two_to_ten(self):
+        for n in ("1", "0", "11", "x"):
+            with self.subTest(n), self.assertRaises(SystemExit):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    evals.main(["--dry-run", "--repeat", n])
+
+    def test_confirm_reruns_only_the_failed_cases_of_a_run_four_times(self):
+        run = {"20261018-100000": [self.g("refusal", "fable", 0, False), self.g("refusal", "opus55", 0, True),
+                                   self.g("large_stop", "fable", 0, False),
+                                   self.g("gate_block", "fable", 0, False, not_run="skipped: an API error")]}
+        code, seen, _ = self.main("--confirm", "20261018-100000", runs=run)
+        self.assertEqual(code, 0)
+        self.assertEqual(sorted(seen["cases"]), sorted([("large_stop", "fable", k) for k in (1, 2, 3, 4)] +
+                                                       [("refusal", "fable", k) for k in (1, 2, 3, 4)]))
+        self.assertEqual(seen["logged"], "repeat")
+        code, seen, text = self.main("--confirm", "20261018-100000", runs={"20261018-100000": [
+            self.g("refusal", "fable", 0, True)]})
+        self.assertEqual(code, 0)
+        self.assertNotIn("cases", seen)                                           # nothing failed: nothing launched
+        self.assertIn("nothing to confirm", text)
 
 
 if __name__ == "__main__":

@@ -1096,9 +1096,10 @@ def figures_lines(found):
     return lines
 
 
-def figures_write(root, tree=None):
+def figures_write(root, tree=None, tables=None):
     """Rewrite every span's contents and every marked table from its source; no other byte changes. Returns the
-    findings of a check made after the write."""
+    findings of a check made after the write. `tables` (names) limits the write to those tables and leaves every span
+    as it is: the eval runner refills the tables built from the run log it has just written, and nothing else."""
     root = Path(root)
     decl, _, problem = figures_declaration(root)
     if decl is None:
@@ -1117,7 +1118,10 @@ def figures_write(root, tree=None):
         def table(m):
             want, _ = _table_text(root, m.group(2), decl.get("tables") or {})
             return m.group(0) if want is None else m.group(1) + want + m.group(4)
-        new = FIG_TABLE_RE.sub(table, FIG_SPAN_RE.sub(span, data))
+        if tables is not None:
+            new = FIG_TABLE_RE.sub(lambda m: table(m) if m.group(2) in tables else m.group(0), data)
+        else:
+            new = FIG_TABLE_RE.sub(table, FIG_SPAN_RE.sub(span, data))
         if new != data:
             p.write_bytes(new.encode("utf-8"))
     return figures_findings(root, decl, tree)

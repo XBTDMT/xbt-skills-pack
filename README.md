@@ -50,7 +50,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 | | |
 |---|---|
 | **The skills** | <!-- fig:eval.scenarios -->27<!-- /fig --> scenarios · <!-- fig:eval.sessions -->49<!-- /fig --> graded sessions · <!-- fig:eval.checks -->202<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->49/49<!-- /fig -->** (<!-- fig:run.full.date -->2026-10-11<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
-| **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->10<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->53<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->15<!-- /fig --> runs: the 29 September and 7 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
+| **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->10<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->53<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->19<!-- /fig --> runs: the 29 September, 7 October and 19 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
 and match, files that must be unchanged, what reached git, commands that must not appear. **In the graded sessions no
@@ -89,13 +89,19 @@ Opus 5 at max effort spawn <!-- fig:doctrine.K.agents -->18<!-- /fig --> of them
 to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig --> points, so a gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> or less there is level within noise; on the held-out set the rule, set before the
 run, is <!-- fig:doctrine.held.rule -->5<!-- /fig --> points.
 
-Since 7 October the pages that ship are the 7 October pages for Fable 5.1 and Claude Opus 5.5 and the 15 September page for Opus 5,
-Sonnet and Haiku; the copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only
+Since 26 October the pages that ship are the 19 October pages for Fable 5.1 (and Mythos) and for Opus 5, Sonnet and
+Haiku (each its earlier page with one paragraph added: write a path out in full, because a non-interactive permission
+check refuses a `cd` into the current folder, a `cd … &&` in front of a git command, a `~` or a shell variable, and a
+refusal ends the task; measured on Fable 5.1 and Opus 5 only) and the 7 October page for Claude Opus 5.5 (and for a
+model the loader cannot place); the copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only
 where that plugin is installed. The Opus 5 page's copy also changes five more sentences: its standing opt-in to agents
 reads "Installing this file is the opt-in to multi-agent work"; the sentence that named the author says "the user";
 superpowers' "invoke a skill before any response" rule is said to hold "where it applies"; the sentence on the enabled
 plugins adds "if any" and leaves out the plugins the author switched off; and the next one looks for the plugin catalog
-under `CLAUDE_CONFIG_DIR` when that is set. On the held-out set Fable's 7 October page scored <!-- fig:doctrine.HX5.score -->94<!-- /fig --> against <!-- fig:doctrine.HX5C.score -->98<!-- /fig --> for the 29 September page it
+under `CLAUDE_CONFIG_DIR` when that is set. On the held-out set Fable's 19 October page scored <!-- fig:doctrine.HX6.score -->91<!-- /fig --> against <!-- fig:doctrine.HX6C.score -->91<!-- /fig --> for the 7 October page it replaced
+(<!-- fig:doctrine.held.gap.fable_oct26 -->±0.0<!-- /fig -->: <!-- fig:doctrine.held.verdict.fable_oct26 -->level within noise<!-- /fig -->) and Opus 5's <!-- fig:doctrine.HO1.score -->92<!-- /fig --> against <!-- fig:doctrine.HO1C.score -->95<!-- /fig --> (<!-- fig:doctrine.held.gap.opus5_oct26 -->−3.1<!-- /fig -->:
+<!-- fig:doctrine.held.verdict.opus5_oct26 -->level within noise<!-- /fig -->; those four runs, on 23 and 25 October, ran as a second user under other conditions, which the
+evidence page lists); before them Fable's 7 October page scored <!-- fig:doctrine.HX5.score -->94<!-- /fig --> against <!-- fig:doctrine.HX5C.score -->98<!-- /fig --> for the 29 September page it
 replaced (<!-- fig:doctrine.held.gap.fable_oct7 -->−4.2<!-- /fig -->: <!-- fig:doctrine.held.verdict.fable_oct7 -->level within noise<!-- /fig -->), and Opus 5.5's <!-- fig:doctrine.HQT4.score -->98<!-- /fig --> against <!-- fig:doctrine.HQT4C.score -->98<!-- /fig --> (<!-- fig:doctrine.held.gap.opus55_oct7 -->±0.0<!-- /fig -->: <!-- fig:doctrine.held.verdict.opus55_oct7 -->level within noise<!-- /fig -->), by the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule.
 
 <a href="docs/doctrine-v2.svg"><picture><source media="(max-width: 1279px)" srcset="docs/doctrine-v2-narrow.svg"><img src="docs/doctrine-v2.svg" alt="What the 14 September pages changed against the 13 September pages: four tasks, one session each"></picture></a>
@@ -304,8 +310,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->528<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.62<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->544<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.28<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,
@@ -313,7 +319,7 @@ the hooks the installer registers (the doctrine's read from `~/.claude/doctrine`
 it also adds the doctrine's hooks to your own settings), account sync and claude.ai connectors off, and a login of its
 own. Before any session starts, `run.py` refuses, with exit 2, no session launched and nothing spent, when that folder
 is not logged in, when one of its hooks does not resolve, or when your `claude --version` is not Claude Code
-<!-- fig:eval.sealed.cli_version -->2.1.295<!-- /fig -->, the version whose bundled skills and plugins the sealed environment was reviewed on
+<!-- fig:eval.sealed.cli_version -->2.1.303<!-- /fig -->, the version whose bundled skills and plugins the sealed environment was reviewed on
 (`cli_version` in `evals/sealed.json`); it names both versions. To reproduce the published runs, run that version;
 `--probe` launches on another one, but grades every case's `sealed` check as unreviewed, never a pass. You also need
 a plan with both Fable 5.1 and Opus 5.5 (`--seat opus` runs the Opus scenarios on Opus 5 instead); `--seat fable` or

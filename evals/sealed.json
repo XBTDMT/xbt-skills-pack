@@ -74,5 +74,5 @@
   "cc-plugin-telemetry@builtin",
   "cc-plugin-plugin-authoring@builtin"
  ],
- "cli_version": "2.1.295"
+ "cli_version": "2.1.303"
 }

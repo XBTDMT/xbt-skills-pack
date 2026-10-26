@@ -11,9 +11,11 @@ everything that repeats them, then the summaries — so nothing is lost and no d
 was itself stale. Every figure you write is one you observed in this session, with its command — or is marked "not
 re-checked — last seen <date>".
 
-Helper (stdlib Python): `closeout.py`, next to this file in the closeout skill's base directory. `$H` below means
-running it with `python3` and that full path (on Windows `python` and the full path). Commands: `facts`, `memory`,
-`worklist`, `tree`, `hunks`, `stage-hunks`, `stamp`, `audit`, `link-audit`, `install-gate`; `$H -h` for usage. It
+Helper (stdlib Python): `closeout.py`, next to this file in the closeout skill's base directory. `closeout.py <command>`
+below means running it with `python3` and that full path written out (on Windows `python` and the full path). Do not
+put the path in a shell variable (`H=…; python3 $H …`) or behind `~`: the permission check refuses that command, and a
+refusal ends the step. Commands: `facts`, `memory`,
+`worklist`, `tree`, `hunks`, `stage-hunks`, `stamp`, `audit`, `link-audit`, `install-gate`; `closeout.py -h` for usage. It
 writes only through `stamp` (the pin), `stage-hunks` (the index), `link-audit` without `--no-inventory` (the UNLINKED inventory in
 `knowledge/`, else `docs/`) and `install-gate` (the repository's git config, or a hook file in git's own hooks folder).
 
@@ -110,7 +112,7 @@ it survives a context compaction partway through, and the logs, handoff and pin 
 
 ## Memory — read it, then update it
 
-`$H memory` lists every memory entry about this project in every memory folder on this computer (not in
+`closeout.py memory` lists every memory entry about this project in every memory folder on this computer (not in
 git): the folder's own memory, the home folder's — sessions started from `~` write there, and
 most project memory lives in it — and any other project's that names this one. For each folder it gives the index
 lines that are duplicated, missing or pointing at nothing, the "START HERE" entry points, and the paths an entry
@@ -123,7 +125,7 @@ keep `MEMORY.md` pointing at every entry (`memory` lists entries missing from it
 Project state — status, counts, what is next — goes in the project's docs, never only in memory: memory is not
 in git, so a cloud session or another machine never sees it, and nobody reviews it.
 
-- **Back up first.** Memory has no history: `$H memory <folder> --backup <scratchpad>` copies each folder it lists
+- **Back up first.** Memory has no history: `closeout.py memory <folder> --backup <scratchpad>` copies each folder it lists
   into `<scratchpad>/memory-backup-<own|home|other>` (never over an existing one), on its own, before any edit; name
   the backup in the report.
 - **Whose lines you may change.** In the project's own folder, any of them. In the home folder and other projects'
@@ -143,7 +145,7 @@ in git, so a cloud session or another machine never sees it, and nobody reviews 
 
 ## Take stock
 
-`$H facts`: git state, the pin and how many commits it does not describe, the handoff,
+`closeout.py facts`: git state, the pin and how many commits it does not describe, the handoff,
 overview and tracking candidates, generated and never-hand-edit files. Read
 `CLAUDE.md`, `README.md`, the pin, the newest handoff, the tracking docs, the commits since the pin's marker
 (or the last 20), and the commits since the newest handoff was written (`git log -1 --format=%h -- <handoff>`) —
@@ -177,7 +179,7 @@ the pack sees them.
 session's stray change: this pass commits it (both skills) and names it in the report, unless a live session is still
 writing it. Pass it to `tree --also` so it appears in the overview's file directory.
 
-**The commit gate.** In a git repository, run `$H install-gate <folder>` as a command of its own, nothing chained to
+**The commit gate.** In a git repository, run `closeout.py install-gate <folder>` as a command of its own, nothing chained to
 it (both skills; safe to re-run): a refused chain takes the gate down with it. It
 registers a git config hook (git 2.54 or newer), which git runs before any hook file, in every worktree; with older
 git it places its block first in the hook file the pack owns (`.git/hooks/pre-commit`), keeping any other hook. It is
@@ -229,7 +231,7 @@ before anything that repeats it. The skill says what else changes in them.
 **Then everything that repeats them**: descriptive docs against the code, mirrors re-derived from what you
 just updated, generated docs regenerated. Fix false facts where they stand; do not restyle or reorganise. If a
 file you must fix carries another session's uncommitted edit, change only your lines and stage only your hunks:
-`$H hunks <file>` numbers them, `$H stage-hunks <file> N [N…]` stages those.
+`closeout.py hunks <file>` numbers them, `closeout.py stage-hunks <file> N [N…]` stages those.
 
 ## Figures
 
@@ -238,8 +240,8 @@ A count or measurement a source can give is not typed: where the doc map declare
 alike; never inside a heading, whose anchor must not move with a count), and a generated table between
 `<!-- fig-table:NAME -->` and `<!-- /fig-table -->`. The file names the docs, each figure's source (a command's JSON
 field, a count in a JSON file, the last matching record of a JSON-lines log, the unit tests, a Done count) and the
-tables. `$H figures . --write` refills every span and table before the worklist is built and rewrites nothing else;
-`$H figures . --check` reports each stale, unknown or missing figure. A span is never edited by hand: when its value
+tables. `closeout.py figures . --write` refills every span and table before the worklist is built and rewrites nothing else;
+`closeout.py figures . --check` reports each stale, unknown or missing figure. A span is never edited by hand: when its value
 is wrong, its source is what gets fixed. Without the key, neither command prints anything.
 
 ## Pin
@@ -278,7 +280,7 @@ inline CSS, no script it depends on, readable at phone width; the name and one l
 <date> · <commit>"; *What it is* (plain sentences, no jargon — 3 to 5 for a new overview); *Where it stands today*
 (what just closed,
 the pin's state and next action, same words; "Done — <date>" if the whole project closed); the observed
-figures, each dated; *How it is built* (short); *File directory* — `$H tree --depth 2 --also <files
+figures, each dated; *How it is built* (short); *File directory* — `closeout.py tree --depth 2 --also <files
 you are adding, and the untracked records this pass commits>` in a `<pre>` (past ~60 lines, re-run with `--depth 1`, which collapses each folder to a count;
 never hand-trim the generated block), one-line purpose beside each main entry (tracked files only, so another
 session's untracked work never lands in it); links to the pin and the handoff as relative paths, with the path also
@@ -287,7 +289,7 @@ written out, so a published copy that cannot resolve them still tells the reader
 ## Audit
 
 Before anything is committed:
-`$H audit --changed <every file you wrote> --pin <pin> --baseline` (a `WARN` for each baseline doc still
+`closeout.py audit --changed <every file you wrote> --pin <pin> --baseline` (a `WARN` for each baseline doc still
 missing; plus `--worklist <file>` when the skill builds
 one: every item still open is a `FAIL`, and so is an item ticked without saying what was found). It checks the lines
 you added (a new file is
@@ -316,7 +318,7 @@ sources: a wholesale rewrite of a doc passes the audit clean.
 lists your files; if it lists others (the audit names them), leave them staged and commit yours by name,
 `git commit -m "<message>" -- <your files>`, which commits only those paths and leaves the rest of the index as it
 was; use the message the skill gives. Then stamp the pin the way the skill
-says — `$H stamp <pin>` marks the commit you just made; `stamp <pin> --keep-marker` moves only the date —
+says — `closeout.py stamp <pin>` marks the commit you just made; `stamp <pin> --keep-marker` moves only the date —
 `git add -- <pin>`, and commit the pin alone (`-m "<the same prefix>: pin stamped <YYYY-MM-DD>"`). If the pin says its marker
 must not be advanced, `stamp` refuses: use `stamp <pin> --keep-marker` to move only the date. No git: skip
 commits and say so. Push only if the project's `CLAUDE.md` says close-outs push; otherwise report the unpushed

@@ -43,9 +43,9 @@ directory). It holds the steps this skill shares with `/closeout`, and
    figure has a side effect the project's own docs call a hazard (a second bundle, a registered copy), run it and
    name the side effect in the report. Anything outside the repo: read-only, or "not re-checked — last seen
    <date>" (§ What kind of doc is it).
-6. **Build the worklist**: where the doc map declares `figures:`, `$H figures . --write` runs first (UPDATING.md
+6. **Build the worklist**: where the doc map declares `figures:`, `closeout.py figures . --write` runs first (UPDATING.md
    § Figures), so the spans and tables it fills are current and the worklist is for everything else; then
-   `$H worklist --docs <every live doc> > <scratchpad>/worklist.md`. Live docs:
+   `closeout.py worklist --docs <every live doc> > <scratchpad>/worklist.md`. Live docs:
    the pin, the overview, `README.md`, `CLAUDE.md`, the tracking docs, the descriptive docs, an undated handoff,
    and any other doc whose facts can go stale. Leave out, and name in the report: append-only logs; redman's ledgers and greenman's
    decision records (the project's own; read at Take stock and reported, not rewritten here) and the pack's side
@@ -59,7 +59,7 @@ directory). It holds the steps this skill shares with `/closeout`, and
 7. **Update the sources of truth, then everything that repeats them** — § Sources, then everything that repeats
    them — working down the worklist. A baseline doc the project lacks is created first (§ Baseline), except a
    handoff, which only `/closeout` writes; append a created doc's items to the worklist
-   (`$H worklist --docs <it> >> <scratchpad>/worklist.md`). A tracking doc changes only through its own
+   (`closeout.py worklist --docs <it> >> <scratchpad>/worklist.md`). A tracking doc changes only through its own
    procedure: counts and pointers re-derived; a status that contradicts a record the project already keeps (a
    ledger entry, a header, a closed issue that says it shipped — the pin is a summary, not a record, so a status
    contradicted only by the pin stays open) is a mirror — fix it and cite that record; a unit with no such record
@@ -78,7 +78,7 @@ directory). It holds the steps this skill shares with `/closeout`, and
 10. **Overview** — § Overview, every figure in it on the worklist.
 11. **Audit** — § Audit, with `--worklist <scratchpad>/worklist.md`.
 12. **Commit** — § Commit, with `git commit -m "refresh: docs, overview and pin true as of <date>"`; then
-    `$H stamp <pin>` (a pin that freezes its marker makes it refuse: then `--keep-marker`).
+    `closeout.py stamp <pin>` (a pin that freezes its marker makes it refuse: then `--keep-marker`).
 13. **Report** in plain words, leading with "refreshed as of <date> · <HEAD>", how many figures were wrong and how
     many other false claims you corrected, by doc; the doc map's problems, if any; then each doc changed and what was false in it; the docs left
     off the worklist and why; the memory entries fixed, deleted or re-pointed, and the backup's path; the two

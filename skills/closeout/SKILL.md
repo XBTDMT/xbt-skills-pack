@@ -45,7 +45,7 @@ write is one you observed in this session, with its command — or is marked "no
    closed:** its status says done, with the date and what "done" covered, and the handoff becomes the
    how-to-pick-it-up-again-later document.
 7. **Update everything that repeats them** — § Sources, then everything that repeats them. Where the doc map declares
-   `figures:`, `$H figures . --write` runs first, so every span and generated table is refilled from its source (§ Figures).
+   `figures:`, `closeout.py figures . --write` runs first, so every span and generated table is refilled from its source (§ Figures).
 8. **Write the pin** — § Pin: the pin of the lane whose unit closed (`facts` → `pins`). `## Just closed` names this
    unit and its proof.
 9. **Write the handoff**: `# <Project> — handoff (<date>)`, a `Supersedes` line if there was one, then
@@ -62,7 +62,7 @@ write is one you observed in this session, with its command — or is marked "no
    actually sees, and what not to do without asking.
 10. **Write the overview HTML** — § Overview.
 11. **Audit** before anything is committed — § Audit.
-12. **Commit** — § Commit, with `git commit -m "close-out: <what closed> …"`; then `$H stamp <pin>` marks
+12. **Commit** — § Commit, with `git commit -m "close-out: <what closed> …"`; then `closeout.py stamp <pin>` marks
     that commit (`--keep-marker` only when the pin freezes its marker).
 13. **Report** in plain words, leading with what closed and its proof (or that it did not close, and what is
     left); the doc map's problems, if any; then each master doc changed and what was false in it; the memory entries added, changed or removed;
