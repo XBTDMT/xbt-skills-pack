@@ -7,7 +7,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # ubuntu-24.04, not ubuntu-latest: since late October 2026 ubuntu-latest is 26.04, which setup-python has no
+        # Python 3.9 for, and 3.9 is the floor this pack keeps
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python: ["3.9", "3.12"]
     runs-on: ${{ matrix.os }}
     steps:
