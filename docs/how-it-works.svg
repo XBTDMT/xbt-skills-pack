@@ -132,7 +132,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <path class="flow" d="M600 1001.8 V1031.8 H15 V408.35 H19"/>
 <path class="head" d="M30 408.35 l-13 -7.8 v15.6 z"/>
 <text class="caption" x="40" y="1054.9">the next session starts from the pin and the handoff, so nothing is lost between threads</text>
-<text class="foot" x="30" y="1100">Underneath, plain Python on Windows, macOS and Linux (MIT): <tspan class="mono">closeout.py</tspan> (facts · audit · link-audit ·</text>
+<text class="foot" x="30" y="1100">Underneath, plain Python on Windows, macOS and Linux (GPL-3.0-or-later): <tspan class="mono">closeout.py</tspan> (facts · audit · link-audit ·</text>
 <text class="foot" x="30" y="1123.1">install-gate) and <tspan class="mono">turn_check.py</tspan>; <tspan class="mono">receipt_check.py</tspan> holds a turn whose receipt is missing or out of shape while</text>
 <text class="foot" x="30" y="1146.2"><tspan class="mono">/eli5</tspan> is on, <tspan class="mono">skill_fresh.py</tspan> says when a loaded skill changed on disk, and the optional doctrine’s <tspan class="mono">brief.py</tspan> gives</text>
 <text class="foot" x="30" y="1169.3">every agent the key rules as it starts.</text>

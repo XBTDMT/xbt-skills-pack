@@ -122,9 +122,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="caption" x="50" y="2911.8">and the handoff, so nothing is lost</text>
 <text class="caption" x="50" y="2941.7">between threads</text>
 <text class="foot" x="40" y="2992.9">Underneath, plain Python on Windows,</text>
-<text class="foot" x="40" y="3022.1">macOS and Linux (MIT): <tspan class="mono">closeout.py</tspan></text>
-<text class="foot" x="40" y="3051.3">(facts · audit · link-audit ·</text>
-<text class="foot" x="40" y="3080.5">install-gate) and <tspan class="mono">turn_check.py</tspan>;</text>
+<text class="foot" x="40" y="3022.1">macOS and Linux (GPL-3.0-or-later):</text>
+<text class="foot" x="40" y="3051.3"><tspan class="mono">closeout.py</tspan> (facts · audit · link-audit</text>
+<text class="foot" x="40" y="3080.5">· install-gate) and <tspan class="mono">turn_check.py</tspan>;</text>
 <text class="foot" x="40" y="3109.7"><tspan class="mono">receipt_check.py</tspan> holds a turn whose</text>
 <text class="foot" x="40" y="3138.9">receipt is missing or out of shape while</text>
 <text class="foot" x="40" y="3168.1"><tspan class="mono">/eli5</tspan> is on, <tspan class="mono">skill_fresh.py</tspan> says when a</text>

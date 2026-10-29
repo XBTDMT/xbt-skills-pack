@@ -8,7 +8,7 @@ makes a project keep a few plain documents, makes the model record real choices 
 every document still points at the plan — and it measures whether the model actually complies, in graded sessions
 you can re-run yourself.
 
-Free, MIT, no account, no telemetry, nothing to buy.
+Free, GPL-3.0-or-later, no account, no telemetry, nothing to buy.
 
 ```sh
 git clone https://github.com/XBTDMT/xbt-skills-pack.git
@@ -361,4 +361,8 @@ especially worth an issue — attach the run folder's `grades.json` and the mode
 
 ## License
 
-MIT, see `LICENSE`. The two `axiom-*` skills are © Charles Wiltgen under their own MIT licence, kept in each folder.
+GNU General Public License, version 3 or (at your option) any later version (GPL-3.0-or-later); the full text is in `LICENSE`.
+Releases before this licence change were published under MIT, and copies of them stay MIT. The two `axiom-*` skills
+are © Charles Wiltgen under their own MIT licence, kept in each folder.
+
+Copyright (c) 2026 XBTDMT
