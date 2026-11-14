@@ -1710,7 +1710,7 @@ class KnownRuns(unittest.TestCase):
         no_edit = by_id["redman_no_edit"]
         self.assertEqual(no_edit["overlay"], "no_edit_big")
         self.assertIn(["final_matches", 3, "(?m)^- Redman: held \\d+ — no edits allowed"], no_edit["checks"])
-        self.assertIn(["final_matches", 3, "(?i)\\bsave\\b[^\\n]*now,? or later\\?"], no_edit["checks"])   # the planted save()
+        self.assertIn(["final_matches", 3, "(?i)\\bsave\\b[^\\n]*?now,? or later[^\\n]*?\\?|now,? or later[^\\n]*?\\bsave\\b[^\\n]*?\\?"], no_edit["checks"])   # the planted save(), named anywhere on the question's line (2026-11-14)
         self.assertTrue(any("big finding" in k["label"] and k["expect"] == "fail" for k in no_edit["known"]))
         # "Fix now, or later?" is the same question; a question about another finding does not stand in for save()'s
         self.assertEqual([k["expect"] for k in no_edit["known"] if "with a comma" in k["label"] or "another finding" in k["label"]],

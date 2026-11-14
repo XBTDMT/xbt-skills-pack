@@ -53,8 +53,8 @@ SKILLS = shipped_skills()
 # document the session changed since its previous turn, however it was written. The per-write hook, hook.sh, is a zsh
 # script for macOS and Linux and is left for you to add by hand (README: "The per-write hook"). The third layer, the
 # commit gate, is added per project by /closeout.
-DOCTRINE_FILES = ("gate.py", "opus-layer.md", "opus-5-5-layer.md", "fable-layer.md", "desktop-architect.md", "SEATS.md",
-                  "brief.py", "key-rules.md")
+DOCTRINE_FILES = ("gate.py", "opus-layer.md", "opus-5-5-layer.md", "fable-layer.md", "fable-5-2-layer.md", "desktop-architect.md",
+                  "SEATS.md", "brief.py", "key-rules.md")
 PROFILE_BEGIN = "# >>> xbt-skills-pack >>>"
 PROFILE_END = "# <<< xbt-skills-pack <<<"
 # The markers an older installer wrote. Its block is replaced where it stands, so a line the user put above it (such

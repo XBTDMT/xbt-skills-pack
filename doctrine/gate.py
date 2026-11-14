@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """SessionStart hook: print the doctrine layer for the session's model, which Claude Code adds to the context.
 
-The layer comes from one table (MEASURED and FAMILY_LAYER below; `gate.py --table` prints it):
+The layer comes from one table (MEASURED, COPIED and FAMILY_LAYER below; `gate.py --table` prints it):
   a measured model id           -> its measured layer (Opus 5.5 -> opus-5-5-layer.md; Opus 5 and Sonnet 5 ->
-                                   opus-layer.md; Fable 5.1 -> fable-layer.md)
+                                   opus-layer.md; Fable 5.1 -> fable-layer.md; Fable 5.2 -> fable-5-2-layer.md)
+  a copied model id             -> its own layer, started as a copy of a measured one and not yet measured on it
+                                   (none today; Fable 5.2 was one from 2026-11-12 until its held-out run on 2026-11-13)
   another version of a family   -> the layer of that family's nearest measured version at or below it, else of its
   with measured rows               lowest (a newer Opus -> the 5.5 layer; Opus 4.8 -> opus-layer.md)
   Haiku                         -> opus-layer.md
@@ -49,12 +51,14 @@ HERE = Path(os.path.abspath(__file__)).parent   # never .resolve(): run through 
 
 # The model table. A new model is one row here (and, for the doctrine harness, its arms).
 MEASURED = {"claude-opus-5": "opus-layer.md", "claude-opus-5-5": "opus-5-5-layer.md",
-            "claude-fable-5-1": "fable-layer.md", "claude-sonnet-5": "opus-layer.md"}    # the measured pairings
+            "claude-fable-5-1": "fable-layer.md", "claude-sonnet-5": "opus-layer.md",
+            "claude-fable-5-2": "fable-5-2-layer.md"}   # the measured pairings (Fable 5.2: held-out 98 against 5.1's 97, 2026-11-13)
+COPIED = {}   # a layer of its own, copied from a measured one and not yet measured on its model (Fable 5.2 was one, 2026-11-12 to 13)
 FAMILY_LAYER = {"haiku": "opus-layer.md"}                                              # families with no measured row
 DEFAULT_LAYER = "opus-5-5-layer.md"                                                    # undetected or unrecognised
 ALIASES = {"opus": "claude-opus-5-5", "sonnet": "claude-sonnet-5", "haiku": "claude-haiku-4-5",
-           "fable": "claude-fable-5-1", "best": "fable", "opusplan": "opus"}
-ALIASES_FROM = "2.1.283"                        # the Claude Code version the alias defaults were read from
+           "fable": "claude-fable-5-2", "best": "fable", "opusplan": "opus"}
+ALIASES_FROM = "2.1.323"                        # the Claude Code version the alias defaults were read from (fable -> 5.2 since 2.1.321)
 ALIAS_ENV = "ANTHROPIC_DEFAULT_<FAMILY>_MODEL"
 ALIAS_FAMILIES = ("opus", "sonnet", "haiku", "fable")   # the family aliases Claude Code lets that variable override
 FAMILY_NAMES = "opus|sonnet|haiku|fable"
@@ -195,6 +199,8 @@ def choose(ident, family, version):
     measured version at or below it, else that family's lowest; else the family's layer; else the default."""
     if ident in MEASURED:
         return MEASURED[ident]
+    if ident in COPIED:
+        return COPIED[ident]
     rows = sorted(((int(m.group(2)), int(m.group(3) or 0)), layer) for m, layer in
                   ((ID_RE.fullmatch(i), layer) for i, layer in MEASURED.items()) if m and m.group(1) == family)
     if rows and version:
@@ -221,7 +227,7 @@ def resolve(raw):
 
 
 def table():
-    return {"schema": 1, "measured": MEASURED, "family_layer": FAMILY_LAYER, "default": DEFAULT_LAYER,
+    return {"schema": 1, "measured": MEASURED, "copied": COPIED, "family_layer": FAMILY_LAYER, "default": DEFAULT_LAYER,
             "aliases": ALIASES, "aliases_from": ALIASES_FROM, "alias_env": ALIAS_ENV}
 
 
@@ -340,10 +346,16 @@ def identify(stdout, layers=None):
     head, _, body = stdout.replace("\r\n", "\n").partition("\n")
     m = HEADER_RE.match(head)
     model, body = (m.group(2) if m else None), body.encode("utf-8")
-    for name, text in (layer_files() if layers is None else layers):
-        if text == body:
-            return model, name, ""
-    return model, None, "text matches no layer file"
+    matches = [name for name, text in (layer_files() if layers is None else layers) if text == body]
+    if not matches:
+        return model, None, "text matches no layer file"
+    if len(matches) > 1 and model:
+        # two layers with one body (fable-5-2-layer.md is fable-layer.md's copy until measured): the one the table
+        # gives the header's model is the one that was injected
+        own = resolve(model)["layer"]
+        if own in matches:
+            return model, own, ""
+    return model, matches[0], ""
 
 
 def _records(path):
@@ -515,7 +527,7 @@ def doctor():
             print(f"ok    Claude Code {version} is ALIASES_FROM")
     else:
         print(f"WARN  claude is not on PATH: the alias defaults ({ALIASES_FROM}) are not checked against it")
-    for name in sorted(set(MEASURED.values()) | set(FAMILY_LAYER.values()) | {DEFAULT_LAYER}):
+    for name in sorted(set(MEASURED.values()) | set(COPIED.values()) | set(FAMILY_LAYER.values()) | {DEFAULT_LAYER}):
         path = HERE / name
         try:
             head = path.read_bytes().partition(b"\n")[0].decode("utf-8").rstrip("\r")

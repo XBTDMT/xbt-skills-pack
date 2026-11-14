@@ -55,10 +55,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 PACK = HERE.parent
-SEATS = {"fable": ["--model", "claude-fable-5-1", "--effort", "low"],
+SEATS = {"fable": ["--model", "claude-fable-5-1", "--effort", "low"],      # Fable 5.1, `cc fable51` since 2026-11-13 (the seat word keeps the run log's meaning)
+         "fable52": ["--model", "claude-fable-5-2", "--effort", "low"],    # `cc fable` since 2026-11-13: the 5.1 page copied, measured on 5.2
          "opus55": ["--model", "claude-opus-5-5", "--effort", "high"],   # the reviewer seat since 2026-09-22; the scenarios name it
          "opus": ["--model", "claude-opus-5", "--effort", "high"]}       # the reviewer seat until 2026-09-22; --seat opus runs the Opus scenarios on it
-SEAT_ALIAS = {"opus": "opus55"}   # a seat that stands in for another: the scenarios name "opus55"; --seat opus runs those on Opus 5
+SEAT_ALIAS = {"opus": "opus55",   # a seat that stands in for another: the scenarios name "opus55"; --seat opus runs those on Opus 5
+              "fable52": "fable"}  # the scenarios name "fable" (5.1); --seat fable52 runs those on Fable 5.2 (2026-11-12)
 GIT_ALLOWED = ("status", "diff", "log", "add", "commit")
 # Each git command allowed bare is allowed in its `git -C <dir>` form too: the doctrine pages tell a session to run git
 # that way, never `cd … &&` in front of it, and the full run of 2026-10-07 had a session refused `git -C <project> status`.
@@ -1289,6 +1291,20 @@ def is_runner_form(hook):
 
 
 INTERPRETERS = re.compile(r"(?:python[0-9.]*|py|sh|bash|zsh)(?:\.exe)?", re.I)
+# An interpreter's options that take no value, which may stand between it and the script (`python3 -I <script>`, an
+# isolated-mode hook): Python's and the shells' single-letter switches, combinable. An option that takes a value
+# (python -c/-m/-W/-X, sh -c/-o) is not one of these, so the script is never looked for past one.
+NO_VALUE_OPTIONS = {"python": re.compile(r"-[bBdEiIOPqRsSuvV]+"), "shell": re.compile(r"-[aefhklnuvx]+")}
+
+
+def _script_at(interpreter, words):
+    """The index of the script in `words` (the interpreter's arguments): past its no-value options."""
+    name = re.split(r"[\\/]", interpreter)[-1].lower()
+    options = NO_VALUE_OPTIONS["python" if name.startswith("py") else "shell"]
+    i = 0
+    while i < len(words) - 1 and options.fullmatch(words[i]):
+        i += 1
+    return i
 
 
 def _words(command):
@@ -1309,12 +1325,16 @@ def hook_parts(hook):
     if args[:1] == ["-c"]:
         return command, (args[2] if len(args) > 2 else ""), tuple(args[3:])
     if args:
+        if INTERPRETERS.fullmatch(re.split(r"[\\/]", command)[-1]):
+            i = _script_at(command, args)
+            return command, args[i], tuple(args[i + 1:])
         return command, args[0], tuple(args[1:])
     words = _words(command)
     if not words:
         return "", "", ()
     if len(words) > 1 and INTERPRETERS.fullmatch(re.split(r"[\\/]", words[0])[-1]):
-        return words[0], words[1], tuple(words[2:])
+        i = 1 + _script_at(words[0], words[1:])
+        return words[0], words[i], tuple(words[i + 1:])
     return "", words[0], tuple(words[1:])
 
 
@@ -2838,7 +2858,7 @@ def _p0(regrade):
 
 
 PAGE_ROW_RE = re.compile(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(\d+)[^|]*\|\s*\**\s*(\d+)\s*/\s*(\d+)\s*\**[^|]*\|(.*)\|\s*$")
-SEAT_WORDS = {"fable": ("Fable",), "opus": ("Opus",), "opus55": ("Opus 5.5",)}
+SEAT_WORDS = {"fable": ("Fable",), "fable52": ("Fable 5.2",), "opus": ("Opus",), "opus55": ("Opus 5.5",)}
 
 
 def page_rows(page):

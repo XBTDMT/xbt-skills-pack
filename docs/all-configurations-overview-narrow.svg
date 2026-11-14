@@ -210,7 +210,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <circle cx="172.3" cy="2073.5" r="9.0" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="189.3" y="2080.5">Opus 5.5</text>
 <circle cx="320.2" cy="2073.5" r="9.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
-<text class="legend" x="337.2" y="2080.5">Fable 5.1</text>
+<text class="legend" x="337.2" y="2080.5">Fable</text>
 <circle cx="45.0" cy="2111.0" r="9.0" style="fill:var(--sonnet);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="62.0" y="2118.0">Sonnet 5</text>
 <circle cx="191.5" cy="2111.0" r="9.0" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>

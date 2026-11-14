@@ -68,11 +68,10 @@
   "workflow-authoring"
  ],
  "builtin_plugins": [
-  "agents-md@builtin",
-  "telemetry@builtin",
   "cc-plugin-agents-md@builtin",
   "cc-plugin-telemetry@builtin",
-  "cc-plugin-plugin-authoring@builtin"
+  "cc-plugin-plugin-authoring@builtin",
+  "cc-plugin-privacy@builtin"
  ],
- "cli_version": "2.1.303"
+ "cli_version": "2.1.323"
 }

@@ -51,7 +51,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="name" x="64" y="594.9"><tspan class="mono">cc</tspan> seats<tspan class="opt" dx="10">OPTIONAL · WINDOWS</tspan></text>
 <text class="desc" x="64" y="624.8"><tspan class="mono">cc</tspan> the engineer</text>
 <text class="desc" x="64" y="654.7"><tspan class="mono">cc opus</tspan> the reviewer</text>
-<text class="desc" x="64" y="684.6"><tspan class="mono">cc fable</tspan> Fable 5.1</text>
+<text class="desc" x="64" y="684.6"><tspan class="mono">cc fable</tspan> Fable 5.2</text>
 <text class="desc" x="64" y="714.5"><tspan class="mono">cc sonnet</tspan> the helper</text>
 <text class="desc" x="64" y="744.4"><tspan class="mono">cc skills</tspan> no doctrine</text>
 <text class="desc" x="64" y="774.3"><tspan class="mono">cc default</tspan> stock Claude Code</text>

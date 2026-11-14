@@ -751,7 +751,7 @@ UNMARKED_PATTERNS = (
     re.compile(r"(?<![\w.$])\d+\s+of\s+the\s+\d+\b", re.I),
     re.compile(r"\babout\s+\$\d+(?:\.\d+)?", re.I),
 )
-SEAT_NAMES = {"fable": "Fable", "opus": "Opus", "opus55": "Opus 5.5"}
+SEAT_NAMES = {"fable": "Fable", "fable52": "Fable 5.2", "opus": "Opus", "opus55": "Opus 5.5"}
 CASES_SUFFIX = {"quick": " (quick)"}
 
 

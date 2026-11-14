@@ -4,7 +4,10 @@
 #
 #   cc           engineer: the everyday seat (`cc eng` too). $CcEngineerModel at medium effort, with its working notes.
 #   cc opus      reviewer: Claude Opus 5.5 at high effort, with its working notes. Reviews, hard maths, long builds.
-#   cc fable     Claude Fable 5.1 at low effort, with its working notes, on Fable's own usage window.
+#   cc fable     Claude Fable 5.2 at low effort, with its measured working notes (the Fable 5.1 notes, measured on 5.2
+#                on 13 November 2026: held-out 98 against 97), on Fable's own usage window. `cc fable51` (or
+#                `cc fable 5.1`) runs Claude Fable 5.1 on its notes; `cc opus5` (or `cc opus 5`) runs Claude Opus 5 at
+#                high effort. A bare seat word is the family's current measured model; any other carries its version.
 #   cc sonnet    helper: Claude Sonnet 5.5 at high effort, the pack's skills and hooks, no working notes: on eight tasks
 #                none of the notes were written from, it did as well without notes as with Opus 5.5's. Cheap side jobs.
 #   cc skills    Claude Code's default model, the pack's skills and hooks, no doctrine (no model or effort pinned).
@@ -36,9 +39,16 @@ function cc {
     $rest = @($args)
     while ($rest.Count -gt 0) {
         $word = [string]$rest[0]
+        # a version after the seat word names it with its dot: cc opus 5, cc opus 5.5, cc fable 5.1, cc fable 5.2
+        if ($word -eq '5' -and $seat -eq 'reviewer') { $word = 'opus5' }
+        if ($word -eq '5.5' -and $seat -eq 'reviewer') { $word = 'opus' }
+        if ($word -eq '5.1' -and $seat -eq 'fable') { $word = 'fable51' }
+        if ($word -eq '5.2' -and $seat -eq 'fable') { $word = 'fable' }
         if (@('opus', 'reviewer') -contains $word) { $seat = 'reviewer'; $model = 'claude-opus-5-5'; $effort = 'high' }
+        elseif ($word -eq 'opus5') { $seat = 'opus5'; $model = 'claude-opus-5'; $effort = 'high' }
         elseif (@('eng', 'engineer') -contains $word) { $seat = 'engineer'; $model = $CcEngineerModel; $effort = 'medium' }
-        elseif ($word -eq 'fable') { $seat = 'fable'; $model = 'claude-fable-5-1'; $effort = 'low' }
+        elseif ($word -eq 'fable') { $seat = 'fable'; $model = 'claude-fable-5-2'; $effort = 'low' }
+        elseif ($word -eq 'fable51') { $seat = 'fable51'; $model = 'claude-fable-5-1'; $effort = 'low' }
         elseif (@('sonnet', 'helper') -contains $word) { $seat = 'helper'; $model = 'claude-sonnet-5-5'; $effort = 'high' }
         elseif ($word -eq 'skills') { $seat = 'skills' }
         elseif ($word -eq 'default') { $seat = 'default' }

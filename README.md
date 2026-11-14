@@ -49,8 +49,8 @@ Two things, measured separately, and neither is a claim that your finished work 
 
 | | |
 |---|---|
-| **The skills** | <!-- fig:eval.scenarios -->27<!-- /fig --> scenarios · <!-- fig:eval.sessions -->49<!-- /fig --> graded sessions · <!-- fig:eval.checks -->202<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->49/49<!-- /fig -->** (<!-- fig:run.full.date -->2026-10-11<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
-| **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->10<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->53<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->19<!-- /fig --> runs: the 29 September, 7 October and 19 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
+| **The skills** | <!-- fig:eval.scenarios -->27<!-- /fig --> scenarios · <!-- fig:eval.sessions -->49<!-- /fig --> graded sessions · <!-- fig:eval.checks -->202<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->45/49<!-- /fig -->** (<!-- fig:run.full.date -->2026-11-14<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
+| **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->11<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->57<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->24<!-- /fig --> runs: the 29 September, 7 October and 19 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
 and match, files that must be unchanged, what reached git, commands that must not appear. **In the graded sessions no
@@ -61,7 +61,7 @@ stayed the script's). Once an answer's first line named its model and doctrine s
 later packets strip that line. And a smaller Sonnet 5 sample of 3 September, quoted below, had a model judge score the
 shape of its prose; no judge enters the nine-task correctness figures.
 
-<a href="docs/measurements.svg"><picture><source media="(max-width: 1279px)" srcset="docs/measurements-narrow.svg"><img src="docs/measurements.svg" alt="Does a doctrine page help? Ten configurations, nine tasks each, run with a page and without one"></picture></a>
+<a href="docs/measurements.svg"><picture><source media="(max-width: 1279px)" srcset="docs/measurements-narrow.svg"><img src="docs/measurements.svg" alt="Does a doctrine page help? Eleven configurations, nine tasks each, run with a page and without one"></picture></a>
 
 The pages were written from the misses on the nine-task set, so it is not held out. Its runs, Claude Opus 5.5 and Sonnet 5.5 included, are on the evidence page in three charts
 ([correctness and cost](docs/all-configurations-overview.svg), [the cheap end](docs/all-configurations-zoom.svg),
@@ -89,7 +89,9 @@ Opus 5 at max effort spawn <!-- fig:doctrine.K.agents -->18<!-- /fig --> of them
 to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig --> points, so a gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> or less there is level within noise; on the held-out set the rule, set before the
 run, is <!-- fig:doctrine.held.rule -->5<!-- /fig --> points.
 
-Since 26 October the pages that ship are the 19 October pages for Fable 5.1 (and Mythos) and for Opus 5, Sonnet and
+Since 13 November 2026 the pages that ship are the 13 November pages for Fable 5.2 and Fable 5.1 (and Mythos), tuned
+from Fable 5.2's measured misses and carrying the one sentence the harder set earned, and the Opus 5.5 page of 7 October
+with that sentence added; since 26 October, the 19 October pages for Opus 5, Sonnet and
 Haiku (each its earlier page with one paragraph added: write a path out in full, because a non-interactive permission
 check refuses a `cd` into the current folder, a `cd … &&` in front of a git command, a `~` or a shell variable, and a
 refusal ends the task; measured on Fable 5.1 and Opus 5 only) and the 7 October page for Claude Opus 5.5 (and for a
@@ -129,8 +131,27 @@ hallucination at the token level. The full method, every run, and what is still 
   author's claude.ai account, 254 skills in all, 7 of them this pack's, so that extra cost measured carrying all of
   them, not this pack's skills alone.*
 - **UI/UX design skills** — nothing in this repo helps with web or front-end design yet (the Apple references help
-  with SwiftUI and macOS implementation, not design). A design-side set (component and
-  layout review, accessibility, design decisions recorded the way code decisions are) is planned, not started.
+  with SwiftUI and macOS implementation, not design). A design-side set is planned, not started, and its scope is
+  now written down: first design principles for front end and back end (use every free tool that fits, and say when
+  a one-time trial plan applies); the 10-5-3 design round as a skill (ten distinct ideas with pros, cons and a
+  recommendation, five rebuilt from the ten's strengths, three finalists); Mac-native design (Apple's own control
+  sizes, text styles, colours, materials and symbols, beside the two `axiom-*` references); and one design system per
+  app (a few type sizes, one radius per kind of thing, a fixed set of button styles, one spacing base, kept in code
+  with a check that counts raw values).
+- **Rebuilt benchmarks for each new model.** On 13 November 2026 the tuned Fable 5.2 page scored 100 on the held-out
+  set, the first run to pass every check, and a harder set of sixteen tasks built the same day (two halves: one
+  whose misses are read, one only ever scored) came back with Fable 5.2 and Opus 5.5 level with and without a page,
+  at 93–94. A test a model can no longer fail measures nothing, so the sets are now rebuilt and re-run for each new
+  model release rather than carried forward: harder tasks, planted on what the newest model actually gets wrong,
+  frozen and committed before any paid run. The one miss the harder set still caught on both models, a final
+  message that did not name every file the change touched, became one sentence on three pages, measured on the
+  sealed half and promoted the same day. Details in [`docs/evidence.md`](docs/evidence.md#a-held-out-set-eight-tasks-no-doctrine-page-was-written-from).
+- **An eval for the close-out ceremony** — `/closeout` and `/project-update` are the two skills the graded suite
+  does not yet cover end to end; a scenario for each is planned, then their long reference document is trimmed the
+  way greenman's and redman's were.
+- **After this release, a review of**: a headroom proxy for long sessions, Claude Code's context mode and MCP
+  servers for the pack's own setup, a small server for the author's setup, and a side-buddy skill that keeps a
+  running note.
 
 ## How it works
 
@@ -163,8 +184,8 @@ hallucination at the token level. The full method, every run, and what is still 
 | `skills/closeout/` | `/closeout`: prove what closed, update every doc, carry findings and decisions into the plan, write the handoff and overview, audit, commit. Holds `UPDATING.md` (the steps both doc skills share) and `closeout.py` (the deterministic helper: `facts`, `memory`, `worklist`, `tree`, `stamp`, `audit`, `link-audit`, `install-gate`). |
 | `skills/project-update/` | `/project-update`: nothing has closed and work goes on; make every doc, figure, overview and memory entry match the project as it is now. |
 | `skills/axiom-macos/`, `skills/axiom-swiftui/` | Apple-platform references that switch on by themselves. Trimmed copies of [charleswiltgen/axiom](https://github.com/charleswiltgen/axiom) (MIT); each folder's `SOURCE.md` lists what was trimmed. `axiom-graphics`, which one `axiom-macos` page refers to, is not included. |
-| `doctrine/` *(optional, off by default)* | `gate.py`, a SessionStart hook that injects the layer its model table names for the session's model (`python gate.py --table` prints the table): `opus-5-5-layer.md` for Claude Opus 5.5 (written for it on 22 September 2026; the copy here is its 7 October page, with one clause added: superpowers' brainstorming rule applies only where that plugin is installed), `fable-layer.md` for Fable, `opus-layer.md` for Opus 5, Sonnet and Haiku; a newer Opus gets the 5.5 layer; a model it cannot detect gets the 5.5 layer, and the layer's header says so. `gate.py --status` shows which layer each recent session really got; `gate.py --doctor` checks the table; `brief.py`, a SubagentStart hook that gives every agent the key rules in `key-rules.md` (evidence for every claim, a permission denial is a stop, no edits where the task forbids them) as it starts, whether the Agent tool, a workflow or a skill started it; `SEATS.md` on which seat to use when; `desktop-architect.md` for a Claude Desktop project. Measured above — read `docs/evidence.md` first. |
-| `powershell/cc.ps1` *(optional)* | The `cc` launcher on Windows: `cc [opus\|fable\|sonnet\|skills\|default] [1\|2]`, then anything for claude itself. `cc` is the everyday seat, Claude Opus 5.5 at medium effort (set `$CcEngineerModel` to run it on another model); `cc opus` is the reviewer, Claude Opus 5.5 at high effort; `cc fable` is Fable 5.1 at low effort, on Fable's own usage window; `cc sonnet` is the helper, Sonnet 5.5 at high effort with the skills and no working notes; `cc skills` is Claude Code's default model with the skills and no doctrine; `cc default` is stock Claude Code (`--safe-mode`). The seats that name a model pin it to an exact id; `cc skills` runs Claude Code's default, and `$CcEngineerModel` puts the engineer seat on any model you name. `2` runs a second account: it sets `CLAUDE_CONFIG_DIR` to the folder you name as `$CcSecondaryDir` in your profile. `doctrine/SEATS.md` says which seat to use when. |
+| `doctrine/` *(optional, off by default)* | `gate.py`, a SessionStart hook that injects the layer its model table names for the session's model (`python gate.py --table` prints the table): `opus-5-5-layer.md` for Claude Opus 5.5 (written for it on 22 September 2026; the copy here is its 7 October page, with one clause added: superpowers' brainstorming rule applies only where that plugin is installed), `fable-layer.md` for Fable 5.1, `fable-5-2-layer.md` for Fable 5.2 (the 5.1 page copied on 12 November 2026, measured on 5.2 on 13 November: level with 5.1 on tasks no page was written from), `opus-layer.md` for Opus 5, Sonnet and Haiku; a newer Opus gets the 5.5 layer; a model it cannot detect gets the 5.5 layer, and the layer's header says so. `gate.py --status` shows which layer each recent session really got; `gate.py --doctor` checks the table; `brief.py`, a SubagentStart hook that gives every agent the key rules in `key-rules.md` (evidence for every claim, a permission denial is a stop, no edits where the task forbids them) as it starts, whether the Agent tool, a workflow or a skill started it; `SEATS.md` on which seat to use when; `desktop-architect.md` for a Claude Desktop project. Measured above — read `docs/evidence.md` first. |
+| `powershell/cc.ps1` *(optional)* | The `cc` launcher on Windows: `cc [opus\|opus5\|fable\|fable52\|sonnet\|skills\|default] [1\|2]`, then anything for claude itself. `cc` is the everyday seat, Claude Opus 5.5 at medium effort (set `$CcEngineerModel` to run it on another model); `cc opus` is the reviewer, Claude Opus 5.5 at high effort; `cc fable` is Fable 5.1 at low effort, on Fable's own usage window; `cc sonnet` is the helper, Sonnet 5.5 at high effort with the skills and no working notes; `cc skills` is Claude Code's default model with the skills and no doctrine; `cc default` is stock Claude Code (`--safe-mode`). The seats that name a model pin it to an exact id; `cc skills` runs Claude Code's default, and `$CcEngineerModel` puts the engineer seat on any model you name. `2` runs a second account: it sets `CLAUDE_CONFIG_DIR` to the folder you name as `$CcSecondaryDir` in your profile. `doctrine/SEATS.md` says which seat to use when. |
 | `plugins.json` *(optional)* | A starting set of plugins that work well with the pack. |
 | `templates/CLAUDE.md` | A starting point for your personal `~/.claude/CLAUDE.md`, written only if you don't have one. |
 
@@ -311,7 +332,7 @@ python3 evals/run.py                    # the full set
 ```
 
 As this tree ships: <!-- fig:tests.public -->544<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.28<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.03<!-- /fig -->.
+<!-- fig:run.quick.cost -->$5.27<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,
@@ -319,10 +340,10 @@ the hooks the installer registers (the doctrine's read from `~/.claude/doctrine`
 it also adds the doctrine's hooks to your own settings), account sync and claude.ai connectors off, and a login of its
 own. Before any session starts, `run.py` refuses, with exit 2, no session launched and nothing spent, when that folder
 is not logged in, when one of its hooks does not resolve, or when your `claude --version` is not Claude Code
-<!-- fig:eval.sealed.cli_version -->2.1.303<!-- /fig -->, the version whose bundled skills and plugins the sealed environment was reviewed on
+<!-- fig:eval.sealed.cli_version -->2.1.323<!-- /fig -->, the version whose bundled skills and plugins the sealed environment was reviewed on
 (`cli_version` in `evals/sealed.json`); it names both versions. To reproduce the published runs, run that version;
 `--probe` launches on another one, but grades every case's `sealed` check as unreviewed, never a pass. You also need
-a plan with both Fable 5.1 and Opus 5.5 (`--seat opus` runs the Opus scenarios on Opus 5 instead); `--seat fable` or
+a plan with both Fable 5.1 and Opus 5.5 (`--seat opus` runs the Opus scenarios on Opus 5 instead, and `--seat fable52` the Fable scenarios on Fable 5.2, whose page was tuned from its own measured misses on 13 November 2026); `--seat fable` or
 `--seat opus55` runs one of them. `docs/evidence.md` has the method, what each case checks, and what the numbers do
 and do not show.
 

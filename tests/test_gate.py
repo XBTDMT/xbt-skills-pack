@@ -440,6 +440,7 @@ FIXTURE_LAYERS = {
     "opus-layer.md": "# Working doctrine (injected: this session runs Claude Opus 5)\n\nthe opus body\n",
     "opus-5-5-layer.md": "# Working notes (injected: this session runs Claude Opus 5.5)\n\nthe opus 5.5 body\n",
     "fable-layer.md": "# Working notes (injected: this session runs Claude Fable 5.1)\n\nthe fable body\n",
+    "fable-5-2-layer.md": "# Working notes (injected: this session runs Claude Fable 5.2)\n\nthe fable body\n",
 }
 
 

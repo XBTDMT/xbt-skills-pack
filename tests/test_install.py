@@ -654,12 +654,15 @@ with open(os.environ["FAKE_CLAUDE_LOG"], "a", encoding="utf-8") as fh:
 
 
 class CcSeats(unittest.TestCase):
-    """powershell/cc.ps1 takes the macOS launcher's shape: cc [opus|fable|sonnet|skills|default] [1|2] [claude args].
-    The seat table is read from the script's word loop, one `if`/`elseif` line per word, as a person reads it."""
+    """powershell/cc.ps1 takes the macOS launcher's shape: cc [opus|opus5|fable|fable51|sonnet|skills|default] [1|2]
+    [claude args]; a version after the word names it with its dot (`cc opus 5`, `cc opus 5.5`, `cc fable 5.1`, `cc fable 5.2`). The seat table is read from the
+    script's word loop, one `if`/`elseif` line per word, as a person reads it."""
     SOURCE = PACK / "powershell" / "cc.ps1"
     OPUS = {"seat": "reviewer", "model": "claude-opus-5-5", "effort": "high"}
+    OPUS5 = {"seat": "opus5", "model": "claude-opus-5", "effort": "high"}
     ENGINEER = {"seat": "engineer", "model": "$CcEngineerModel", "effort": "medium"}
-    FABLE = {"seat": "fable", "model": "claude-fable-5-1", "effort": "low"}
+    FABLE = {"seat": "fable", "model": "claude-fable-5-2", "effort": "low"}       # the current Fable, measured 2026-11-13 (held-out 98 against 97)
+    FABLE51 = {"seat": "fable51", "model": "claude-fable-5-1", "effort": "low"}   # Fable 5.1 on its page, kept launchable
     SONNET = {"seat": "helper", "model": "claude-sonnet-5-5", "effort": "high"}
 
     @classmethod
@@ -676,12 +679,13 @@ class CcSeats(unittest.TestCase):
         r = subprocess.run([sys.executable, str(PACK / "doctrine" / "gate.py"), "--table"], capture_output=True,
                            text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
-        return json.loads(r.stdout)["measured"]
+        table = json.loads(r.stdout)
+        return {**table["measured"], **table.get("copied", {})}   # copied: a page of its own, not yet measured on its model
 
     def test_the_seat_and_account_words(self):
         self.assertEqual(self.words, {
-            "opus": self.OPUS, "reviewer": self.OPUS,
-            "fable": self.FABLE, "eng": self.ENGINEER, "engineer": self.ENGINEER,
+            "opus": self.OPUS, "reviewer": self.OPUS, "opus5": self.OPUS5, "5": {"word": "opus5"},
+            "fable": self.FABLE, "fable51": self.FABLE51, "5.1": {"word": "fable51"}, "5.2": {"word": "fable"}, "5.5": {"word": "opus"}, "eng": self.ENGINEER, "engineer": self.ENGINEER,
             "sonnet": self.SONNET, "helper": self.SONNET,
             "skills": {"seat": "skills"}, "default": {"seat": "default"},
             "1": {"account": "primary"}, "primary": {"account": "primary"},
@@ -739,11 +743,15 @@ class CcSeats(unittest.TestCase):
                 calls = [json.loads(l) for l in log.read_text(encoding="utf-8").splitlines()] if log.exists() else []
                 return r.returncode, r.stdout + r.stderr, calls
 
-            fable = {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-fable-5-1", "CLAUDE_CONFIG_DIR": None}
+            fable = {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-fable-5-2", "CLAUDE_CONFIG_DIR": None}
+            fable51 = {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-fable-5-1", "CLAUDE_CONFIG_DIR": None}
             for line, argv, seen in (
                     ("cc", ["--model", "claude-opus-5-5", "--effort", "medium"],
                      {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-opus-5-5", "CLAUDE_CONFIG_DIR": None}),
-                    ("cc fable 1 --continue", ["--model", "claude-fable-5-1", "--effort", "low", "--continue"], fable),
+                    ("cc fable 1 --continue", ["--model", "claude-fable-5-2", "--effort", "low", "--continue"], fable),
+                    ("cc fable 5.1 --continue", ["--model", "claude-fable-5-1", "--effort", "low", "--continue"], fable51),
+                    ("cc opus 5", ["--model", "claude-opus-5", "--effort", "high"],
+                     {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-opus-5", "CLAUDE_CONFIG_DIR": None}),
                     ("cc opus 2 --resume", ["--model", "claude-opus-5-5", "--effort", "high", "--resume"],
                      {"DOCTRINE": "on", "DOCTRINE_MODEL": "claude-opus-5-5", "CLAUDE_CONFIG_DIR": second}),
                     ("cc 2 opus", ["--model", "claude-opus-5-5", "--effort", "high"],
