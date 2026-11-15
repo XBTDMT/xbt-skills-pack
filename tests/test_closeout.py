@@ -387,6 +387,42 @@ class Audit(Base):
         self.r.write("HANDOFF.md", "key sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA\n<<<<<<< HEAD\n")
         self.assertEqual(len(self.levels(closeout.audit(self.dir, ["HANDOFF.md"]), "FAIL")), 2)
 
+    def test_secrets_are_checked_in_every_changed_text_file(self):
+        """Redman 2026-10-22: the secret pass read only .md, .html and .txt, so a settings copy with a DSN password
+        passed every close-out. Any extension now, binary skipped by the NUL sniff tools/secret_scan.py uses; the other
+        checks (conflict markers, placeholders, paths) stay on the documents."""
+        self.r.write("src/settings.local.json", '{"dsn": "postgresql://app:hunter2abc@127.0.0.1:5432/db", "note": "TBD"}\n')
+        self.r.write("src/keys.py", 'TOKEN = "sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA"\n<<<<<<< HEAD\n')
+        (self.dir / "src" / "blob.bin").write_bytes(b"\0\0sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA")
+        found = closeout.audit(self.dir, ["src/settings.local.json", "src/keys.py", "src/blob.bin"])
+        self.assertEqual([(f[1], f[2]) for f in self.levels(found, "FAIL")],
+                         [("src/settings.local.json:1", "looks like a secret; remove it"),
+                          ("src/keys.py:1", "looks like a secret; remove it")])
+        self.assertEqual([f for f in found if "placeholder" in f[2] or "conflict" in f[2]], [])
+        self.r.commit("keys", "src/keys.py")                                  # a committed line is not this pass's
+        self.r.write("src/keys.py", 'TOKEN = "sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA"\nOTHER = 1\n')
+        self.assertEqual(self.levels(closeout.audit(self.dir, ["src/keys.py"]), "FAIL"), [])
+        self.r.write("tests/test_keys.py", 'FAKE = "sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA"\n')   # a fixture: WARN, not FAIL
+        found = closeout.audit(self.dir, ["tests/test_keys.py"])
+        self.assertEqual(self.levels(found, "FAIL"), [])
+        self.assertEqual([f[1] for f in self.levels(found, "WARN") if "secret" in f[2]], ["tests/test_keys.py:1"])
+
+    def test_the_why_of_a_roadmap_line_is_not_read_for_ids(self):
+        """Redman 2026-10-15: LINKING.md § 2's form is `roadmap: <ids> — <why>`; an id-shaped word in the why (`A-2
+        ruled …`, `RV-55 §6`) was refused as an unknown id. Ids come from the part before the first ` — `."""
+        self.r.write("knowledge/00-ROADMAP.md", "## Now\n- R-1 a\n")
+        self.r.write("knowledge/02-spec-a.md", "# a\nroadmap: R-1 — because R-99 ruled the layout (RV-55 §6 MINOR-1)\n")
+        self.r.write("knowledge/02-spec-b.md", "# b\nroadmap: R-1, R-99 — the why\n")
+        self.r.write("knowledge/02-spec-c.md", "# c\nroadmap: R-1 —R-99 is still an id without the spaces\n")
+        ctx = closeout.link_context(self.dir)
+        self.assertEqual(closeout.judge(ctx, "knowledge/02-spec-a.md"), ("LINKED", "R-1"))
+        self.assertEqual(closeout.judge(ctx, "knowledge/02-spec-b.md")[0], "BROKEN")     # before the dash: an id
+        self.assertEqual(closeout.judge(ctx, "knowledge/02-spec-c.md")[0], "BROKEN")
+        self.r.write("CLAUDE.md", "# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nid form: table rows\n")
+        self.r.write("knowledge/00-ROADMAP.md", "| id | item |\n|---|---|\n| 383 | a |\n")
+        self.r.write("knowledge/02-spec-d.md", "# d\nroadmap: 383 — refines row 999 after RV-55 §6\n")
+        self.assertEqual(closeout.judge(closeout.link_context(self.dir), "knowledge/02-spec-d.md"), ("LINKED", "383"))
+
     def test_project_shaped_secrets_fail_and_placeholders_do_not(self):
         self.r.write("HANDOFF.md", "TEST_DATABASE_URL=postgres://app:hunter2@127.0.0.1:5432/app\n"
                                    "DATA_API_KEY=abcdefghijklmnopqrstuvwxyz0123\n"
@@ -1661,6 +1697,27 @@ class Receipt(unittest.TestCase):
             "the loader dropped rows (see R-3)", "because the user asked"))))
 
 
+class ReceiptSpill(unittest.TestCase):
+    """closeout.receipt_facts, redman 2026-10-11: a field that spills onto indented lines ends the block, and the
+    fields after it read as missing or empty; the errors now also name the line that ended the block. The verdict is
+    unchanged: the line is named only beside the errors the shape already gives."""
+
+    def test_a_spilled_field_names_the_line_that_ended_the_block(self):
+        spilled = Receipt.GOOD.replace("- Proof: 41 passed in 2.1 s\n", "- Proof:\n    41 passed in 2.1 s\n")
+        (block,) = closeout.receipt_facts(spilled)
+        self.assertIn("Proof is empty (write `none — not verified` when nothing was)", block["errors"])
+        self.assertIn("Goal is missing", block["errors"])
+        self.assertEqual(block["errors"][-1], "line 8 ends the block: each field is one line")
+        # a complete block followed by prose has nothing missing: no such line
+        (block,) = closeout.receipt_facts(Receipt.GOOD + "Prose after the block.\n")
+        self.assertEqual(block["errors"], [])
+        # a block cut short by the end of the text names no line: nothing ended it
+        cut = Receipt.GOOD.split("- Redman:")[0]
+        (block,) = closeout.receipt_facts(cut)
+        self.assertTrue(block["errors"])
+        self.assertFalse(any("ends the block" in e for e in block["errors"]))
+
+
 class ReceiptTexts(unittest.TestCase):
     """What the close-out skills tell a session to report about the audit and the commit gate says what holds (R-24
     §5.7): the pre-existing lines and whose each warning is; the gate's state line and whether it ran on the last
@@ -2080,6 +2137,26 @@ class StateChecks(Base):
         self.r.write("HANDOFF.md", "# h\n\n## Open items\n- the importer drops the header row on Windows\n")
         found = self.handoff_findings(closeout.audit(self.dir, ["HANDOFF.md"]))
         self.assertIn("handoff Open items omit: R-3", found[0][2])            # the Now item, by its id
+
+    def test_a_superseded_banner_alone_does_not_fail_a_dated_handoffs_open_items(self):
+        """Redman 2026-11-10: /project-update step 9 banners a dated handoff and forbids rewriting it, yet the audit
+        FAILed its Open items whenever it was in `changed`. A banner alone is not this pass's rewrite: the omission is
+        reported (WARN) as for an unchanged handoff; a line added anywhere else still FAILs, and so does a new file."""
+        rel = "knowledge/2026-09-20-session-handoff.md"
+        self.r.write("CLAUDE.md", f"# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\nhandoff: {rel}\n")
+        self.r.write(rel, "# h\nroadmap: R-3\n\n## Open items\n- R-3 the importer\n")
+        self.assertEqual([f[0] for f in self.handoff_findings(closeout.audit(self.dir, [rel]))], ["FAIL"])  # new file
+        self.r.commit("handoff", "CLAUDE.md", rel)
+        self.r.write(rel, "> Superseded in part — the importer row closed; current state: knowledge/00-CURRENT.md.\n\n"
+                          "# h\nroadmap: R-3\n\n## Open items\n- R-3 the importer\n")
+        found = self.handoff_findings(closeout.audit(self.dir, [rel]))
+        self.assertEqual([f[0] for f in found], ["WARN"], found)
+        self.assertIn("handoff Open items omit: knowledge/redman/LEDGER.md 2026-09-20", found[0][2])
+        self.r.write(rel, "> Superseded in part — see the pin.\n\n# h\nroadmap: R-3\n\n## Open items\n- R-3 the "
+                          "importer\n- and a line this pass added\n")
+        self.assertEqual([f[0] for f in self.handoff_findings(closeout.audit(self.dir, [rel]))], ["FAIL"])
+        self.r.write(rel, "# h\nroadmap: R-3\n\n## Open items\n- R-3 the importer\n\n> Superseded, but not leading.\n")
+        self.assertEqual([f[0] for f in self.handoff_findings(closeout.audit(self.dir, [rel]))], ["FAIL"])
 
     def test_a_decision_kept_only_as_a_ledger_row_is_an_open_item(self):
         """What `facts` lists as awaiting or owing a real fix includes a decision ledger's row with no `G-` file (an S

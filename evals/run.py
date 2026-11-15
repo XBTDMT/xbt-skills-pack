@@ -2777,24 +2777,37 @@ def log_run(out, runs_root, grades, selection, pack_sha=None):
     """The graded run's one record, appended to RUNS.jsonl (R-29 § 6)."""
     record = run_record(out, runs_root, grades, selection, pack_sha)
     append_run(record)
-    refill_run_tables(RUNS_FILE)
+    refill_figures(RUNS_FILE)
     return record
 
 
-def refill_run_tables(runs_file):
-    """Refill the figure tables built from this run log, in the repo the log belongs to (two levels up), and no span.
-    Without it every graded run left the evidence page's runs table stale, and the next batch's suite gate refused at
-    test_this_repos_figures_hold until `figures --write` ran by hand (redman 2026-10-21). A repo without a doc map
-    declaring `figures:` is left alone."""
+FIGURES_TIMEOUT = 600
+
+
+def refill_figures(runs_file, python=None):
+    """After the append, refill every figure span and table of the repository the run log belongs to (two levels up):
+    `python closeout/closeout.py figures <root> --write`, the same command the close-out map names, and print its
+    result line. Without it every graded run left the evidence page's run table and its last-run spans stale, and the
+    next batch's suite gate refused at test_this_repos_figures_hold until `figures --write` ran by hand (redman
+    2026-10-07, 2026-10-21). It fails soft: a graded run is never lost to its bookkeeping, so a refill that cannot run
+    prints what to run instead. Returns the printed line."""
     root = Path(runs_file).resolve().parent.parent
-    co = closeout_module()
-    decl, _, _ = co.figures_declaration(root)
-    if not decl:
-        return
-    rel = Path(runs_file).resolve().relative_to(root).as_posix()
-    names = [n for n, t in (decl.get("tables") or {}).items() if t.get("file") == rel]
-    if names:
-        co.figures_write(root, tables=names)
+    by_hand = f"run: python3 closeout/closeout.py figures {root} --write"
+    try:
+        script = pack_path("closeout/closeout.py")
+        r = subprocess.run([python or sys.executable, str(script), "figures", str(root), "--write"],
+                           capture_output=True, text=True, timeout=FIGURES_TIMEOUT)
+        lines = [l for l in (r.stdout + r.stderr).splitlines() if l.strip()]
+        if not lines:
+            line = f"figures: nothing declared in {root}"
+        elif r.returncode == 0:
+            line = lines[-1]
+        else:
+            line = f"{lines[-1]} (figures --write exited {r.returncode}; {by_hand})"
+    except (OSError, subprocess.SubprocessError, FileNotFoundError) as e:
+        line = f"figures: not refilled ({type(e).__name__}: {e}); {by_hand}"
+    print(line)
+    return line
 
 
 

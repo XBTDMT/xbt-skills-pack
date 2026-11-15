@@ -3728,34 +3728,71 @@ class RunLog(unittest.TestCase):
         self.assertEqual((r["run"], r["selection"], r["pack_sha"], r["result"], r["cost"], r["layer_ok"]),
                          ("20260928-120000", "only", "a" * 40, "1/1", 0.25, None))
 
-    def test_a_logged_run_refills_the_run_tables_and_nothing_else(self):
-        """Known-bad first (redman 2026-10-21): a graded run used to leave the evidence page's runs table stale, so
-        the next batch's suite gate failed test_this_repos_figures_hold until `figures --write` ran by hand. log_run
-        now refills the tables built from the run log it wrote to, in that log's repo, and touches no span."""
+    def logproj(self):
+        """A repository with a doc map declaring figures: the runs table and a last-full-run span, both read from its
+        evals/RUNS.jsonl, and one span nothing owns."""
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "closeout"))
-        import closeout
-        out = self.mkrun("20261021-233320", [("alpha-fable", [("2.1.303", 0.25)])])
-        grades = json.loads((out / "grades.json").read_text())
         proj = self.tmp / "logproj"
         (proj / "evals").mkdir(parents=True)
-        runs = proj / "evals" / "RUNS.jsonl"
-        runs.write_text("", encoding="utf-8")
+        (proj / "evals" / "RUNS.jsonl").write_text("", encoding="utf-8")
         (proj / "tools").mkdir()
-        (proj / "tools" / "figures.json").write_text(json.dumps({"docs": ["evidence.md"], "figures": {}, "tables": {
+        (proj / "tools" / "figures.json").write_text(json.dumps({"docs": ["evidence.md"], "figures": {
+            "run.full.result": {"kind": "jsonl_last", "file": "evals/RUNS.jsonl", "where": {"selection": "full"},
+                                "field": "result"}}, "tables": {
             "runs": {"file": "evals/RUNS.jsonl", "where": {"selection": ["full", "quick", "seat"]},
                      "summary_of": {"selection": "only"}, "columns": ["date", "cases_label", "result_label",
                                                                       "failed_note"]}}}), encoding="utf-8")
         (proj / "CLAUDE.md").write_text("# p\n\n## Doc map\nfigures: tools/figures.json\n", encoding="utf-8")
-        span = "Stated elsewhere: <!-- fig:not.a.run.figure -->7<!-- /fig -->.\n"
         (proj / "evidence.md").write_text("### Every full, quick and seat run\n\n<!-- fig-table:runs -->\n"
-                                          "<!-- /fig-table -->\n\n" + span, encoding="utf-8")
-        with mock.patch.object(evals, "RUNS_FILE", runs):
+                                          "<!-- /fig-table -->\n\nLast full run: <!-- fig:run.full.result -->0/0"
+                                          "<!-- /fig -->.\n\n" + self.FOREIGN_SPAN, encoding="utf-8")
+        return proj
+
+    FOREIGN_SPAN = "Stated elsewhere: <!-- fig:not.a.run.figure -->7<!-- /fig -->.\n"
+
+    def test_a_logged_run_refills_the_figures_read_from_the_run_log(self):
+        """Known-bad first (redman 2026-10-07, 2026-10-21): a graded run used to leave the evidence page's runs table and
+        its last-run spans stale, so the next batch's suite gate failed test_this_repos_figures_hold until `figures
+        --write` ran by hand. log_run now runs the pack's `figures --write` on the log's repository: the table and the
+        span it feeds are current, a span the log does not own is left as it was, and the result line is printed."""
+        out = self.mkrun("20261021-233320", [("alpha-fable", [("2.1.303", 0.25)])])
+        grades = json.loads((out / "grades.json").read_text())
+        proj = self.logproj()
+        import closeout
+        printed = io.StringIO()
+        with mock.patch.object(evals, "RUNS_FILE", proj / "evals" / "RUNS.jsonl"), contextlib.redirect_stdout(printed):
             evals.log_run(out, self.root, grades, "full", pack_sha="c" * 40)
         text = (proj / "evidence.md").read_text(encoding="utf-8")
         self.assertIn("| 2026-10-21 |", text)
-        self.assertTrue(text.endswith(span), "a span the run log does not own was rewritten")
+        self.assertIn("<!-- fig:run.full.result -->1/1<!-- /fig -->", text)
+        self.assertTrue(text.endswith(self.FOREIGN_SPAN), "a span the run log does not own was rewritten")
         found = closeout.figures_findings(proj)
-        self.assertEqual([f for f in found if f[3] == "fig-table:runs" and f[0] != "OK"], [])
+        self.assertEqual([f for f in found if f[0] not in ("OK", "UNKNOWN")], [])   # clean but for the foreign span
+        self.assertRegex(printed.getvalue(), r"(?m)^figures: \d+ span\(s\)")
+
+    def test_the_refill_is_the_closeout_command_and_fails_soft(self):
+        """The refill is `python closeout/closeout.py figures <root> --write` as a subprocess (the close-out map's own
+        command), and a refill that cannot run prints what to run by hand instead of losing the graded run."""
+        runs = self.tmp / "repo2" / "evals" / "RUNS.jsonl"
+        runs.parent.mkdir(parents=True)
+        done = mock.Mock(returncode=0, stdout="x\nfigures: 2 span(s), 0 stale, 0 unknown, 0 missing\n", stderr="")
+        with mock.patch.object(evals.subprocess, "run", return_value=done) as run, \
+                contextlib.redirect_stdout(io.StringIO()):
+            line = evals.refill_figures(runs, python="/usr/bin/env-python")
+        self.assertEqual(line, "figures: 2 span(s), 0 stale, 0 unknown, 0 missing")
+        (args,), kw = run.call_args
+        self.assertEqual(args[0], "/usr/bin/env-python")
+        self.assertEqual(Path(args[1]), evals.pack_path("closeout/closeout.py"))
+        self.assertEqual(args[2:], ["figures", str(runs.resolve().parent.parent), "--write"])
+        self.assertTrue(kw.get("timeout"))
+        stale = mock.Mock(returncode=1, stdout="STALE evidence.md:9 fig:run.full.result: differs\nfigures: 2 span(s), 1 stale\n",
+                          stderr="")
+        with mock.patch.object(evals.subprocess, "run", return_value=stale), contextlib.redirect_stdout(io.StringIO()):
+            self.assertIn("exited 1; run: python3 closeout/closeout.py figures", evals.refill_figures(runs))
+        with mock.patch.object(evals.subprocess, "run", side_effect=OSError("no interpreter")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            line = evals.refill_figures(runs)
+        self.assertIn("figures: not refilled (OSError: no interpreter); run: python3 closeout/closeout.py figures", line)
 
     def test_the_launch_path_logs_the_run(self):
         """main() appends the record after the report; --dry-run appends nothing."""

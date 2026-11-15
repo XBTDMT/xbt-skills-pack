@@ -147,6 +147,15 @@ class MissingBlock(Fixture):
         self.assertIn("In one sentence is missing", d["reason"])
         self.assertNotIn("part done", d["reason"])
 
+    def test_a_spilled_field_is_held_naming_the_line_that_ended_the_block(self):
+        """Redman 2026-10-11: a Proof that ran onto indented lines was held as "Proof is empty; Goal is missing", so
+        the rewrite aimed at the wrong lines; the hold now names the line that ended the block."""
+        spilled = block().replace("- Proof: 4 passed\n", "- Proof:\n    4 passed, the fixture too\n")
+        d = self.check(self.transcript(prompt("fix"), bash(), text("Fixed.\n\n" + spilled)))
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("Proof is empty", d["reason"])
+        self.assertIn("ends the block: each field is one line", d["reason"])
+
     def test_a_shape_hold_also_carries_the_id_check(self):
         """One stop, one hold: a malformed block that also cites an unrecorded id names both (the continuation is not
         checked again)."""

@@ -78,7 +78,18 @@ SECRET_RES = [re.compile(p) for p in (
     # `redacted`, is a placeholder, not a secret; so is a value with a dot in it (`process.env.KEY`).
     r"\b(?:postgres(?:ql)?|mysql|redis|mongodb(?:\+srv)?|amqp)://[^:/\s@]+:"
     r"(?!(?:p|PW|CHANGE_ME|password|redacted|x+)@)[^<$*{@\s][^@\s]{2,}@",
-    r"(?i)\b[A-Z0-9_]*(?:api[_-]?key|api[_-]?token|secret|password|passwd|access[_-]?token)\s*[=:]\s*['\"]?[A-Za-z0-9_\-]{16,}(?![.\w])")]
+    # The `key = value` shape skips a value that is an identifier or an expression — one followed by `.` or `(`
+    # (`settings.KEY`, `read_key(`), or snake_case / CONSTANT_CASE (`vendor_api_key`, `REAL_SECRET_VALUE`: letters of
+    # one case or digits joined by `_`) — and a placeholder: a value that spells one (`your_…_here`, `example`,
+    # `changeme`) or echoes its own key's word (`test-password-123`, `settings-key-0000`); a credential is random
+    # and never says what it is, while a hyphenated passphrase (`correct-horse-battery-staple`) stays caught. Redman
+    # 2026-10-22: all but one of a repository's hits were these shapes, and a commit refused for a non-secret invites
+    # `--no-verify`.
+    r"(?i)\b[A-Z0-9_]*(?:api[_-]?key|api[_-]?token|secret|password|passwd|access[_-]?token)\s*[=:]\s*['\"]?"
+    r"(?!(?-i:(?:[a-z]+|[A-Z]+|[0-9]+)(?:_(?:[a-z]+|[A-Z]+|[0-9]+))+)(?![A-Za-z0-9_\-]))"
+    r"(?![A-Za-z0-9_\-]*(?:your|example|placeholder|change[_-]?me|dummy|sample|xxxx|api[_-]?key|password|passwd|"
+    r"secret|token|(?<![A-Za-z])key(?![A-Za-z]))[A-Za-z0-9_\-]*(?![A-Za-z0-9_\-]))"
+    r"[A-Za-z0-9_\-]{16,}(?![.(\w])")]
 PLACEHOLDER_RE = re.compile(r"\bTBD\b|\bFIXME\b|<fill[^>]*>|\?\?\?")
 CONFLICT_RE = re.compile(r"^(<{7}|>{7}|={7})(\s|$)", re.M)
 FILE_EXTS = {"md", "html", "htm", "py", "swift", "js", "mjs", "ts", "tsx", "json", "jsonl", "sh", "plist", "yml",
@@ -1358,6 +1369,27 @@ def added_lines(root, rel):
     return lines
 
 
+SUPERSEDED_BANNER_RE = re.compile(r"^>[ \t]*Superseded\b")
+
+
+def only_superseded_banner(root, rel):
+    """True when the lines this pass added to a tracked file are only a leading `> Superseded …` banner (with the blank
+    line under it): /project-update step 9's mark on a dated handoff, which forbids rewriting it, so the handoff's Open
+    items stay history and are not this pass's to fail (redman 2026-11-10)."""
+    new = added_lines(root, rel)
+    if not new:
+        return False   # a new file (None) or nothing added: the whole file is this pass's, or no line is
+    try:
+        lines = (Path(root) / rel).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return False
+    if new != set(range(1, max(new) + 1)) or max(new) > len(lines):
+        return False   # an added line below the top is a rewrite
+    added = [lines[n - 1] for n in sorted(new)]
+    return bool(SUPERSEDED_BANNER_RE.match(added[0])) and all(SUPERSEDED_BANNER_RE.match(l) or not l.strip()
+                                                              for l in added)
+
+
 def audit(folder, changed, pin=None, worklist=None, check_baseline=False, today=None):
     """Checks the lines this close-out added — old text in a file it only marked superseded is history, not its
     work. Whole-file properties (charset, the pin's fields) are checked on the whole file. A broken link FAILs only
@@ -1427,9 +1459,10 @@ def audit(folder, changed, pin=None, worklist=None, check_baseline=False, today=
             add("WARN", rel, "CLAUDE.md says never hand-edit this file — name the command that changed it")
         if p.name not in HAND_WRITTEN and is_generated(p):
             add("WARN", rel, "marked as generated — name the command that regenerated it; never edit it by hand")
-        if p.suffix.lower() not in (".md", ".html", ".htm", ".txt"):
-            continue
-        text = p.read_text(encoding="utf-8", errors="replace")
+        data = p.read_bytes()
+        if b"\0" in data[:8192]:
+            continue   # binary, by the sniff tools/secret_scan.py uses
+        text = data.decode("utf-8", "replace")
         new = added_lines(root, rel)
 
         def line_of(pos):
@@ -1438,13 +1471,23 @@ def audit(folder, changed, pin=None, worklist=None, check_baseline=False, today=
         def fresh(pos):
             return new is None or line_of(pos) in new
 
-        for m in CONFLICT_RE.finditer(text):
-            if fresh(m.start()):
-                add("FAIL", f"{rel}:{line_of(m.start())}", "merge-conflict marker")
+        # every changed text file, whatever its extension (redman 2026-10-22: a committed settings copy carried a DSN
+        # with its password past every close-out while this pass read only .md, .html and .txt)
+        # A test folder's files feed the scanners made-up credentials on purpose (this repo's tests/: 14 such lines;
+        # another project's tests: 19, measured 2026-11-14), so there a hit is a WARN to read, not a FAIL (2026-11-14).
+        in_tests = any(part in ("tests", "test") for part in Path(rel).parts[:-1])
         for rx in SECRET_RES:
             for m in rx.finditer(text):
                 if fresh(m.start()):
-                    add("FAIL", f"{rel}:{line_of(m.start())}", "looks like a secret; remove it")
+                    if in_tests:
+                        add("WARN", f"{rel}:{line_of(m.start())}", "looks like a secret (a test fixture? keep it made up)")
+                    else:
+                        add("FAIL", f"{rel}:{line_of(m.start())}", "looks like a secret; remove it")
+        if p.suffix.lower() not in (".md", ".html", ".htm", ".txt"):
+            continue
+        for m in CONFLICT_RE.finditer(text):
+            if fresh(m.start()):
+                add("FAIL", f"{rel}:{line_of(m.start())}", "merge-conflict marker")
         for m in PLACEHOLDER_RE.finditer(text):
             if fresh(m.start()):
                 add("WARN", f"{rel}:{line_of(m.start())}", f"placeholder {m.group(0)!r} left in")
@@ -1498,7 +1541,8 @@ def audit(folder, changed, pin=None, worklist=None, check_baseline=False, today=
     handoff = handoff_open_items(root)
     if handoff is not None:
         kind, rel, msg = handoff
-        add("WARN" if kind == "no-section" else ("FAIL" if rel in changed else "WARN"), rel, msg)
+        mine = rel in changed and not only_superseded_banner(root, rel)   # a banner alone is not a rewrite
+        add("WARN" if kind == "no-section" else ("FAIL" if mine else "WARN"), rel, msg)
     for rel, msg in record_owed_on_done(root):
         add("WARN", rel, msg)
     for rel, msg in inventory_findings(root, link_counts["MISSING"]):
@@ -2269,7 +2313,9 @@ def judge(ctx, rel, text=None):
         return ("NONE", val[:120]) if re.match(r"none\s*[—–-]\s*\S", val, re.I) else \
             ("BROKEN", "`roadmap: none` without a reason")
     lanes = [l for l in ctx["lanes"] if l["form"] or l["roadmap"]]
-    by = cited_by_lane(val, lanes)
+    # LINKING.md § 2's form is `roadmap: <ids> — <why>`: the why is prose, so an id-shaped word in it (`A-2 ruled`,
+    # `RV-55 §6`) is never read as an id (redman 2026-10-15, a correct link refused for its explanation)
+    by = cited_by_lane(val.split(" — ", 1)[0], lanes)
     if not by:
         return "BROKEN", f"`roadmap:` names no id: {val[:80]}"
     bad, unchecked, named = [], [], []
@@ -3724,6 +3770,7 @@ def receipt_facts(text):
             i += 1
             continue
         title, fields, groups, errors, i = lines[i].strip(), [], [[]], [], i + 1
+        ended = None   # the 1-based line that stopped the block, when a non-field line did
         while i < len(lines):
             line = lines[i].rstrip()
             m = RECEIPT_FIELD_RE.match(line)
@@ -3736,6 +3783,7 @@ def receipt_facts(text):
                 if groups[-1]:
                     groups.append([])
             else:
+                ended = i + 1
                 break
             i += 1
         groups = [g for g in groups if g]
@@ -3759,6 +3807,12 @@ def receipt_facts(text):
         for name in ("Goal", "In one sentence"):
             if not values.get(name):
                 errors.append(f"{name} is missing")
+        # A field that spilled onto indented lines ends the block, and the fields after it read as missing or empty;
+        # name the line that ended it so the rewrite aims at the right fault (redman 2026-10-11). Only beside the
+        # errors above, so the verdict is the same one the evals grade.
+        required = [f for g in RECEIPT_GROUPS for f in g if f != "Fail"]
+        if errors and ended is not None and any(f not in values for f in required):
+            errors.append(f"line {ended} ends the block: each field is one line")
         blocks.append({"title": title, "fields": fields, "groups": groups, "errors": errors})
     return blocks
 

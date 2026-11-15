@@ -231,7 +231,8 @@ def scan(entries, ev, now):
 
 class Roots:
     """root_of(path) in-process: the first folder upward holding a `.git` entry (file or folder); outside git, the
-    nearest one holding CLAUDE.md or a default roadmap. Memoised per folder; no subprocess."""
+    nearest one holding CLAUDE.md or a default roadmap. Memoised per folder; no subprocess. A linked worktree is its
+    own root; `check` reads its roadmap ids against the main work tree's roadmap too (main_worktree)."""
 
     def __init__(self):
         self.memo = {}
@@ -278,6 +279,25 @@ def _git_dir(root):
         return None
     target = Path(line[len("gitdir:"):].strip())
     return target if target.is_absolute() else Path(root) / target
+
+
+def main_worktree(root):
+    """The main work tree of a linked worktree, or None: its `.git` is a file naming the git dir, whose `commondir`
+    names the common dir, whose parent is the main work tree. A main work tree (`.git` a folder) and a folder outside
+    git give None."""
+    if not (Path(root) / ".git").is_file():
+        return None
+    gitdir = _git_dir(root)
+    if gitdir is None:
+        return None
+    try:
+        rel = (gitdir / "commondir").read_text(encoding="utf-8", errors="replace").strip()
+    except OSError:
+        return None
+    if not rel:
+        return None
+    common = Path(os.path.realpath(gitdir / rel))
+    return common.parent if common.name == ".git" and common.parent.is_dir() else None
 
 
 def own_roots(cwd, finder=None):
@@ -554,6 +574,25 @@ def check(payload, states=None, now=None, temp_dirs=None, config_dirs=None, budg
     def label(root, rel):
         return rel if len(roots) == 1 or root == roots[0] else f"{root}/{rel}"
 
+    main_ctx = {}
+
+    def verdict(ctx, root, rel, text=None):
+        """closeout.judge, and for a document in a linked worktree whose ids the worktree's roadmap lacks, judged again
+        against the main work tree's roadmap: an id filed on main after the worktree branched is a correct link, not a
+        BROKEN one (redman 2026-10-13). The document's own text is judged both times."""
+        hit = closeout.judge(ctx, rel, text)
+        if not hit or hit[0] != "BROKEN" or "roadmap id(s) not in" not in hit[1]:
+            return hit
+        main = main_worktree(root)
+        if main is None or same_path(main) == same_path(root):
+            return hit
+        if main not in main_ctx:
+            main_ctx[main] = closeout.link_context(main)
+        if text is None:
+            text = (Path(root) / rel).read_text(encoding="utf-8", errors="replace")
+        again = closeout.judge(main_ctx[main], rel, text)
+        return again if again and again[0] != "BROKEN" else hit
+
     for root in roots:
         if time.monotonic() - started >= budget:   # >=: a budget spent to the tick (Windows' clock moves in ~16 ms
             # steps, so two reads in one tick differ by 0) is spent; with >, a budget of 0 still checked a root
@@ -596,7 +635,7 @@ def check(payload, states=None, now=None, temp_dirs=None, config_dirs=None, budg
                     continue
                 why = BY_COMMAND if shown else NAMED
             rel = f.resolve().relative_to(Path(root).resolve()).as_posix()
-            hit = closeout.judge(ctx, rel)
+            hit = verdict(ctx, root, rel)
             if hit and hit[0] in ("MISSING", "BROKEN"):
                 found.append(f"- {label(root, rel)} ({why}): {hit[0]} — {hit[1]}")
         if ev.commit_windows and in_git:
@@ -605,7 +644,7 @@ def check(payload, states=None, now=None, temp_dirs=None, config_dirs=None, budg
                     real = same_path(Path(root) / rel)
                     if real not in ev.written and theirs(real):
                         continue
-                    hit = closeout.judge(ctx, rel, git(root, "show", f"{sha_}:{rel}").stdout)
+                    hit = verdict(ctx, root, rel, git(root, "show", f"{sha_}:{rel}").stdout)
                     if hit and hit[0] in ("MISSING", "BROKEN"):
                         found.append(f"- {label(root, rel)} (committed in {sha_[:8]} this turn; "
                                      f"{written_when(real, Path(root) / rel, ev, since)}): {hit[0]} — {hit[1]}")

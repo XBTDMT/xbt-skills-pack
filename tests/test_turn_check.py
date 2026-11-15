@@ -316,6 +316,25 @@ class OwnRoots(Session):
                                   self.reason(self.check(cwd=cwd)))
                     doc.unlink()
 
+    def test_a_linked_worktrees_ids_are_read_against_the_main_roadmap_too(self):
+        """Redman 2026-10-13: a roadmap id filed on main after the worktree branched read BROKEN in the worktree on
+        every turn that named the document. Known-bad first (an id neither roadmap has), then the fix, with the same
+        document judged on both sides of the common git dir."""
+        wt = self.worktree("main-wt")
+        doc = wt / "knowledge" / "33-branched-spec.md"
+        self.touch(doc, "# s\nroadmap: R-7\n", self.t0 + 50)
+        self.tool("u1", "Bash", {"command": f"ls -l {doc}"}, self.t0 + 100, self.t0 + 101)
+        self.assertIn("BROKEN — roadmap id(s) not in knowledge/00-ROADMAP.md: R-7", self.reason(self.check(cwd=wt)))
+        (self.main / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a\n- R-7 filed after the branch\n",
+                                                               encoding="utf-8")
+        self.state = self.tmp / "state2"
+        self.assertIsNone(self.check(cwd=wt))                                  # the main roadmap has it
+        self.state = self.tmp / "state3"
+        self.assertIsNone(self.check(cwd=self.main))                           # and from the main side
+        self.assertEqual(turn_check.main_worktree(wt), self.main.resolve())
+        self.assertIsNone(turn_check.main_worktree(self.main))
+        self.assertIsNone(turn_check.main_worktree(self.tmp))
+
     def test_the_repositories_own_roots_are_read_from_the_common_git_dir(self):
         wt = self.worktree("main-wt")
         want = {turn_check.same_path(self.main), turn_check.same_path(wt)}
