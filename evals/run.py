@@ -754,6 +754,50 @@ def slot_dir(case_dir, n=0):
     return Path(case_dir).resolve().parent.parent / "slots" / str(n)
 
 
+def _try_lock(fh):
+    """Take an exclusive, non-blocking lock on an open file; False when another holder has it. The operating system
+    drops the lock when the holder's process ends, however it ends, so a crashed batch never leaves a slot taken."""
+    try:
+        if os.name == "nt":
+            import msvcrt
+            fh.seek(0)
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def claim_slots(runs_root, n):
+    """[(slot folder, lock handle)] for n slots no other batch holds: slot k is taken through `<runs root>/slots/<k>.lock`,
+    lowest free number first, so two batches running at once never share a folder (2026-11-15: a second batch emptied the
+    slots a first batch's sessions were working in) while batches run one after another still reuse the same paths."""
+    root = Path(runs_root) / "slots"
+    root.mkdir(parents=True, exist_ok=True)
+    got, k = [], 0
+    while len(got) < n:
+        if k > 4096:
+            release_slots(got)
+            raise RuntimeError(f"no free slot under {root}")
+        fh = open(root / f"{k}.lock", "a+")
+        if _try_lock(fh):
+            got.append((root / str(k), fh))
+        else:
+            fh.close()
+        k += 1
+    return got
+
+
+def release_slots(got):
+    for _, fh in got:
+        try:
+            fh.close()
+        except OSError:
+            pass
+
+
 def first_request_cache(turns):
     """{"cache_creation_input_tokens", "cache_read_input_tokens"} of the case's first request (turn 1's first assistant
     message), the figures the shared prefix's saving is measured by; None when no message carried a usage record."""
@@ -792,12 +836,14 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
     whose project, origin and scratch move to the case folder when the case ends, however it ends."""
     granted = scenario_allowed_tools(scenario)   # checked before anything is built or launched
     case_dir.mkdir(parents=True)
-    slot = Path(slot) if slot else slot_dir(case_dir)
+    own = [] if slot else claim_slots(case_dir.resolve().parent.parent, 1)   # a case run on its own takes a free slot
+    slot = Path(slot) if slot else own[0][0]
     _claim_slot(slot, config_dir)
     try:
         return _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat)
     finally:
         _release_slot(slot, case_dir)
+        release_slots(own)
 
 
 def _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat):
@@ -3835,8 +3881,9 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
 
     cases = [tuple(c) + (0,) * (3 - len(c)) for c in cases]   # (scenario, seat[, repeat]); 0 is a one-session case
     slots = queue.Queue()   # one fixed slot folder per worker (a shared prompt prefix): a session runs in it, then hands it to the next case
-    for n in range(max(1, parallel)):
-        slots.put(out.parent / "slots" / str(n))
+    held = claim_slots(out.parent, max(1, parallel))   # locked for this batch: another batch running now takes other numbers
+    for folder, _ in held:
+        slots.put(folder)
 
     def one(case_dir, s, st, k=0):
         if limited.is_set():
@@ -3881,6 +3928,7 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
                                "cost_error": f"not graded: {type(e).__name__}",
                                "results": [{"check": ["run"], "passed": False, "detail": f"{type(e).__name__}: {e}"}]})
             print(f"  finished {s['id']} on {st}{f' (repeat {k})' if k else ''}", flush=True)
+    release_slots(held)
     grades.sort(key=lambda g: (g["scenario"], g["seat"], g.get("repeat") or 0))
     return grades, (changed[0] if changed else None)
 

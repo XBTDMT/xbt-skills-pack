@@ -89,9 +89,11 @@ Opus 5 at max effort spawn <!-- fig:doctrine.K.agents -->18<!-- /fig --> of them
 to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig --> points, so a gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> or less there is level within noise; on the held-out set the rule, set before the
 run, is <!-- fig:doctrine.held.rule -->5<!-- /fig --> points.
 
-Since 13 November 2026 the pages that ship are the 13 November pages for Fable 5.2 and Fable 5.1 (and Mythos), tuned
-from Fable 5.2's measured misses and carrying the one sentence the harder set earned, and the Opus 5.5 page of 7 October
-with that sentence added; since 26 October, the 19 October pages for Opus 5, Sonnet and
+Since 15 November 2026 the pages that ship are the 13 November pages for Fable 5.2 and Fable 5.1 (and Mythos), tuned
+from Fable 5.2's measured misses and carrying the one sentence the harder set earned, with one paragraph added on
+15 November (one operation per shell call: a non-interactive permission check refuses a chained command whole; over
+the behaviour suite's ten quick Fable cases chained calls fell from 19 to 0), and the Opus 5.5 page of 7 October
+with the harder set's sentence added; since 26 October, the 19 October pages for Opus 5, Sonnet and
 Haiku (each its earlier page with one paragraph added: write a path out in full, because a non-interactive permission
 check refuses a `cd` into the current folder, a `cd … &&` in front of a git command, a `~` or a shell variable, and a
 refusal ends the task; measured on Fable 5.1 and Opus 5 only) and the 7 October page for Claude Opus 5.5 (and for a
@@ -331,7 +333,7 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->565<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+As this tree ships: <!-- fig:tests.public -->566<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
 <!-- fig:run.quick.cost -->$6.34<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`

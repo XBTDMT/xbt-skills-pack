@@ -3425,6 +3425,22 @@ class PromptPrefix(unittest.TestCase):
         self.assertFalse((evals.slot_dir(case) / "project").exists())
         self.assertIn("not_completed", json.loads((case / "record.json").read_text(encoding="utf-8")))
 
+    def test_two_batches_at_once_never_share_a_slot(self):
+        """2026-11-15: a second batch launched while a first was running emptied the slots its sessions were working
+        in. A slot is held through an operating-system lock for the batch's life; a second claim takes other numbers,
+        and a released slot is the first one offered again."""
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            first = evals.claim_slots(root, 3)
+            second = evals.claim_slots(root, 2)
+            self.assertEqual([p.name for p, _ in first], ["0", "1", "2"])
+            self.assertEqual([p.name for p, _ in second], ["3", "4"])
+            self.assertFalse({p for p, _ in first} & {p for p, _ in second})
+            evals.release_slots(first)
+            third = evals.claim_slots(root, 1)
+            self.assertEqual([p.name for p, _ in third], ["0"])          # the same paths again, run after run
+            evals.release_slots(second); evals.release_slots(third)
+
     def test_a_stale_slot_is_emptied_before_the_session(self):
         case = self.tmp / "out" / "y-fable"
         slot = evals.slot_dir(case)
