@@ -165,6 +165,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-14 | 49 | 45 / 49 | `full_flow` on Fable; `redman_no_edit` on Fable and Opus 5.5; `vendored_fork` on Fable; the full set before the 2026-11-14 release, on the reviewed 2.1.323 copy, with the 13 November Fable page and the Opus 5.5 page's report sentence live; rechecked 46/49 after redman_no_edit's now-or-later check was widened to either order (a2c15a9: Opus 5.5 had asked it with save() named after the question); the confirm run 20261114-003756 settled the rest: redman_no_edit 8/8, vendored_fork 4/4, full_flow 3/4 |
 | 2026-11-14 | 19 (quick) | **19 / 19** | — |
 | 2026-11-14 | 19 (quick) | **19 / 19** | — |
+| 2026-11-15 | 10 (quick) | 0 / 10 | `failed_fork` on Fable; `large_stop` on Fable; `pushback_ruling` on Fable; `redman_eli5` on Fable; `redman_no_edit` on Fable; `redman_side_finding` on Fable; `shell_doc` on Fable; `shell_doc_eli5` on Fable; `skill_changed_midsession` on Fable; the Fable candidate page (fable-layer-2026-11-14, the one-operation paragraph) forced through DOCTRINE_LAYER: the layer check fails by design on a page that is not the live one; the behaviour checks passed in 9 of 10 (vendored_fork edited the fixture's CLAUDE.md); chained Bash calls 19 → 0 against the same cases on the live page |
 
 plus 64 targeted runs (`--only`), 70/104 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -694,7 +695,7 @@ check as unreviewed, never a pass, so its results are not comparable with the ru
 lists are reviewed into `evals/sealed.json`.
 
 As this tree ships: <!-- fig:tests.public -->565<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.95<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
+<!-- fig:run.quick.cost -->$6.34<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. While a
