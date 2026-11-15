@@ -63,7 +63,7 @@ shape of its prose; no judge enters the nine-task correctness figures.
 
 <a href="docs/measurements.svg"><picture><source media="(max-width: 1279px)" srcset="docs/measurements-narrow.svg"><img src="docs/measurements.svg" alt="Does a doctrine page help? Eleven configurations, nine tasks each, run with a page and without one"></picture></a>
 
-The pages were written from the misses on the nine-task set, so it is not held out. Its runs, Claude Opus 5.5 and Sonnet 5.5 included, are on the evidence page in three charts
+Fable 5.2 low's pair on this chart ran the Fable 5.1 page copied (<!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, <!-- fig:doctrine.F2P.score -->95<!-- /fig --> with it, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->); the page tuned for it scored <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against a same-day <!-- fig:doctrine.F2P2.score -->94<!-- /fig --> and is on the page-revisions chart. The pages were written from the misses on the nine-task set, so it is not held out. Its runs, Claude Opus 5.5 and Sonnet 5.5 included, are on the evidence page in three charts
 ([correctness and cost](docs/all-configurations-overview.svg), [the cheap end](docs/all-configurations-zoom.svg),
 [each page revision against the page it would replace](docs/all-configurations-revisions.svg)); the held-out set is
 [`docs/heldout.svg`](docs/heldout.svg). The skills control run, absent against present against invoked against

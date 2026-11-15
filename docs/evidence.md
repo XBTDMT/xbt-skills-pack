@@ -15,7 +15,7 @@ Two different things are measured, and they are not the same claim:
    set of eight tasks no page was written from, where the 29 September, 7 October and 19 October page revisions were each measured
    against the page they replaced, Opus 5.5 medium ran the 29 September page with no control run, and Sonnet 5.5 ran
    with the Opus 5.5 page and without one. Answer: on the nine-task set the page scored better than running without one on some configurations, better by just past
-   the noise rule on others, and level within noise on the rest; <!-- fig:doctrine.nine.pairs_lower -->4<!-- /fig --> of the <!-- fig:doctrine.nine.pairs -->15<!-- /fig --> pairs went the wrong way, all within
+   the noise rule on others, and level within noise on the rest; <!-- fig:doctrine.nine.pairs_lower -->5<!-- /fig --> of the <!-- fig:doctrine.nine.pairs -->17<!-- /fig --> pairs went the wrong way, all within
    noise, the largest Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->. The verdicts per configuration are below. On the held-out set every page scored level within noise of the page it was
    set against by the judge's scores (by the script alone Opus 5's 19 October page is <!-- fig:doctrine.held.script_gap.opus5_oct26 -->−5.7<!-- /fig -->, just past the rule),
    and cost is what separates the setups most, until 13 November 2026: a Fable 5.2 page tuned from that set's one
@@ -345,6 +345,8 @@ the Opus 5.5 page was <!-- fig:doctrine.held.gap.sonnet55_high -->±0.0<!-- /fig
 the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule, and short of the bar registered before those runs for keeping the page (at least one effort
 <!-- fig:doctrine.held.sonnet_bar -->3<!-- /fig --> points or more above running without a page, neither below it beyond noise), so Sonnet 5.5's seat runs without one.
 
+**Fable 5.2 low on this set, 12 and 13 November 2026.** Fable 5.2 low scored <!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, where Fable 5.1 low scored <!-- fig:doctrine.J.score -->90<!-- /fig --> and 5.1 medium <!-- fig:doctrine.N.score -->93<!-- /fig -->: bare, it is the stronger model, and it starts near this set's ceiling. On 12 November it ran the Fable 5.1 page copied under its own name, a page written from 5.1's misses: <!-- fig:doctrine.F2P.score -->95<!-- /fig --> (<!-- fig:doctrine.gap.F2P_F2B -->−1.1<!-- /fig -->, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->). That is the pair the measurements chart draws, and it reads below 5.1 low's <!-- fig:doctrine.I.score -->98<!-- /fig --> with a page for two reasons: the gap is inside the <!-- fig:doctrine.nine.rule -->3<!-- /fig -->-point rule (and 5.1's runs were in September, where runs on different days moved up to <!-- fig:doctrine.nine.cross_day -->4.2<!-- /fig --> points), and one task was a real miss of the copied page, whose scope rule kept the session out of a folder the project's notes protect, so a removed parameter stayed behind. The page tuned from that miss ran on 13 November against a same-day control on the copied page: <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against <!-- fig:doctrine.F2P2.score -->94<!-- /fig --> (<!-- fig:doctrine.gap.F2PT_F2P2 -->+2.4<!-- /fig -->, <!-- fig:doctrine.verdict.F2PT_F2P2 -->level within noise<!-- /fig --> on this set, with the fix showing on the task it was written for); that pair is on the page-revisions chart, and the same page's held-out result is in the next section. A page built for one model does not carry to the next; the nine-task set, written from 5.1's misses, cannot show a 5.2 page much, which is why the harder set below exists.
+
 Three charts. The correctness-and-cost chart draws one dot per run: <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs of <!-- fig:doctrine.nine.overview_setups -->27<!-- /fig --> setups (Sonnet 5.5
 ran without a page twice at each effort), Fable, Opus 5 and Sonnet included; the second enlarges its cheap
 end; the third draws <!-- fig:doctrine.nine.revisions_runs -->32<!-- /fig --> runs: each page revised since 22 September beside the page it would replace,
@@ -355,7 +357,7 @@ means.
 
 <a href="all-configurations-overview.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-overview-narrow.svg"><img src="all-configurations-overview.svg" alt="Correctness and cost on the nine-task set: twenty-nine runs of eleven configurations"></picture></a>
 
-<a href="all-configurations-zoom.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-zoom-narrow.svg"><img src="all-configurations-zoom.svg" alt="The cheap end: the sixteen runs that cost under $30 for the nine tasks"></picture></a>
+<a href="all-configurations-zoom.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-zoom-narrow.svg"><img src="all-configurations-zoom.svg" alt="The cheap end: the eighteen runs that cost under $30 for the nine tasks"></picture></a>
 
 <a href="all-configurations-revisions.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-revisions-narrow.svg"><img src="all-configurations-revisions.svg" alt="The page revisions on the nine-task set, each beside the page it would replace"></picture></a>
 
