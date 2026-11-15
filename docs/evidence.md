@@ -221,7 +221,7 @@ anything.
 
 The optional layer in `doctrine/` was measured against running without it on **the nine-task set: <!-- fig:doctrine.configurations -->11<!-- /fig --> configurations (a
 model at one effort), each run without a page and with a doctrine page (its own; for Sonnet 5 the Opus 5 page the loader
-gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it): <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs on the correctness-and-cost chart, <!-- fig:doctrine.nine.runs_total -->57<!-- /fig --> nine-task runs in all**
+gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it): <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs on the correctness-and-cost chart, <!-- fig:doctrine.nine.runs_total -->57<!-- /fig --> nine-task runs in all**
 with the page revisions and repeats further down (Opus 5.5 and Sonnet 5.5 also ran under the older Opus 5 page, and
 Sonnet 5.5 without a page ran twice), one fresh Claude Code session per task per run, on two of the author's own repositories.
 Opus 5, Fable 5.1 and Sonnet 5 ran on <!-- fig:doctrine.when.first -->2–3 September<!-- /fig --> 2026 (rescored 22 September), Claude Opus 5.5 on
@@ -345,15 +345,15 @@ the Opus 5.5 page was <!-- fig:doctrine.held.gap.sonnet55_high -->±0.0<!-- /fig
 the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule, and short of the bar registered before those runs for keeping the page (at least one effort
 <!-- fig:doctrine.held.sonnet_bar -->3<!-- /fig --> points or more above running without a page, neither below it beyond noise), so Sonnet 5.5's seat runs without one.
 
-Three charts. The correctness-and-cost chart draws one dot per run: <!-- fig:doctrine.overview_runs -->27<!-- /fig --> runs of <!-- fig:doctrine.nine.overview_setups -->25<!-- /fig --> setups (Sonnet 5.5
+Three charts. The correctness-and-cost chart draws one dot per run: <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs of <!-- fig:doctrine.nine.overview_setups -->27<!-- /fig --> setups (Sonnet 5.5
 ran without a page twice at each effort), Fable, Opus 5 and Sonnet included; the second enlarges its cheap
 end; the third draws <!-- fig:doctrine.nine.revisions_runs -->32<!-- /fig --> runs: each page revised since 22 September beside the page it would replace,
-Sonnet 5.5 without a page beside the Opus 5.5 page, and the repeats, every pair run side by side on <!-- fig:doctrine.when.revisions -->29–30 September, 5 October and 12–13 November<!-- /fig -->. <!-- fig:doctrine.nine.revisions_in_overview -->4<!-- /fig --> of those are on the correctness-and-cost chart too:
+Sonnet 5.5 without a page beside the Opus 5.5 page, and the repeats, every pair run side by side on <!-- fig:doctrine.when.revisions -->29–30 September, 5 October and 12–13 November<!-- /fig -->. <!-- fig:doctrine.nine.revisions_in_overview -->6<!-- /fig --> of those are on the correctness-and-cost chart too:
 Sonnet 5.5's runs of <!-- fig:doctrine.when.sonnet55_opus55_page -->5 October<!-- /fig -->. On the page-revisions chart each cell is one run; its numbers read
 page in use → revised page, and a setup run twice gives its two scores and the gap between them, from the unrounded
 means.
 
-<a href="all-configurations-overview.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-overview-narrow.svg"><img src="all-configurations-overview.svg" alt="Correctness and cost on the nine-task set: twenty-seven runs of ten configurations"></picture></a>
+<a href="all-configurations-overview.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-overview-narrow.svg"><img src="all-configurations-overview.svg" alt="Correctness and cost on the nine-task set: twenty-nine runs of eleven configurations"></picture></a>
 
 <a href="all-configurations-zoom.svg"><picture><source media="(max-width: 1279px)" srcset="all-configurations-zoom-narrow.svg"><img src="all-configurations-zoom.svg" alt="The cheap end: the sixteen runs that cost under $30 for the nine tasks"></picture></a>
 
