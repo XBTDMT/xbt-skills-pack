@@ -24,8 +24,8 @@ figure, a gap, a gate that cannot look). Diagnose it enough to size it:
 - **Small** (fixable in one sitting; no production, data, doctrine or high-blast-radius file; the main task does not
   depend on it): **file one ledger row and say nothing else.** The receipt reads only `filed N small → <ledger path>`.
   A finding about **the skills pack itself** (a skill misfired, a rule was unclear) goes in the pack's side ledger
-  instead (§ The ledger); it is sized the same way, counts in N, and the receipt names the ledger it went to (both
-  paths if a turn filed to both).
+  where the project has one, else in the project's ledger as a `pack:` row (§ The ledger); it is sized the same way,
+  counts in N, and the receipt names the ledger it went to (both paths if a turn filed to both).
   **When the task's own instruction forbids edits** (a review or an audit that says "do not edit anything"), the
   instruction wins over this rule: no row is written, the finding goes in the report, and the receipt reads
   `held N — no edits allowed`. Filing a row into a repo the user said not to touch is an edit.
@@ -86,8 +86,10 @@ word) · where (`path#anchor`) · observed (`command → line`) · why it matter
 step · `roadmap:`. Then a For-the-user block for anything big and unruled, and a Cost line. `/closeout` and
 `/project-update` read every declared ledger at Take stock, so small findings surface without anyone remembering them.
 
-**The pack's side ledger — `<project root>/xbt-skills-pack/LEDGER.md`.** Only findings about the skills pack itself
-in that project (a skill misfired, a hook missed a file, a rule was ambiguous), same columns. Create it on first use
-with the first lines `# Pack side ledger — <project>` and `roadmap: none — the skills pack's side ledger; findings about
-the pack, not the project`, and commit it; it is what you read before you next update the pack (or file an
-issue against it). Findings about the project never go there.
+**The pack's side ledger — `<project root>/xbt-skills-pack/LEDGER.md`, only in a project that already has an
+`xbt-skills-pack/` folder; never create that folder.** Only findings about the skills pack itself in that project (a
+skill misfired, a hook missed a file, a rule was ambiguous), same columns. Where the folder exists, create the file on
+first use with the first lines `# Pack side ledger — <project>` and `roadmap: none — the skills pack's side ledger;
+findings about the pack, not the project`, and commit it. Where it does not, the finding goes in the project's own
+ledger as a row whose kind starts `pack:` (the pack's maintainer reads those too); it is what you read before you next
+update the pack (or file an issue against it). Findings about the project never go there.

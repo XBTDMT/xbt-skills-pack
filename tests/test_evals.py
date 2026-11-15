@@ -3137,7 +3137,8 @@ class Isolation(unittest.TestCase):
     def allowed(self, path, case):
         """A path a sealed case may name: under the sealed folder, the case folder or the pack a sealed link resolves into."""
         p = os.path.realpath(path)
-        roots = [self.config, case] + [Path(os.path.realpath(l)).parent for l in (self.config / "skills").iterdir()]
+        roots = [self.config, case, evals.slot_dir(case)] + \
+                [Path(os.path.realpath(l)).parent for l in (self.config / "skills").iterdir()]
         return any(p == os.path.realpath(r) or p.startswith(os.path.realpath(r) + os.sep) for r in roots)
 
     def test_a_sealed_case_writes_nothing_under_the_live_config(self):
@@ -3233,7 +3234,8 @@ class Isolation(unittest.TestCase):
     def test_without_allowed_tools_the_command_is_todays(self):
         plain = {"id": "p", "turns": ["SMALL", "SMALL"], "seats": ["fable"], "checks": []}
         cmds, rec, case = self.launches(plain)
-        proj, scratch = case / "project", case / "scratch"
+        slot = evals.slot_dir(case)                                                # the session's paths: the slot's (G-60 E)
+        proj, scratch = slot / "project", slot / "scratch"
         readable, sessions = evals.skill_dirs(self.config), evals.session_dirs(proj, self.config)
         self.assertEqual(len(cmds), 2)
         for n, cmd in enumerate(cmds):                                           # today's command, spelled out
@@ -3338,6 +3340,142 @@ class SkillChangedRunner(unittest.TestCase):
                     {"after": 1, "write": "x.md"}):
             with self.assertRaises(ValueError):
                 evals.between_turns_writes(dict(scenario, between_turns=[bad]), 1, case / "project")
+
+
+class PromptPrefix(unittest.TestCase):
+    """G-60 E: every session sees the same slot paths, the fixture commit reads the same, the 1-hour cache TTL is set,
+    and the first request's cache figures are recorded and summed."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.home = self.tmp / "home"
+        (self.home / ".claude" / "skills").mkdir(parents=True)
+        (self.home / ".claude" / "projects").mkdir()
+        (self.home / ".claude" / "skills" / "redman").symlink_to(evals.pack_path("redman"))
+        p = mock.patch.object(Path, "home", lambda: self.home)
+        p.start()
+        self.addCleanup(p.stop)
+        self.config = self.tmp / "sealed"
+        evals.build_sealed(self.config)
+        (self.tmp / "claude-bin").write_text("#!/bin/sh\n", encoding="utf-8")
+
+    USAGE = {"input_tokens": 3, "cache_creation_input_tokens": 11000, "cache_read_input_tokens": 12000, "output_tokens": 5}
+
+    def fake(self, seen, version="2.1.281"):
+        real = subprocess.run
+
+        def run(cmd, *a, **kw):
+            if cmd and str(cmd[0]).endswith("claude-bin"):
+                if cmd[1:] == ["--version"]:
+                    return subprocess.CompletedProcess(cmd, 0, f"{version} (Claude Code)\n", "")
+                seen.append({"cmd": list(cmd), "env": kw.get("env"), "cwd": str(kw.get("cwd")),
+                             "cwd_exists": Path(kw["cwd"]).is_dir(), "scratch_exists": Path(kw["env"]["TMPDIR"]).is_dir()})
+                lines = [{"type": "system", "subtype": "init", "session_id": "s1", "claude_code_version": version},
+                         {"type": "assistant", "message": {"id": "m1", "model": "claude-fable-5-1", "usage": self.USAGE,
+                                                           "content": [{"type": "text", "text": "hi"}]}},
+                         {"type": "result", "result": "done", "total_cost_usd": 0.1, "session_id": "s1"}]
+                return subprocess.CompletedProcess(cmd, 0, "\n".join(json.dumps(l) for l in lines), "")
+            return real(cmd, *a, **kw)
+        return run
+
+    def run_case(self, case, scenario, seen, version="2.1.281"):
+        with mock.patch.object(evals.subprocess, "run", self.fake(seen)):
+            return evals.run_case(case, scenario, "fable", SPEC["prompts"], self.config, str(self.tmp / "claude-bin"), version)
+
+    def test_two_prepared_sessions_see_identical_paths_and_the_cache_ttl(self):
+        seen = []
+        out = self.tmp / "out"
+        for sid in ("one", "two"):
+            self.run_case(out / f"{sid}-fable", {"id": sid, "turns": ["SMALL"], "seats": ["fable"], "checks": []}, seen)
+        self.assertEqual(len(seen), 2)
+        a, b = seen
+        self.assertEqual(a["cmd"], b["cmd"])                                       # the whole command line, scratch path included
+        self.assertEqual(a["cwd"], b["cwd"])                                       # the working directory
+        self.assertEqual(a["cwd"], str(evals.slot_dir(out / "one-fable") / "project"))
+        self.assertTrue(a["cwd_exists"] and a["scratch_exists"])                   # both existed while the session ran
+        for s in (a, b):
+            self.assertEqual(s["env"]["CLAUDE_CODE_PROMPT_CACHE_TTL"], "1h")
+            self.assertEqual(s["env"]["TMPDIR"], str(evals.slot_dir(out / "one-fable") / "scratch"))
+            prompt = s["cmd"][s["cmd"].index("--append-system-prompt") + 1]
+            self.assertIn(str(evals.slot_dir(out / "one-fable") / "scratch"), prompt)
+            self.assertNotIn("one-fable", prompt)
+            self.assertNotIn("two-fable", prompt)
+        # the per-case env values still differ, outside the prompt
+        self.assertNotEqual(a["env"]["DOC_GUARDRAILS_STATE"], b["env"]["DOC_GUARDRAILS_STATE"])
+        # after each case its project, origin and scratch sit in the case folder, and the slot is empty
+        for sid in ("one", "two"):
+            case = out / f"{sid}-fable"
+            for name in evals.SLOT_PARTS:
+                self.assertTrue((case / name).is_dir(), name)
+            rec = json.loads((case / "record.json").read_text(encoding="utf-8"))
+            self.assertEqual(rec["env"]["slot"], str(evals.slot_dir(case)))
+            self.assertEqual(rec["env"]["prompt_cache_ttl"], "1h")
+            self.assertEqual(rec["first_request_cache"],
+                             {"cache_creation_input_tokens": 11000, "cache_read_input_tokens": 12000})
+        self.assertEqual(sorted(p.name for p in evals.slot_dir(out / "one-fable").iterdir()), [])
+
+    def test_a_case_that_stops_still_leaves_its_project_in_the_case_folder(self):
+        case = self.tmp / "out" / "x-fable"
+        with self.assertRaises(evals.CLIChanged):                                  # the version guard fires on turn 1
+            self.run_case(case, {"id": "x", "turns": ["SMALL"], "seats": ["fable"], "checks": []}, [], version="9.9.9")
+        self.assertTrue((case / "project" / "README.md").is_file())
+        self.assertTrue((case / "origin.git").is_dir())
+        self.assertFalse((evals.slot_dir(case) / "project").exists())
+        self.assertIn("not_completed", json.loads((case / "record.json").read_text(encoding="utf-8")))
+
+    def test_a_stale_slot_is_emptied_before_the_session(self):
+        case = self.tmp / "out" / "y-fable"
+        slot = evals.slot_dir(case)
+        (slot / "project").mkdir(parents=True)
+        (slot / "project" / "LEFTOVER.txt").write_text("from a crashed case\n", encoding="utf-8")
+        self.run_case(case, {"id": "y", "turns": ["SMALL"], "seats": ["fable"], "checks": []}, [])
+        self.assertFalse((case / "project" / "LEFTOVER.txt").exists())
+        self.assertTrue((case / "project" / "README.md").is_file())
+
+    def test_the_fixture_commit_has_a_fixed_author_and_date(self):
+        fmt = "%H%n%an%n%ae%n%at%n%cn%n%ce%n%ct%n%s"
+        logs = []
+        for name in ("a", "b"):
+            proj = evals.build_project(self.tmp / name, {"id": "t"})
+            r = subprocess.run(["git", "-C", str(proj), "log", "-1", f"--format={fmt}"],
+                               capture_output=True, encoding="utf-8", check=True)
+            logs.append(r.stdout)
+        self.assertEqual(logs[0], logs[1])                                         # the id included: the trees are the same
+        _, an, ae, at, cn, ce, ct, subject = logs[0].strip().split("\n")
+        self.assertEqual((an, ae, cn, ce, subject), ("evals", "evals@local", "evals", "evals@local", "fixture"))
+        self.assertEqual((at, ct), ("1767225600", "1767225600"))                   # 2026-01-01T00:00:00Z, author and committer
+
+    def test_first_request_cache_reads_turn_ones_first_message(self):
+        lines = [{"type": "assistant", "message": {"id": "m1", "usage": self.USAGE, "content": []}},
+                 {"type": "assistant", "message": {"id": "m2", "usage": {"cache_creation_input_tokens": 1,
+                                                                        "cache_read_input_tokens": 1}, "content": []}},
+                 {"type": "result", "result": "", "total_cost_usd": 0.1}]
+        turn = evals.parse_stream("\n".join(json.dumps(l) for l in lines))
+        self.assertEqual(evals.first_request_cache([turn, turn]),
+                         {"cache_creation_input_tokens": 11000, "cache_read_input_tokens": 12000})
+        self.assertIsNone(evals.first_request_cache([]))
+        self.assertIsNone(evals.first_request_cache([evals.parse_stream("")]))
+
+    def test_the_report_prints_one_cache_line_from_the_records(self):
+        out = self.tmp / "run"
+        grades = []
+        for sid, creation, read in (("p", 500, 12000), ("q", 9500, 2500)):
+            (out / f"{sid}-fable").mkdir(parents=True)
+            (out / f"{sid}-fable" / "record.json").write_text(json.dumps({
+                "scenario": sid, "seat": "fable", "turns": [],
+                "first_request_cache": {"cache_creation_input_tokens": creation, "cache_read_input_tokens": read}}),
+                encoding="utf-8")
+            grades.append({"scenario": sid, "seat": "fable", "passed": True, "cost": 0.1, "results": []})
+        grades.append({"scenario": "old", "seat": "fable", "passed": True, "cost": 0.1, "results": []})   # no record: not counted
+        self.assertEqual(evals.cache_line(out, grades),
+                         "cache: first-request creation 10000 tokens, read 14500 tokens across 2 sessions")
+        with contextlib.redirect_stdout(io.StringIO()) as buf:
+            evals.report(grades, out)
+        self.assertIn("cache: first-request creation 10000 tokens, read 14500 tokens across 2 sessions\n", buf.getvalue())
+        self.assertIn("cache: first-request creation 10000 tokens", (out / "report.txt").read_text(encoding="utf-8"))
+        self.assertIsNone(evals.cache_line(out, [grades[2]]))                     # a run recorded before: no line
 
 
 class SkillChangedKnownRuns(unittest.TestCase):
@@ -3934,12 +4072,16 @@ class Repeats(unittest.TestCase):
             costs = evals.case_costs(run, [self.g("a", "fable", 1, True), self.g("a", "fable", 2, True)])
         self.assertEqual({k: v[0] for k, v in costs.items()}, {"a-fable-r1": 0.25, "a-fable-r2": 0.5})
 
-    def main(self, *argv, runs=None):
+    def main(self, *argv, runs=None, outcomes=None):
+        """evals.main with every launch mocked: run_batch answers each session from `outcomes` ({(scenario, seat):
+        "PFP…"}, the k-th letter for repeat k; P when unscripted) and records every case it was asked for, in order."""
         seen = {}
 
         def batch(cases, spec, out, *a, **k):
-            seen["cases"] = [(s["id"], st, n) for s, st, n in cases]
-            return [self.g(s["id"], st, n, True) for s, st, n in cases], None
+            seen.setdefault("cases", []).extend((s["id"], st, n) for s, st, n in cases)
+            script = outcomes or {}
+            return [self.g(s["id"], st, n, script.get((s["id"], st), "P" * 10)[max(n, 1) - 1] == "P")
+                    for s, st, n in cases], None
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name) / "runs"
@@ -3954,7 +4096,9 @@ class Repeats(unittest.TestCase):
                 mock.patch.object(evals, "run_batch", batch), \
                 mock.patch.object(evals, "preflight", lambda *a, **k: (0, "")), \
                 mock.patch.object(evals, "build_sealed", lambda *a, **k: None), \
-                mock.patch.object(evals, "log_run", lambda *a, **k: seen.setdefault("logged", a[3])), \
+                mock.patch.object(evals, "log_run",
+                                  lambda *a, **k: (seen.setdefault("logged", a[3]),
+                                                   seen.setdefault("verdicts", k.get("verdicts")))), \
                 mock.patch.object(st, "main", lambda argv=None, quiet=False: 0), \
                 mock.patch.dict(os.environ, {"PATH": f"{bin_}{os.pathsep}{os.environ['PATH']}"}), \
                 contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
@@ -3990,20 +4134,138 @@ class Repeats(unittest.TestCase):
                 with contextlib.redirect_stderr(io.StringIO()):
                     evals.main(["--dry-run", "--repeat", n])
 
-    def test_confirm_reruns_only_the_failed_cases_of_a_run_four_times(self):
-        run = {"20261018-100000": [self.g("refusal", "fable", 0, False), self.g("refusal", "opus55", 0, True),
-                                   self.g("large_stop", "fable", 0, False),
-                                   self.g("gate_block", "fable", 0, False, not_run="skipped: an API error")]}
-        code, seen, _ = self.main("--confirm", "20261018-100000", runs=run)
+    FAILED_RUN = {"20261018-100000": [{"scenario": "refusal", "seat": "fable", "passed": False, "results": []},
+                                      {"scenario": "refusal", "seat": "opus55", "passed": True, "results": []},
+                                      {"scenario": "large_stop", "seat": "fable", "passed": False, "results": []},
+                                      {"scenario": "gate_block", "seat": "fable", "passed": False, "results": [],
+                                       "not_run": "skipped: an API error"}]}
+
+    def test_confirm_reruns_only_the_failed_cases_one_session_at_a_time_until_the_rule_settles_them(self):
+        """G-60 option B: a failed case gets fresh sessions one at a time, each read before the next is launched, and
+        the rule stops them: three straight passes settle it at three (no regression), never a fixed four."""
+        code, seen, text = self.main("--confirm", "20261018-100000", runs=self.FAILED_RUN)
         self.assertEqual(code, 0)
-        self.assertEqual(sorted(seen["cases"]), sorted([("large_stop", "fable", k) for k in (1, 2, 3, 4)] +
-                                                       [("refusal", "fable", k) for k in (1, 2, 3, 4)]))
+        self.assertEqual(seen["cases"], [("large_stop", "fable", 1), ("large_stop", "fable", 2), ("large_stop", "fable", 3),
+                                         ("refusal", "fable", 1), ("refusal", "fable", 2), ("refusal", "fable", 3)])
         self.assertEqual(seen["logged"], "repeat")
+        self.assertIn("confirm: refusal fable — P P P → no regression", text)
+        self.assertEqual(seen["verdicts"], {"large_stop-fable": {"runs": "PPP", "verdict": "no regression"},
+                                            "refusal-fable": {"runs": "PPP", "verdict": "no regression"}})
         code, seen, text = self.main("--confirm", "20261018-100000", runs={"20261018-100000": [
             self.g("refusal", "fable", 0, True)]})
         self.assertEqual(code, 0)
         self.assertNotIn("cases", seen)                                           # nothing failed: nothing launched
         self.assertIn("nothing to confirm", text)
+
+    def test_a_second_failure_stops_a_confirm_at_two_as_hurt(self):
+        code, seen, text = self.main("--confirm", "20261018-100000", runs=self.FAILED_RUN,
+                                     outcomes={("refusal", "fable"): "FF", ("large_stop", "fable"): "PFF"})
+        self.assertEqual(code, 1)
+        self.assertEqual([c for c in seen["cases"] if c[0] == "refusal"], [("refusal", "fable", 1), ("refusal", "fable", 2)])
+        self.assertEqual([c for c in seen["cases"] if c[0] == "large_stop"],
+                         [("large_stop", "fable", k) for k in (1, 2, 3)])
+        self.assertIn("confirm: refusal fable — F F → hurt", text)
+        self.assertIn("confirm: large_stop fable — P F F → hurt", text)
+        self.assertEqual(seen["verdicts"]["refusal-fable"], {"runs": "FF", "verdict": "hurt"})
+
+    def test_one_failure_in_four_is_flaky_read_it(self):
+        code, seen, text = self.main("--confirm", "20261018-100000", runs=self.FAILED_RUN,
+                                     outcomes={("refusal", "fable"): "PFPP", ("large_stop", "fable"): "FPPP"})
+        self.assertEqual(code, 1)
+        self.assertEqual([c[2] for c in seen["cases"] if c[0] == "refusal"], [1, 2, 3, 4])   # a pass after the failure
+        self.assertIn("confirm: refusal fable — P F P P → flaky, read it", text)                # does not settle it
+        self.assertIn("confirm: large_stop fable — F P P P → flaky, read it", text)
+        self.assertEqual(seen["verdicts"]["refusal-fable"], {"runs": "PFPP", "verdict": "flaky, read it"})
+
+    def test_the_rule_itself(self):
+        v = evals.confirm_verdict
+        self.assertIsNone(v([]))
+        self.assertIsNone(v(["P", "P"]))
+        self.assertIsNone(v(["P", "F", "P"]))
+        self.assertEqual(v(["F", "F"]), "hurt")
+        self.assertEqual(v(["P", "P", "F", "F"]), "hurt")
+        self.assertEqual(v(["P", "P", "P"]), "no regression")
+        self.assertEqual(v(["P", "P", "F", "P"]), "flaky, read it")
+        self.assertEqual(v(["P", "N"]), "not measured")                           # an API error measured nothing
+
+    def test_a_confirm_record_carries_the_verdicts_beside_every_existing_field(self):
+        with tempfile.TemporaryDirectory() as t:
+            run = Path(t) / "runs" / "20261018-120000"
+            run.mkdir(parents=True)
+            grades = [self.g("a", "fable", 1, False), self.g("a", "fable", 2, True), self.g("a", "fable", 3, True),
+                      self.g("a", "fable", 4, True)]
+            costs = {evals.case_name_of(x): (0.5, None, None) for x in grades}
+            verdicts = evals.confirm_verdicts(grades)
+            r = evals.run_record(run, Path(t) / "runs", grades, "repeat", costs=costs, verdicts=verdicts)
+            plain = evals.run_record(run, Path(t) / "runs", grades, "repeat", costs=costs)
+        self.assertEqual(verdicts, {"a-fable": {"runs": "FPPP", "verdict": "flaky, read it"}})
+        self.assertEqual(sorted(r), sorted(evals.RUN_FIELDS + ("verdicts",)))        # added, nothing renamed
+        self.assertEqual((r["selection"], r["result"], r["verdicts"]), ("repeat", "3/4", verdicts))
+        self.assertEqual(sorted(plain), sorted(evals.RUN_FIELDS))                     # no other run has it
+
+    def test_confirm_dry_run_prints_what_it_would_run_and_launches_nothing(self):
+        code, seen, text = self.main("--confirm", "20261018-100000", "--dry-run", runs=self.FAILED_RUN)
+        self.assertEqual(code, 0)
+        self.assertNotIn("cases", seen)
+        self.assertNotIn("logged", seen)
+        self.assertIn("would confirm refusal on fable: up to 4 sessions, one at a time (a 2nd failure stops it as hurt, "
+                      "3 straight passes as no regression; one failure in four is flaky, read it)", text)
+        self.assertEqual(text.count("would confirm"), 2)                              # one line per case, not per session
+        self.assertNotIn("would run", text)
+
+    def test_confirm_takes_no_repeat_count(self):
+        code, seen, text = self.main("--confirm", "20261018-100000", "--repeat", "3", runs=self.FAILED_RUN)
+        self.assertEqual(code, 2)
+        self.assertNotIn("cases", seen)
+        self.assertIn("takes no --quick, --only, --seat or --repeat", text)
+
+    def test_history_reads_runs_and_passes_per_case_since_october_with_pass_k(self):
+        """--history: each run read from its own grades.json (every session, repeats included); a run whose folder is
+        gone from the log alone when it names its cases; nothing launched or written."""
+        spec = {"scenarios": [{"id": "a", "seats": ["fable", "opus55"], "quick": ["fable"]},
+                              {"id": "b", "seats": ["fable"], "quick": ["fable"]}]}
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root, log = Path(tmp.name) / "runs", Path(tmp.name) / "RUNS.jsonl"
+        records = [
+            {"run": "20260930-120000", "date": "2026-09-30", "selection": "full", "failed": [["a", "fable"]]},   # before
+            {"run": "20261002-120000", "date": "2026-10-02", "selection": "full", "failed": [["a", "fable"]]},   # folder
+            {"run": "20261003-120000", "date": "2026-10-03", "selection": "repeat", "failed": [],               # confirm,
+             "verdicts": {"a-fable": {"runs": "PFPP", "verdict": "flaky, read it"}}},                            # no folder
+            {"run": "20261004-120000", "date": "2026-10-04", "selection": "quick", "failed": [["b", "fable"]]},  # no folder
+            {"run": "20261005-120000", "date": "2026-10-05", "selection": "only", "failed": []}]                 # unread
+        log.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+        folder = root / "20261002-120000"
+        folder.mkdir(parents=True)
+        (folder / "grades.json").write_text(json.dumps([
+            {"scenario": "a", "seat": "fable", "passed": False}, {"scenario": "a", "seat": "opus55", "passed": True},
+            {"scenario": "b", "seat": "fable", "passed": True},
+            {"scenario": "b", "seat": "opus55", "passed": False, "not_run": "an API error"}]), encoding="utf-8")
+        table, read, from_log, unread = evals.case_history(evals.read_runs(log), root, spec)
+        self.assertEqual((read, from_log, unread), (1, 2, 1))
+        self.assertEqual(table, {("a", "fable"): {"runs": 6, "passes": 4},     # 0/1 folder + 3/4 confirm + 1/1 quick
+                                 ("a", "opus55"): {"runs": 1, "passes": 1},
+                                 ("b", "fable"): {"runs": 2, "passes": 1}})    # the NOT RUN opus55 session is no run
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            code = evals.history_report("a", log, root, spec)
+        text = out.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("history since 2026-10-01: 1 run(s) read from their folders, 2 from the log alone, 1 unread", text)
+        self.assertRegex(text, r"a\s+fable\s+6\s+4\s+0\.67\s+0\.30")           # (4/6)^3 = 0.296
+        self.assertRegex(text, r"a\s+opus55\s+1\s+1\s+1\.00\s+1\.00")
+        self.assertNotIn("\nb ", text)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(evals.history_report("zzz", log, root, spec), 1)
+        self.assertIn("no run of zzz since 2026-10-01", out.getvalue())
+        self.assertEqual(log.read_text(encoding="utf-8"), "".join(json.dumps(r) + "\n" for r in records))  # read-only
+
+    def test_history_is_a_read_only_report_of_the_run_log(self):
+        with tempfile.TemporaryDirectory() as t, mock.patch.object(evals, "RUNS_FILE", Path(t) / "RUNS.jsonl"), \
+                contextlib.redirect_stdout(io.StringIO()) as out:
+            code = evals.main(["--history", "--out", t])
+        self.assertEqual(code, 1)
+        self.assertIn("no run since 2026-10-01", out.getvalue())
+        self.assertFalse((Path(t) / "RUNS.jsonl").exists())
 
 
 if __name__ == "__main__":

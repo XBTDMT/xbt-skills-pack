@@ -14,8 +14,13 @@
                                             each selected case 4 times (2 to 10), and one verdict per case: held (no
                                             failure; the report gives the bound on its failure rate), flaky (one: read
                                             that transcript) or fails (two or more: a real failure, not a flake)
-  python3 evals/run.py --confirm <run>      only the cases a graded run failed, 4 fresh sessions each, with the same
-                                            verdicts: settling a failure costs its own sessions, never the whole set
+  python3 evals/run.py --confirm <run>      only the cases a graded run failed, each rerun one fresh session at a time,
+                                            up to 4, stopped by a rule: a 2nd failure is "hurt", 3 straight passes
+                                            "no regression", one failure in four "flaky, read it" (the verdict per
+                                            case goes into the run's record): settling a failure costs a few sessions,
+                                            never the whole set
+  python3 evals/run.py --history [case]     read-only: per case and seat, the runs and passes since 2026-10-01 in
+                                            evals/RUNS.jsonl and pass^3, how likely three straight passes are at that rate
   python3 evals/run.py --build-sealed       build the sealed config folder (--config, default ~/.claude-evals) and stop
 
 Every session runs in a sealed config folder, never your own ~/.claude: CLAUDE_CONFIG_DIR is set to --config
@@ -27,10 +32,15 @@ the preflight refuses (exit 2, no session launched, nothing spent) when the fold
 resolve, account entries or MCP servers reach it, or `claude --version` is not sealed.json's `cli_version`, the version
 its bundled skills and plugins were reviewed on; `--probe` launches on another version and grades the case's `sealed`
 check unreviewed, never a pass.
-Each session gets its own copy of evals/fixture (plus an overlay if the scenario names one) under
-~/xbt-evals/<stamp>/<scenario>-<seat>/project (`<scenario>-<seat>-r<k>` for a repeat), with git and a bare `origin`, a pinned model and effort, acceptEdits, a
+Each session gets its own copy of evals/fixture (plus an overlay if the scenario names one), with git and a bare `origin`
+(the fixture commit by a fixed author on a fixed date), a pinned model and effort, acceptEdits, a
 narrow tool allow-list, one deny list (`git push`, Write and Edit inside the skill folders, and the session folder's
-transcripts) and the skill folders and the session's own folder (its memory/ writable) added as directories. Every turn's stream is kept, and the project's files are snapshotted after each turn so
+transcripts) and the skill folders and the session's own folder (its memory/ writable) added as directories. While it
+runs, the session sees a fixed slot path, `~/xbt-evals/slots/<n>/project` (its scratch folder `slots/<n>/scratch`, one
+slot per parallel worker; the 1-hour prompt-cache TTL set), so every session's prompt prefix reads the same and the
+cache is read, not written again (the shared-prefix design); when the case ends its project, origin and scratch move to the case's own
+folder, ~/xbt-evals/<stamp>/<scenario>-<seat>/ (`<scenario>-<seat>-r<k>` for a repeat), where every check reads them.
+Every turn's stream is kept, and the project's files are snapshotted after each turn so
 checks can ask about the state mid-conversation. Exit 1 when any check fails. Stdlib only, Python 3.9 or newer.
 """
 import argparse
@@ -43,6 +53,7 @@ import importlib.util
 import json
 import math
 import os
+import queue
 import re
 import shlex
 import shutil
@@ -276,22 +287,32 @@ def preflight(cli_path, config_dir, probe=False, runs_root=None, repo=None, reru
 
 # ------------------------------------------------------------------------------------------------ project
 
-def build_project(case_dir, scenario):
+# The fixture commit's author, committer and date, fixed so `git log` reads the same in every session (the shared prefix: the
+# commit's text and, for one fixture tree, its id are part of the prompt prefix the sessions share).
+FIXTURE_COMMIT_ENV = {"GIT_AUTHOR_NAME": "evals", "GIT_AUTHOR_EMAIL": "evals@local",
+                      "GIT_COMMITTER_NAME": "evals", "GIT_COMMITTER_EMAIL": "evals@local",
+                      "GIT_AUTHOR_DATE": "2026-01-01T00:00:00 +0000", "GIT_COMMITTER_DATE": "2026-01-01T00:00:00 +0000"}
+
+
+def build_project(case_dir, scenario, where=None):
     """The case's project: the fixture, its overlays, git with a bare origin, then its preps — run with the case's own
     DOC_GUARDRAILS_STATE and the pack under test's closeout.py, the values the session and the grader use, so no prep
-    leaves a record in the live state."""
-    proj = case_dir / "project"
+    leaves a record in the live state. `where`: the folder that holds `project` and `origin.git` (the case folder by
+    default; a run's fixed slot folder while the session runs); the case's `state` stays in the case folder."""
+    where = Path(where) if where else case_dir
+    proj = where / "project"
     (case_dir / "state").mkdir(parents=True, exist_ok=True)
     stray = shutil.ignore_patterns("__pycache__")   # bytecode a test run left beside the sources is no part of a case
     shutil.copytree(HERE / "fixture", proj, ignore=stray)
     overlays = scenario.get("overlay") or []
     for name in [overlays] if isinstance(overlays, str) else overlays:
         shutil.copytree(HERE / "overlays" / name, proj, dirs_exist_ok=True, ignore=stray)
-    git = lambda *a: subprocess.run(["git", "-C", str(proj), *a], check=True, capture_output=True)
+    git_env = dict(os.environ, **FIXTURE_COMMIT_ENV)
+    git = lambda *a: subprocess.run(["git", "-C", str(proj), *a], check=True, capture_output=True, env=git_env)
     git("init", "-q", "-b", "main")
     git("add", "-A")
-    git("-c", "user.name=evals", "-c", "user.email=evals@local", "commit", "-q", "-m", "fixture")
-    subprocess.run(["git", "init", "-q", "--bare", str(case_dir / "origin.git")], check=True, capture_output=True)
+    git("commit", "-q", "-m", "fixture")
+    subprocess.run(["git", "init", "-q", "--bare", str(where / "origin.git")], check=True, capture_output=True)
     git("remote", "add", "origin", "../origin.git")
     preps = scenario.get("prep") or []
     for prep in [preps] if isinstance(preps, str) else preps:
@@ -723,14 +744,65 @@ def scenario_allowed_tools(scenario):
 INTERRUPTED = "interrupted"   # a record kept mid-case; the final write replaces it
 
 
-def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0):
+SLOT_PARTS = ("project", "origin.git", "scratch")   # what a session sees at its slot path; moved to the case folder after
+PROMPT_CACHE_TTL = "1h"   # CLAUDE_CODE_PROMPT_CACHE_TTL: "5m" or "1h" (the CLI's own setting text, 2.1.323 and 2.1.325)
+
+
+def slot_dir(case_dir, n=0):
+    """Slot n's fixed folder, `<runs root>/slots/<n>`, beside the run folders (a case folder is `<runs root>/<stamp>/<case>`):
+    the same path run after run, so the working directory and scratch path a session sees never change (the shared prompt prefix)."""
+    return Path(case_dir).resolve().parent.parent / "slots" / str(n)
+
+
+def first_request_cache(turns):
+    """{"cache_creation_input_tokens", "cache_read_input_tokens"} of the case's first request (turn 1's first assistant
+    message), the figures the shared prefix's saving is measured by; None when no message carried a usage record."""
+    for turn in turns[:1]:
+        for m in turn.get("messages") or []:
+            usage = m.get("usage") or {}
+            if usage:
+                return {k: usage.get(k) or 0 for k in ("cache_creation_input_tokens", "cache_read_input_tokens")}
+    return None
+
+
+def _claim_slot(slot, config_dir):
+    """Empty the slot (a crash may have left a case in it) and Claude Code's folder for its project path under the
+    sealed config, so no memory/ or transcript of an earlier case reaches this one."""
+    slot = Path(slot)
+    slot.mkdir(parents=True, exist_ok=True)
+    for name in SLOT_PARTS:
+        if (slot / name).exists():
+            shutil.rmtree(slot / name)
+    for d in session_dirs(slot / "project", config_dir):
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _release_slot(slot, case_dir):
+    """Move the session's project, origin and scratch from the slot to the case folder, where every check reads them."""
+    for name in SLOT_PARTS:
+        if (Path(slot) / name).exists():
+            shutil.move(str(Path(slot) / name), str(Path(case_dir) / name))
+
+
+def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0, slot=None):
     """One case in the sealed config: every turn launched through the batch's resolved binary, with the sealed
     folder as its config, the case's own state and hook log, no MCP server and the updater off (§5.7). Nothing is
     read from or written to the live config. The scenario's `allowed_tools` join the one --allowedTools list of every
-    turn, resumed turns included, and the case's `env` records them."""
+    turn, resumed turns included, and the case's `env` records them. The session runs in `slot` (slot 0 by default),
+    whose project, origin and scratch move to the case folder when the case ends, however it ends."""
     granted = scenario_allowed_tools(scenario)   # checked before anything is built or launched
     case_dir.mkdir(parents=True)
-    proj = build_project(case_dir, scenario)
+    slot = Path(slot) if slot else slot_dir(case_dir)
+    _claim_slot(slot, config_dir)
+    try:
+        return _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat)
+    finally:
+        _release_slot(slot, case_dir)
+
+
+def _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat):
+    granted = scenario_allowed_tools(scenario)
+    proj = build_project(case_dir, scenario, where=slot)
     for n in range(len(scenario["turns"])):
         between_turns_writes(scenario, n, proj)   # every entry checked before the first turn runs
     snaps = [snapshot(proj)]
@@ -743,12 +815,13 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
     sessions = session_dirs(proj, config_dir)
     readable = skill_dirs(config_dir)
     env_record = {"cli_path": str(cli_path), "claude_version": cli_version, "pack_head": _head(PACK),
-                  "allowed_tools": granted}
+                  "allowed_tools": granted, "slot": str(slot), "prompt_cache_ttl": PROMPT_CACHE_TTL}
     def write_record(**extra):
         record = {"scenario": scenario["id"], "seat": seat, "turns": turns, "snapshots": snaps,
                   "baseline_tests": baseline, "hooks": [list(e) for e in entries],
                   "loader": list(found[0]) if found[0] else None, "env": env_record,
                   "layer_expected": layer_expected(seat), "probe": bool(probe),
+                  "first_request_cache": first_request_cache(turns),
                   **({"repeat": repeat} if repeat else {}), **extra}
         (case_dir / "record.json").write_text(json.dumps(record, indent=1), encoding="utf-8")
         return record
@@ -764,7 +837,9 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         # Without one, /project-update's worklist (a scratch file the skill will not write into the repo) went to
         # `$TMPDIR/…`, which the headless permission check refused (a variable in the path, a redirect outside the
         # project), and the session stopped, correctly, at the refusal (project_update_records on opus55).
-        scratch = case_dir / "scratch"; scratch.mkdir(exist_ok=True)
+        # 2026-11-14: the scratch folder sits in the slot, so its path in the system prompt is the same for every
+        # session; it moves to the case folder with the project when the case ends.
+        scratch = slot / "scratch"; scratch.mkdir(exist_ok=True)
         cmd = [str(cli_path), "-p", prompt, *(["--resume", sid] if sid else []), *SEATS[seat],
                "--permission-mode", "acceptEdits", *permission_flags(tools, readable, sessions),
                "--add-dir", str(scratch),
@@ -774,7 +849,7 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         # every hook the sealed config runs appends one line to the case's hook log (evals/hook_log.py)
         env = dict(os.environ, TMPDIR=str(scratch), CLAUDE_CONFIG_DIR=str(config_dir),
                    DOC_GUARDRAILS_STATE=str(case_dir / "state"), XBT_EVAL_HOOK_LOG=str(case_dir / "hooks.jsonl"),
-                   DISABLE_AUTOUPDATER="1")
+                   DISABLE_AUTOUPDATER="1", CLAUDE_CODE_PROMPT_CACHE_TTL=PROMPT_CACHE_TTL)
         t_start = utc_now()
         try:
             r = subprocess.run(cmd, cwd=proj, capture_output=True, encoding="utf-8", errors="replace", timeout=SESSION_TIMEOUT, env=env)
@@ -2750,8 +2825,9 @@ def case_costs(run_dir, grades):
     return out
 
 
-def run_record(run_dir, runs_root, grades, selection, pack_sha=None, costs=None, note=""):
-    """One RUNS.jsonl record: never an absolute path (`run` is relative to the runs root)."""
+def run_record(run_dir, runs_root, grades, selection, pack_sha=None, costs=None, note="", verdicts=None):
+    """One RUNS.jsonl record: never an absolute path (`run` is relative to the runs root). A confirm run adds `verdicts`
+    ({"<scenario>-<seat>": {"runs": "PPF", "verdict": …}}, confirm_verdicts) beside RUN_FIELDS; no other run has it."""
     costs = costs if costs is not None else case_costs(run_dir, grades)
     passed = sum(1 for g in grades if g.get("passed"))
     not_run = sum(1 for g in grades if g.get("not_run"))
@@ -2765,7 +2841,8 @@ def run_record(run_dir, runs_root, grades, selection, pack_sha=None, costs=None,
             "cost": None if any(c is None for c in known) else round(sum(known), 2),
             "failed": [[g["scenario"], g["seat"]] for g in grades if not g.get("passed") and not g.get("not_run")],
             "layer_ok": (all(v is True for v in layer) if layer and None not in layer else None) if layer else None,
-            "pack_sha": pack_sha, "published": selection in LISTED, "note": note}
+            "pack_sha": pack_sha, "published": selection in LISTED, "note": note,
+            **({"verdicts": verdicts} if verdicts is not None else {})}
 
 
 def append_run(record, path=None):
@@ -2773,9 +2850,9 @@ def append_run(record, path=None):
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def log_run(out, runs_root, grades, selection, pack_sha=None):
-    """The graded run's one record, appended to RUNS.jsonl (R-29 § 6)."""
-    record = run_record(out, runs_root, grades, selection, pack_sha)
+def log_run(out, runs_root, grades, selection, pack_sha=None, verdicts=None):
+    """The graded run's one record, appended to RUNS.jsonl (R-29 § 6); `verdicts` is a confirm run's per-case table."""
+    record = run_record(out, runs_root, grades, selection, pack_sha, verdicts=verdicts)
     append_run(record)
     refill_figures(RUNS_FILE)
     return record
@@ -3348,6 +3425,162 @@ def failed_cases(run_dir):
     return sorted({(g["scenario"], g["seat"]) for g in grades if not g.get("passed") and not g.get("not_run")})
 
 
+# ---- confirmation: a failed case is settled by fresh sessions one at a time, each read before the
+# next is launched, and stopped by a rule, so a failure costs a few sessions to settle and never the whole set
+
+CONFIRM_MAX = 4
+CONFIRM_RULE = ("a 2nd failure stops it as hurt, 3 straight passes as no regression; one failure in four is flaky, "
+                "read it")
+HISTORY_SINCE = "2026-10-01"   # the run log is read from here: the window the testing-strategy record set
+PASS_K = 3                      # the pass^k view: how likely k straight passes are at the observed rate
+
+
+def outcome_of(g):
+    """One letter per graded session: P passed, F failed, N not run (an API error: it measured nothing)."""
+    return "N" if g.get("not_run") else "P" if g.get("passed") else "F"
+
+
+def confirm_verdict(outcomes):
+    """The rule's verdict after the sessions so far (a list of outcome letters), or None while another session is
+    needed: a second failure is `hurt`; three straight passes with no failure `no regression`; four sessions with one
+    failure `flaky, read it`; a NOT RUN session ends the case as `not measured`."""
+    if "N" in outcomes:
+        return "not measured"
+    if outcomes.count("F") >= 2:
+        return "hurt"
+    if "F" not in outcomes and outcomes.count("P") >= 3:
+        return "no regression"
+    if len(outcomes) >= CONFIRM_MAX:
+        return "flaky, read it"
+    return None
+
+
+def confirm_verdicts(grades):
+    """{"<scenario>-<seat>": {"runs": "PPF…", "verdict": …}} for every repeated case in the grades, the sessions in
+    their order; `unsettled` when the sessions stopped before the rule did (a CLI change)."""
+    by = {}
+    for g in sorted(grades, key=lambda g: g.get("repeat") or 0):
+        if g.get("repeat"):
+            by.setdefault((g["scenario"], g["seat"]), []).append(outcome_of(g))
+    return {case_name(sid, seat): {"runs": "".join(o), "verdict": confirm_verdict(o) or "unsettled"}
+            for (sid, seat), o in sorted(by.items())}
+
+
+def confirm_line(sid, seat, outcomes, verdict):
+    return f"confirm: {sid} {seat} — {' '.join(outcomes) or '(no session)'} → {verdict}"
+
+
+def confirm_batch(pairs, spec, out, config, cli, version, probe=False, on_graded=None):
+    """(grades, changed): each failed case rerun one fresh session at a time, up to CONFIRM_MAX, stopped by
+    confirm_verdict's rule; every session is run_batch's, so it is recorded, graded and costed like any other. A NOT RUN
+    session or a CLI change ends the batch, the cases not started recorded as such."""
+    grades, changed, stop = [], None, None
+    for s, st in pairs:
+        if stop:
+            grades.append({"scenario": s["id"], "seat": st, "repeat": 1, "passed": False, "cost": 0, "results": [],
+                           "not_run": stop})
+            print(confirm_line(s["id"], st, [], f"not measured ({stop})"), flush=True)
+            continue
+        outcomes = []
+        while confirm_verdict(outcomes) is None and not changed:
+            got, changed = run_batch([(s, st, len(outcomes) + 1)], spec, out, config, cli, version, 1, probe=probe,
+                                     on_graded=on_graded)
+            grades += got
+            outcomes.append(outcome_of(got[0]))
+        verdict = confirm_verdict(outcomes) or "unsettled: the CLI changed"
+        print(confirm_line(s["id"], st, outcomes, verdict), flush=True)
+        if "N" in outcomes:
+            stop = "skipped: an earlier session hit an API error"
+        elif changed:
+            stop = "not launched: CLI changed"
+    return grades, changed
+
+
+def case_history(records, runs_root, spec, since=HISTORY_SINCE):
+    """({(scenario, seat): {"runs": n, "passes": n}}, read, from_log, unread) over the records dated `since` or later:
+    a run is read from its own grades.json under the runs root (every session, repeats included); a run whose folder is
+    gone is read from the log alone when it names its cases — a confirm's `verdicts`, or a quick or full set (its cases
+    today's scenarios', less the record's `failed`) — and counted unread otherwise."""
+    table, read, from_log, unread = {}, 0, 0, 0
+    S = spec["scenarios"]
+    sets = {"full": [(s["id"], st) for s in S for st in s["seats"]],
+            "quick": [(s["id"], st) for s in S for st in s.get("quick") or []]}
+
+    def add(sid, seat, passed):
+        row = table.setdefault((sid, seat), {"runs": 0, "passes": 0})
+        row["runs"] += 1
+        row["passes"] += 1 if passed else 0
+
+    for r in records:
+        if (r.get("date") or "") < since:
+            continue
+        try:
+            grades = json.loads((Path(runs_root) / r["run"] / "grades.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError, KeyError, TypeError):
+            grades = None
+        if grades is not None:
+            read += 1
+            for g in grades:
+                if not g.get("not_run"):
+                    add(g["scenario"], g["seat"], bool(g.get("passed")))
+        elif isinstance(r.get("verdicts"), dict):
+            from_log += 1
+            for name, v in r["verdicts"].items():
+                sid, seat = name.rsplit("-", 1)
+                for o in v.get("runs", ""):
+                    if o != "N":
+                        add(sid, seat, o == "P")
+        elif r.get("selection") in sets:
+            from_log += 1
+            failed = {tuple(f) for f in r.get("failed") or []}
+            for sid, seat in sets[r["selection"]]:
+                add(sid, seat, (sid, seat) not in failed)
+        else:
+            unread += 1
+    return table, read, from_log, unread
+
+
+def history_report(case, runs_file, runs_root, spec, since=HISTORY_SINCE, k=PASS_K):
+    """--history [CASE]: per case and seat, the runs and passes since `since` and pass^k, the probability of k straight
+    passes at the observed rate (0.90 → 0.73 for k = 3: a clean confirm of a case that fails one time in ten is likely,
+    so a confirm settles a regression, never a rate). Nothing is launched or written."""
+    table, read, from_log, unread = case_history(read_runs(runs_file), runs_root, spec, since)
+    rows = [(sid, seat, v) for (sid, seat), v in sorted(table.items())
+            if not case or case in (sid, case_name(sid, seat))]
+    print(f"history since {since}: {read} run(s) read from their folders, {from_log} from the log alone"
+          + (f", {unread} unread (no folder and the record does not name its cases)" if unread else ""))
+    if not rows:
+        print(f"no run of {case} since {since}" if case else f"no run since {since}")
+        return 1
+    print(f"{'scenario':<24} {'seat':<8} {'runs':>5} {'passes':>7} {'rate':>6} {'pass^' + str(k):>7}")
+    for sid, seat, v in rows:
+        rate = v["passes"] / v["runs"]
+        print(f"{sid:<24} {seat:<8} {v['runs']:>5} {v['passes']:>7} {rate:>6.2f} {rate ** k:>7.2f}")
+    return 0
+
+
+def cache_line(out, grades):
+    """"cache: first-request creation <sum> tokens, read <sum> tokens across <n> sessions", summed from each graded
+    case's record.json under `out` (the shared prefix's measure: 9.5k–15k tokens were written per session before it); None when
+    no record carries the figures (a run recorded before them)."""
+    creation = read = sessions = 0
+    for g in grades:
+        rec_path = Path(out) / case_name_of(g) / "record.json"
+        if not rec_path.is_file():
+            continue
+        try:
+            cache = json.loads(rec_path.read_text(encoding="utf-8")).get("first_request_cache")
+        except ValueError:
+            continue
+        if cache:
+            creation += cache.get("cache_creation_input_tokens") or 0
+            read += cache.get("cache_read_input_tokens") or 0
+            sessions += 1
+    if not sessions:
+        return None
+    return f"cache: first-request creation {creation} tokens, read {read} tokens across {sessions} sessions"
+
+
 def report(grades, out, stem=None, head=None):
     lines = [head] if head else []
     for g in grades:
@@ -3377,6 +3610,9 @@ def report(grades, out, stem=None, head=None):
     if repaired:   # the receipt hook's work, counted apart: the skill's miss is not hidden
         lines.append(f"repaired by hook: {repaired} case(s)")
     lines += [repeat_line(v) for v in repeat_verdicts(grades)]
+    cache = cache_line(out, grades)
+    if cache:
+        lines.append(cache)
     text = "\n".join(lines)
     print(text)
     out.mkdir(parents=True, exist_ok=True)   # a regrade writes beside the record, never over it (`stem`)
@@ -3398,8 +3634,11 @@ def main(argv=None):
     ap.add_argument("--repeat", type=repeat_count, metavar="N",
                     help=f"run each selected case N times (2 to {REPEAT_MAX}) and give each case one verdict: held, "
                          "flaky or fails")
-    ap.add_argument("--confirm", metavar="RUN", help="re-run only the cases a graded run failed, 4 fresh sessions "
-                                                     "each (--repeat to change), the run under --out or a path")
+    ap.add_argument("--confirm", metavar="RUN", help=f"re-run only the cases a graded run failed (the run under --out "
+                    f"or a path), one fresh session at a time, up to {CONFIRM_MAX}: {CONFIRM_RULE}")
+    ap.add_argument("--history", nargs="?", const="", metavar="CASE",
+                    help=f"read-only: per case and seat (or one scenario or <scenario>-<seat>), the runs and passes "
+                         f"since {HISTORY_SINCE} in evals/RUNS.jsonl and pass^{PASS_K}")
     ap.add_argument("--out", help="where a batch writes its run (default ~/xbt-evals); for --recheck, where the "
                                   "regrade goes (default: beside the run's record, never over it)")
     ap.add_argument("--config", default=str(Path.home() / ".claude-evals"),
@@ -3457,6 +3696,8 @@ def main(argv=None):
         return code
     spec = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
     by_id = {s["id"]: s for s in spec["scenarios"]}
+    if args.history is not None:
+        return history_report(args.history, RUNS_FILE, Path(args.out) if args.out else Path.home() / "xbt-evals", spec)
     if args.recheck:
         run_dir = Path(args.recheck)
         grades = [grade(d, by_id[json.loads((d / "record.json").read_text(encoding="utf-8"))["scenario"]])
@@ -3465,9 +3706,9 @@ def main(argv=None):
         return 0 if report(grades, Path(args.out) if args.out else run_dir, stem=f"regrade-{stamp}") else 1
     cases = plan(spec, args.quick, args.only, args.seat)
     if args.confirm:
-        if args.quick or args.only or args.seat:
-            print("--confirm picks its own cases: the run's failed ones; it takes no --quick, --only or --seat",
-                  file=sys.stderr)
+        if args.quick or args.only or args.seat or args.repeat:
+            print("--confirm picks its own cases (the run's failed ones) and its own count (up to "
+                  f"{CONFIRM_MAX}, stopped by the rule); it takes no --quick, --only, --seat or --repeat", file=sys.stderr)
             return 2
         run_dir = Path(args.confirm)
         if not run_dir.is_absolute() and not (run_dir / "grades.json").is_file():
@@ -3479,10 +3720,15 @@ def main(argv=None):
         if not cases:
             print(f"nothing to confirm: no case of {run_dir.name} failed (a NOT RUN case measured nothing: re-run it)")
             return 0
-    cases = with_repeats(cases, args.repeat or (4 if args.confirm else 1))
+    cases = with_repeats(cases, CONFIRM_MAX if args.confirm else args.repeat or 1)   # a confirm's most: its rule stops early
+    pairs = list(dict.fromkeys((s["id"], st) for s, st, _ in cases))   # a confirm's cases, once each, in order
     if args.dry_run or not cases:
         for s, st, k in cases:
-            print(f"would run {s['id']} on {st}{f' (repeat {k})' if k else ''}: {len(s['turns'])} turn(s), "
+            if args.confirm and k > 1:
+                continue
+            print(f"would confirm {s['id']} on {st}: up to {CONFIRM_MAX} sessions, one at a time ({CONFIRM_RULE}); "
+                  f"{len(s['turns'])} turn(s), {len(s['checks'])} check(s)" if args.confirm else
+                  f"would run {s['id']} on {st}{f' (repeat {k})' if k else ''}: {len(s['turns'])} turn(s), "
                   f"{len(s['checks'])} check(s)")
         print(totals_line(spec))
         if args.quick or args.only or args.seat:
@@ -3510,12 +3756,23 @@ def main(argv=None):
     out = runs_root / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     on_graded, head = None, None
     print(f"running {len(cases)} case(s) into {out} on {cli} ({version})", flush=True)
-    grades, changed = run_batch(cases, spec, out, config, cli, version, args.parallel, probe=args.probe,
-                                on_graded=on_graded)
+    if args.confirm:   # one fresh session at a time, each read before the next, stopped by the rule
+        grades, changed = confirm_batch([(by_id[sid], st) for sid, st in pairs], spec, out, config, cli, version,
+                                        probe=args.probe, on_graded=on_graded)
+    else:
+        grades, changed = run_batch(cases, spec, out, config, cli, version, args.parallel, probe=args.probe,
+                                    on_graded=on_graded)
     if args.probe:
         build_sealed(config)   # the probe entry is E-1's alone: the next build leaves it out
     ok = report(grades, out, head=head)
-    log_run(out, runs_root, grades, selection_of(args), _head(PACK))
+    verdicts = None
+    if args.confirm:
+        verdicts = confirm_verdicts(grades)
+        lines = [confirm_line(*name.rsplit("-", 1), list(v["runs"]), v["verdict"]) for name, v in verdicts.items()]
+        print("\n".join(lines))
+        with open(out / "report.txt", "a", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+    log_run(out, runs_root, grades, selection_of(args), _head(PACK), verdicts=verdicts)
     if changed:
         print(f"CLI changed mid-batch: {changed[0]} → {changed[1]} — the batch stopped; review the new version with a "
               f"--probe run before the next batch", file=sys.stderr)
@@ -3577,17 +3834,23 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
     limited, stopped, changed, grades = threading.Event(), threading.Event(), [], []
 
     cases = [tuple(c) + (0,) * (3 - len(c)) for c in cases]   # (scenario, seat[, repeat]); 0 is a one-session case
+    slots = queue.Queue()   # one fixed slot folder per worker (a shared prompt prefix): a session runs in it, then hands it to the next case
+    for n in range(max(1, parallel)):
+        slots.put(out.parent / "slots" / str(n))
 
     def one(case_dir, s, st, k=0):
         if limited.is_set():
             return "skipped"
         if stopped.is_set():
             return "not launched"
+        slot = slots.get()
         try:
-            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k)
+            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k, slot=slot)
         except CLIChanged as e:
             changed.append((e.old, e.new))
             stopped.set()
+        finally:
+            slots.put(slot)
         return "ran"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:

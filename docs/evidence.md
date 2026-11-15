@@ -212,9 +212,11 @@ anything.
   work done without them. That control has since run; its results are in *The skills with and without* below.
 - One session per case per run. Sessions are not deterministic; a single pass is weak evidence for any one case,
   and the targeted re-runs (`--only`, counted under the run table) are where a specific behaviour was checked harder.
-  `--confirm <run>` re-runs only the cases a run failed, four fresh sessions each, and `--repeat N` runs any
-  selection N times; each case then gets one verdict (held, flaky or fails), recorded apart from the quick and
-  full results.
+  `--confirm <run>` re-runs only the cases a run failed, one fresh session at a time and up to four, stopped by a
+  rule: a second failure is "hurt", three straight passes "no regression", one failure in four "flaky, read it", and
+  the verdict per case goes into the run's record; `--history [case]` reads the run log for each case's runs, passes
+  and pass^3 (how likely three straight passes are at that rate); `--repeat N` runs any selection N times, each case
+  then getting one verdict (held, flaky or fails). All three are recorded apart from the quick and full results.
 - It runs on a few small codebases — real repositories with git, a plan and source files, but small ones.
 - Two model seats, one person's design of the scenarios.
 
@@ -676,7 +678,10 @@ CLAUDE_CONFIG_DIR=~/.claude-evals claude auth login   # once: that folder's own 
 python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 python3 evals/run.py --recheck <run dir>  # grade a finished run again without spending anything
-python3 evals/run.py --confirm <run>      # re-run only that run's failed cases, four sessions each, one verdict per case
+python3 evals/run.py --confirm <run>      # re-run only that run's failed cases, one session at a time, up to four,
+                                          # stopped by the rule (2nd failure hurt; 3 straight passes no regression;
+                                          # 1 in 4 flaky, read it); the verdict per case goes into the run's record
+python3 evals/run.py --history [case]     # read-only: each case's runs, passes and pass^3 from the run log
 ```
 
 Each batch rebuilds the sealed folder (`--build-sealed` only builds it ahead of the login), then checks it before
@@ -688,11 +693,15 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->551<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+As this tree ships: <!-- fig:tests.public -->565<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
 <!-- fig:run.quick.cost -->$10.95<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
-Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its
-snapshot after every turn (`record.json`), with the run's `grades.json` beside them. Nothing is uploaded anywhere.
+Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
+scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. While a
+session runs it works in a fixed slot path, `~/xbt-evals/slots/<n>/project` (one slot per parallel worker, with the
+scratch folder beside it), and the fixture commit carries a fixed author and date, so every session's prompt prefix
+reads the same and is served from the prompt cache; the project moves to the case folder when the case ends, and the
+report's `cache:` line sums each session's first-request cache figures. Nothing is uploaded anywhere.
 
 If you run it and get a different result, that is worth knowing — open an issue with the run folder's `grades.json`
 and the models you used. (Issues, not pull requests: this whole tree is generated, so a pull request would be
