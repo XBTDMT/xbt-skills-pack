@@ -332,7 +332,7 @@ python3 evals/run.py                    # the full set
 ```
 
 As this tree ships: <!-- fig:tests.public -->551<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.81<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
+<!-- fig:run.quick.cost -->$10.95<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,

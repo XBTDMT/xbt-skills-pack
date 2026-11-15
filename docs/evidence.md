@@ -164,6 +164,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-12 | 10 (quick) | 0 / 10 | `failed_fork` on Fable 5.2; `large_stop` on Fable 5.2; `pushback_ruling` on Fable 5.2; `redman_eli5` on Fable 5.2; `redman_no_edit` on Fable 5.2; `redman_side_finding` on Fable 5.2; `shell_doc` on Fable 5.2; `shell_doc_eli5` on Fable 5.2; `skill_changed_midsession` on Fable 5.2; `vendored_fork` on Fable 5.2; the first run on Fable 5.2 (seat fable52: the Fable 5.1 page copied, unmeasured on 5.2) and the review of Claude Code 2.1.323 after the reviewed 2.1.303: first grade UNREV on the sealed check's cli_version and builtin_plugins alone (cc-plugin-privacy@builtin new; agents-md@builtin and telemetry@builtin no longer listed), every behaviour check passing (93 of 93); the manifest then moved to 2.1.323 and the recheck PASS 10/10 (regrade-20261112-193648) |
 | 2026-11-14 | 49 | 45 / 49 | `full_flow` on Fable; `redman_no_edit` on Fable and Opus 5.5; `vendored_fork` on Fable; the full set before the 2026-11-14 release, on the reviewed 2.1.323 copy, with the 13 November Fable page and the Opus 5.5 page's report sentence live; rechecked 46/49 after redman_no_edit's now-or-later check was widened to either order (a2c15a9: Opus 5.5 had asked it with save() named after the question); the confirm run 20261114-003756 settled the rest: redman_no_edit 8/8, vendored_fork 4/4, full_flow 3/4 |
 | 2026-11-14 | 19 (quick) | **19 / 19** | — |
+| 2026-11-14 | 19 (quick) | **19 / 19** | — |
 
 plus 64 targeted runs (`--only`), 70/104 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -688,7 +689,7 @@ check as unreviewed, never a pass, so its results are not comparable with the ru
 lists are reviewed into `evals/sealed.json`.
 
 As this tree ships: <!-- fig:tests.public -->551<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.81<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
+<!-- fig:run.quick.cost -->$10.95<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$33.91<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, and its
 snapshot after every turn (`record.json`), with the run's `grades.json` beside them. Nothing is uploaded anywhere.
