@@ -35,11 +35,11 @@ check unreviewed, never a pass.
 Each session gets its own copy of evals/fixture (plus an overlay if the scenario names one), with git and a bare `origin`
 (the fixture commit by a fixed author on a fixed date), a pinned model and effort, acceptEdits, a
 narrow tool allow-list, one deny list (`git push`, Write and Edit inside the skill folders, and the session folder's
-transcripts) and the skill folders and the session's own folder (its memory/ writable) added as directories. While it
-runs, the session sees a fixed slot path, `~/xbt-evals/slots/<n>/project` (its scratch folder `slots/<n>/scratch`, one
-slot per parallel worker; the 1-hour prompt-cache TTL set), so every session's prompt prefix reads the same and the
-cache is read, not written again (the shared-prefix design); when the case ends its project, origin and scratch move to the case's own
-folder, ~/xbt-evals/<stamp>/<scenario>-<seat>/ (`<scenario>-<seat>-r<k>` for a repeat), where every check reads them.
+transcripts) and the skill folders and the session's own folder (its memory/ writable) added as directories. The
+session runs in the case's own folder, ~/xbt-evals/<stamp>/<scenario>-<seat>/ (`<scenario>-<seat>-r<k>` for a repeat):
+its project at `project`, its scratch folder at `scratch`, the origin at `origin.git`, the paths every check reads
+afterwards, with the 1-hour prompt-cache TTL set (fixed session paths shared between cases were tried and removed on
+2026-11-15: path-keyed evidence, the commit gate's heartbeat, is recorded against the path the session ran in).
 Every turn's stream is kept, and the project's files are snapshotted after each turn so
 checks can ask about the state mid-conversation. Exit 1 when any check fails. Stdlib only, Python 3.9 or newer.
 """
@@ -53,7 +53,6 @@ import importlib.util
 import json
 import math
 import os
-import queue
 import re
 import shlex
 import shutil
@@ -294,13 +293,13 @@ FIXTURE_COMMIT_ENV = {"GIT_AUTHOR_NAME": "evals", "GIT_AUTHOR_EMAIL": "evals@loc
                       "GIT_AUTHOR_DATE": "2026-01-01T00:00:00 +0000", "GIT_COMMITTER_DATE": "2026-01-01T00:00:00 +0000"}
 
 
-def build_project(case_dir, scenario, where=None):
+def build_project(case_dir, scenario):
     """The case's project: the fixture, its overlays, git with a bare origin, then its preps — run with the case's own
     DOC_GUARDRAILS_STATE and the pack under test's closeout.py, the values the session and the grader use, so no prep
-    leaves a record in the live state. `where`: the folder that holds `project` and `origin.git` (the case folder by
-    default; a run's fixed slot folder while the session runs); the case's `state` stays in the case folder."""
-    where = Path(where) if where else case_dir
-    proj = where / "project"
+    leaves a record in the live state. `project`, `origin.git` and `state` sit in the case folder, where the session
+    runs and every check reads them (fixed session paths shared between cases were tried and removed on 2026-11-15:
+    path-keyed evidence, the commit gate's heartbeat, is recorded against the path the session ran in)."""
+    proj = case_dir / "project"
     (case_dir / "state").mkdir(parents=True, exist_ok=True)
     stray = shutil.ignore_patterns("__pycache__")   # bytecode a test run left beside the sources is no part of a case
     shutil.copytree(HERE / "fixture", proj, ignore=stray)
@@ -312,7 +311,7 @@ def build_project(case_dir, scenario, where=None):
     git("init", "-q", "-b", "main")
     git("add", "-A")
     git("commit", "-q", "-m", "fixture")
-    subprocess.run(["git", "init", "-q", "--bare", str(where / "origin.git")], check=True, capture_output=True)
+    subprocess.run(["git", "init", "-q", "--bare", str(case_dir / "origin.git")], check=True, capture_output=True)
     git("remote", "add", "origin", "../origin.git")
     preps = scenario.get("prep") or []
     for prep in [preps] if isinstance(preps, str) else preps:
@@ -744,58 +743,7 @@ def scenario_allowed_tools(scenario):
 INTERRUPTED = "interrupted"   # a record kept mid-case; the final write replaces it
 
 
-SLOT_PARTS = ("project", "origin.git", "scratch")   # what a session sees at its slot path; moved to the case folder after
 PROMPT_CACHE_TTL = "1h"   # CLAUDE_CODE_PROMPT_CACHE_TTL: "5m" or "1h" (the CLI's own setting text, 2.1.323 and 2.1.325)
-
-
-def slot_dir(case_dir, n=0):
-    """Slot n's fixed folder, `<runs root>/slots/<n>`, beside the run folders (a case folder is `<runs root>/<stamp>/<case>`):
-    the same path run after run, so the working directory and scratch path a session sees never change (the shared prompt prefix)."""
-    return Path(case_dir).resolve().parent.parent / "slots" / str(n)
-
-
-def _try_lock(fh):
-    """Take an exclusive, non-blocking lock on an open file; False when another holder has it. The operating system
-    drops the lock when the holder's process ends, however it ends, so a crashed batch never leaves a slot taken."""
-    try:
-        if os.name == "nt":
-            import msvcrt
-            fh.seek(0)
-            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return True
-    except OSError:
-        return False
-
-
-def claim_slots(runs_root, n):
-    """[(slot folder, lock handle)] for n slots no other batch holds: slot k is taken through `<runs root>/slots/<k>.lock`,
-    lowest free number first, so two batches running at once never share a folder (2026-11-15: a second batch emptied the
-    slots a first batch's sessions were working in) while batches run one after another still reuse the same paths."""
-    root = Path(runs_root) / "slots"
-    root.mkdir(parents=True, exist_ok=True)
-    got, k = [], 0
-    while len(got) < n:
-        if k > 4096:
-            release_slots(got)
-            raise RuntimeError(f"no free slot under {root}")
-        fh = open(root / f"{k}.lock", "a+")
-        if _try_lock(fh):
-            got.append((root / str(k), fh))
-        else:
-            fh.close()
-        k += 1
-    return got
-
-
-def release_slots(got):
-    for _, fh in got:
-        try:
-            fh.close()
-        except OSError:
-            pass
 
 
 def first_request_cache(turns):
@@ -809,46 +757,15 @@ def first_request_cache(turns):
     return None
 
 
-def _claim_slot(slot, config_dir):
-    """Empty the slot (a crash may have left a case in it) and Claude Code's folder for its project path under the
-    sealed config, so no memory/ or transcript of an earlier case reaches this one."""
-    slot = Path(slot)
-    slot.mkdir(parents=True, exist_ok=True)
-    for name in SLOT_PARTS:
-        if (slot / name).exists():
-            shutil.rmtree(slot / name)
-    for d in session_dirs(slot / "project", config_dir):
-        shutil.rmtree(d, ignore_errors=True)
-
-
-def _release_slot(slot, case_dir):
-    """Move the session's project, origin and scratch from the slot to the case folder, where every check reads them."""
-    for name in SLOT_PARTS:
-        if (Path(slot) / name).exists():
-            shutil.move(str(Path(slot) / name), str(Path(case_dir) / name))
-
-
-def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0, slot=None):
+def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0):
     """One case in the sealed config: every turn launched through the batch's resolved binary, with the sealed
     folder as its config, the case's own state and hook log, no MCP server and the updater off (§5.7). Nothing is
     read from or written to the live config. The scenario's `allowed_tools` join the one --allowedTools list of every
-    turn, resumed turns included, and the case's `env` records them. The session runs in `slot` (slot 0 by default),
-    whose project, origin and scratch move to the case folder when the case ends, however it ends."""
+    turn, resumed turns included, and the case's `env` records them. The session runs in the case
+    folder's `project`, the path every check reads afterwards."""
     granted = scenario_allowed_tools(scenario)   # checked before anything is built or launched
     case_dir.mkdir(parents=True)
-    own = [] if slot else claim_slots(case_dir.resolve().parent.parent, 1)   # a case run on its own takes a free slot
-    slot = Path(slot) if slot else own[0][0]
-    _claim_slot(slot, config_dir)
-    try:
-        return _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat)
-    finally:
-        _release_slot(slot, case_dir)
-        release_slots(own)
-
-
-def _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe, repeat):
-    granted = scenario_allowed_tools(scenario)
-    proj = build_project(case_dir, scenario, where=slot)
+    proj = build_project(case_dir, scenario)
     for n in range(len(scenario["turns"])):
         between_turns_writes(scenario, n, proj)   # every entry checked before the first turn runs
     snaps = [snapshot(proj)]
@@ -861,7 +778,7 @@ def _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, 
     sessions = session_dirs(proj, config_dir)
     readable = skill_dirs(config_dir)
     env_record = {"cli_path": str(cli_path), "claude_version": cli_version, "pack_head": _head(PACK),
-                  "allowed_tools": granted, "slot": str(slot), "prompt_cache_ttl": PROMPT_CACHE_TTL}
+                  "allowed_tools": granted, "prompt_cache_ttl": PROMPT_CACHE_TTL}
     def write_record(**extra):
         record = {"scenario": scenario["id"], "seat": seat, "turns": turns, "snapshots": snaps,
                   "baseline_tests": baseline, "hooks": [list(e) for e in entries],
@@ -883,9 +800,10 @@ def _run_case_in(slot, case_dir, scenario, seat, prompts, config_dir, cli_path, 
         # Without one, /project-update's worklist (a scratch file the skill will not write into the repo) went to
         # `$TMPDIR/…`, which the headless permission check refused (a variable in the path, a redirect outside the
         # project), and the session stopped, correctly, at the refusal (project_update_records on opus55).
-        # 2026-11-14: the scratch folder sits in the slot, so its path in the system prompt is the same for every
-        # session; it moves to the case folder with the project when the case ends.
-        scratch = slot / "scratch"; scratch.mkdir(exist_ok=True)
+        # 2026-11-14: the scratch folder sat in a fixed folder shared between cases, with the project; 2026-11-15: both
+        # are in the case folder again (path-keyed evidence, the commit gate's heartbeat, is recorded against the path
+        # the session ran in).
+        scratch = case_dir / "scratch"; scratch.mkdir(exist_ok=True)
         cmd = [str(cli_path), "-p", prompt, *(["--resume", sid] if sid else []), *SEATS[seat],
                "--permission-mode", "acceptEdits", *permission_flags(tools, readable, sessions),
                "--add-dir", str(scratch),
@@ -3880,24 +3798,17 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
     limited, stopped, changed, grades = threading.Event(), threading.Event(), [], []
 
     cases = [tuple(c) + (0,) * (3 - len(c)) for c in cases]   # (scenario, seat[, repeat]); 0 is a one-session case
-    slots = queue.Queue()   # one fixed slot folder per worker (a shared prompt prefix): a session runs in it, then hands it to the next case
-    held = claim_slots(out.parent, max(1, parallel))   # locked for this batch: another batch running now takes other numbers
-    for folder, _ in held:
-        slots.put(folder)
 
     def one(case_dir, s, st, k=0):
         if limited.is_set():
             return "skipped"
         if stopped.is_set():
             return "not launched"
-        slot = slots.get()
         try:
-            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k, slot=slot)
+            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k)
         except CLIChanged as e:
             changed.append((e.old, e.new))
             stopped.set()
-        finally:
-            slots.put(slot)
         return "ran"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
@@ -3928,7 +3839,6 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
                                "cost_error": f"not graded: {type(e).__name__}",
                                "results": [{"check": ["run"], "passed": False, "detail": f"{type(e).__name__}: {e}"}]})
             print(f"  finished {s['id']} on {st}{f' (repeat {k})' if k else ''}", flush=True)
-    release_slots(held)
     grades.sort(key=lambda g: (g["scenario"], g["seat"], g.get("repeat") or 0))
     return grades, (changed[0] if changed else None)
 

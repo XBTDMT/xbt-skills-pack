@@ -3137,7 +3137,7 @@ class Isolation(unittest.TestCase):
     def allowed(self, path, case):
         """A path a sealed case may name: under the sealed folder, the case folder or the pack a sealed link resolves into."""
         p = os.path.realpath(path)
-        roots = [self.config, case, evals.slot_dir(case)] + \
+        roots = [self.config, case] + \
                 [Path(os.path.realpath(l)).parent for l in (self.config / "skills").iterdir()]
         return any(p == os.path.realpath(r) or p.startswith(os.path.realpath(r) + os.sep) for r in roots)
 
@@ -3234,8 +3234,7 @@ class Isolation(unittest.TestCase):
     def test_without_allowed_tools_the_command_is_todays(self):
         plain = {"id": "p", "turns": ["SMALL", "SMALL"], "seats": ["fable"], "checks": []}
         cmds, rec, case = self.launches(plain)
-        slot = evals.slot_dir(case)                                                # the session's paths: the slot's (G-60 E)
-        proj, scratch = slot / "project", slot / "scratch"
+        proj, scratch = case / "project", case / "scratch"                         # the session's paths: the case folder's
         readable, sessions = evals.skill_dirs(self.config), evals.session_dirs(proj, self.config)
         self.assertEqual(len(cmds), 2)
         for n, cmd in enumerate(cmds):                                           # today's command, spelled out
@@ -3343,8 +3342,9 @@ class SkillChangedRunner(unittest.TestCase):
 
 
 class PromptPrefix(unittest.TestCase):
-    """G-60 E: every session sees the same slot paths, the fixture commit reads the same, the 1-hour cache TTL is set,
-    and the first request's cache figures are recorded and summed."""
+    """What a session's prompt prefix is made of: it runs in the case folder's project (the path the grader reads
+    afterwards), the fixture commit reads the same in every case, the 1-hour cache TTL is set, and the first request's
+    cache figures are recorded and summed."""
 
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
@@ -3384,71 +3384,49 @@ class PromptPrefix(unittest.TestCase):
         with mock.patch.object(evals.subprocess, "run", self.fake(seen)):
             return evals.run_case(case, scenario, "fable", SPEC["prompts"], self.config, str(self.tmp / "claude-bin"), version)
 
-    def test_two_prepared_sessions_see_identical_paths_and_the_cache_ttl(self):
+    def test_a_prepared_session_runs_in_the_case_project_with_the_cache_ttl(self):
         seen = []
-        out = self.tmp / "out"
-        for sid in ("one", "two"):
-            self.run_case(out / f"{sid}-fable", {"id": sid, "turns": ["SMALL"], "seats": ["fable"], "checks": []}, seen)
-        self.assertEqual(len(seen), 2)
-        a, b = seen
-        self.assertEqual(a["cmd"], b["cmd"])                                       # the whole command line, scratch path included
-        self.assertEqual(a["cwd"], b["cwd"])                                       # the working directory
-        self.assertEqual(a["cwd"], str(evals.slot_dir(out / "one-fable") / "project"))
-        self.assertTrue(a["cwd_exists"] and a["scratch_exists"])                   # both existed while the session ran
-        for s in (a, b):
-            self.assertEqual(s["env"]["CLAUDE_CODE_PROMPT_CACHE_TTL"], "1h")
-            self.assertEqual(s["env"]["TMPDIR"], str(evals.slot_dir(out / "one-fable") / "scratch"))
-            prompt = s["cmd"][s["cmd"].index("--append-system-prompt") + 1]
-            self.assertIn(str(evals.slot_dir(out / "one-fable") / "scratch"), prompt)
-            self.assertNotIn("one-fable", prompt)
-            self.assertNotIn("two-fable", prompt)
-        # the per-case env values still differ, outside the prompt
-        self.assertNotEqual(a["env"]["DOC_GUARDRAILS_STATE"], b["env"]["DOC_GUARDRAILS_STATE"])
-        # after each case its project, origin and scratch sit in the case folder, and the slot is empty
-        for sid in ("one", "two"):
-            case = out / f"{sid}-fable"
-            for name in evals.SLOT_PARTS:
-                self.assertTrue((case / name).is_dir(), name)
-            rec = json.loads((case / "record.json").read_text(encoding="utf-8"))
-            self.assertEqual(rec["env"]["slot"], str(evals.slot_dir(case)))
-            self.assertEqual(rec["env"]["prompt_cache_ttl"], "1h")
-            self.assertEqual(rec["first_request_cache"],
-                             {"cache_creation_input_tokens": 11000, "cache_read_input_tokens": 12000})
-        self.assertEqual(sorted(p.name for p in evals.slot_dir(out / "one-fable").iterdir()), [])
+        case = self.tmp / "out" / "one-fable"
+        self.run_case(case, {"id": "one", "turns": ["SMALL"], "seats": ["fable"], "checks": []}, seen)
+        self.assertEqual(len(seen), 1)
+        s = seen[0]
+        self.assertEqual(s["cwd"], str(case / "project"))                          # the path the grader reads (ctx["proj"])
+        self.assertTrue(s["cwd_exists"] and s["scratch_exists"])                   # both existed while the session ran
+        self.assertEqual(s["env"]["CLAUDE_CODE_PROMPT_CACHE_TTL"], "1h")
+        self.assertEqual(s["env"]["TMPDIR"], str(case / "scratch"))
+        self.assertIn(str(case / "scratch"), s["cmd"][s["cmd"].index("--append-system-prompt") + 1])
+        for name in ("project", "origin.git", "scratch"):
+            self.assertTrue((case / name).is_dir(), name)
+        rec = json.loads((case / "record.json").read_text(encoding="utf-8"))
+        self.assertNotIn("slot", rec["env"])
+        self.assertEqual(rec["env"]["prompt_cache_ttl"], "1h")
+        self.assertEqual(rec["first_request_cache"],
+                         {"cache_creation_input_tokens": 11000, "cache_read_input_tokens": 12000})
 
-    def test_a_case_that_stops_still_leaves_its_project_in_the_case_folder(self):
-        case = self.tmp / "out" / "x-fable"
-        with self.assertRaises(evals.CLIChanged):                                  # the version guard fires on turn 1
-            self.run_case(case, {"id": "x", "turns": ["SMALL"], "seats": ["fable"], "checks": []}, [], version="9.9.9")
-        self.assertTrue((case / "project" / "README.md").is_file())
-        self.assertTrue((case / "origin.git").is_dir())
-        self.assertFalse((evals.slot_dir(case) / "project").exists())
-        self.assertIn("not_completed", json.loads((case / "record.json").read_text(encoding="utf-8")))
+    def test_the_gate_heartbeat_of_a_session_commit_is_read_at_the_path_it_ran_in(self):
+        """2026-11-15: the gate's heartbeat stores the worktree path and keys its state folder on it, so a project
+        moved after the session lost `gate_ran`. The session's commit, made in the working directory it was launched
+        with, is graded where it was made."""
+        r = subprocess.run(["git", "hook", "list", "pre-commit"], capture_output=True, text=True)
+        if r.returncode == 129 or "unknown subcommand" in r.stderr:
+            self.skipTest("git <2.54 on PATH: config hooks unsupported")
+        case = self.tmp / "out" / "g-fable"
+        scenario = {"id": "g", "turns": ["SMALL"], "seats": ["fable"], "prep": "gate", "checks": [["gate_ran"]]}
+        seen, real = [], subprocess.run
+        answer = self.fake(seen)                                                   # built before the patch: it keeps the real run
 
-    def test_two_batches_at_once_never_share_a_slot(self):
-        """2026-11-15: a second batch launched while a first was running emptied the slots its sessions were working
-        in. A slot is held through an operating-system lock for the batch's life; a second claim takes other numbers,
-        and a released slot is the first one offered again."""
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d)
-            first = evals.claim_slots(root, 3)
-            second = evals.claim_slots(root, 2)
-            self.assertEqual([p.name for p, _ in first], ["0", "1", "2"])
-            self.assertEqual([p.name for p, _ in second], ["3", "4"])
-            self.assertFalse({p for p, _ in first} & {p for p, _ in second})
-            evals.release_slots(first)
-            third = evals.claim_slots(root, 1)
-            self.assertEqual([p.name for p, _ in third], ["0"])          # the same paths again, run after run
-            evals.release_slots(second); evals.release_slots(third)
-
-    def test_a_stale_slot_is_emptied_before_the_session(self):
-        case = self.tmp / "out" / "y-fable"
-        slot = evals.slot_dir(case)
-        (slot / "project").mkdir(parents=True)
-        (slot / "project" / "LEFTOVER.txt").write_text("from a crashed case\n", encoding="utf-8")
-        self.run_case(case, {"id": "y", "turns": ["SMALL"], "seats": ["fable"], "checks": []}, [])
-        self.assertFalse((case / "project" / "LEFTOVER.txt").exists())
-        self.assertTrue((case / "project" / "README.md").is_file())
+        def run(cmd, *a, **kw):
+            if cmd and str(cmd[0]).endswith("claude-bin") and cmd[1:] != ["--version"]:
+                cwd, env = Path(kw["cwd"]), dict(kw["env"], CLOSEOUT_PY=str(evals.pack_path("closeout/closeout.py")))
+                (cwd / "knowledge" / "02-spec-cli.md").write_text("# CLI spec\n", encoding="utf-8")
+                for args in (("add", "knowledge/02-spec-cli.md"), ("commit", "-qm", "spec")):   # the session's commit
+                    real(["git", "-C", str(cwd), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                         capture_output=True, text=True, env=env, check=True)
+            return answer(cmd, *a, **kw)
+        with mock.patch.object(evals.subprocess, "run", run):
+            evals.run_case(case, scenario, "fable", SPEC["prompts"], self.config, str(self.tmp / "claude-bin"), "2.1.281")
+        self.assertEqual(seen[0]["cwd"], str(case / "project"))
+        self.assertEqual(verdicts(case, ["gate_ran"], scenario=scenario), [True])
 
     def test_the_fixture_commit_has_a_fixed_author_and_date(self):
         fmt = "%H%n%an%n%ae%n%at%n%cn%n%ce%n%ct%n%s"
