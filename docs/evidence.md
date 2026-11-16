@@ -292,13 +292,13 @@ defect in 2 of 2 runs with the new rules and 0 of 4 without them", and gave the 
 message contained the literal `>=`, and the runs on the 13 September page wrote "greater-or-equal" with the same substance.
 The check was fixed to accept the change named in words or symbols together with its consequence, and every
 configuration was rescored; the figures on this page and in `doctrine-v2.svg` are the rescored ones. On the
-corrected scorer <!-- fig:doctrine.d2.registered -->77<!-- /fig --> of the <!-- fig:doctrine.d2.runs -->81<!-- /fig --> scored Review runs register that defect and <!-- fig:doctrine.d2.missed -->4<!-- /fig --> do not, with the page and
+corrected scorer <!-- fig:doctrine.d2.registered -->79<!-- /fig --> of the <!-- fig:doctrine.d2.runs -->83<!-- /fig --> scored Review runs register that defect and <!-- fig:doctrine.d2.missed -->4<!-- /fig --> do not, with the page and
 without it alike. Whether a review calls the change a defect in its own right or only an inconsistency between the three gates, the
-scorer does not measure; read from the answers (each reading kept with the answer's own words), <!-- fig:doctrine.d2.defect -->17<!-- /fig --> of the <!-- fig:doctrine.d2.runs -->81<!-- /fig -->
+scorer does not measure; read from the answers (each reading kept with the answer's own words), <!-- fig:doctrine.d2.defect -->17<!-- /fig --> of the <!-- fig:doctrine.d2.runs -->83<!-- /fig -->
 call it a defect: Opus 5.5 on a page written for it, <!-- fig:doctrine.d2.o55_page.defect -->12<!-- /fig --> of <!-- fig:doctrine.d2.o55_page.runs -->13<!-- /fig --> (the last unclear by its own count), and each
 naming the input where the old and new code disagree, a cache exactly 14 days old, which that page tells the model to
 do; Sonnet 5.5 on that page, <!-- fig:doctrine.d2.s55_o55_page.defect -->2<!-- /fig --> of <!-- fig:doctrine.d2.s55_o55_page.runs -->2<!-- /fig -->, and without a page, <!-- fig:doctrine.d2.s55_none.defect -->2<!-- /fig --> of <!-- fig:doctrine.d2.s55_none.runs -->4<!-- /fig -->; and Fable 5.1 without a page, <!-- fig:doctrine.d2.fable_none.defect -->1<!-- /fig --> of <!-- fig:doctrine.d2.fable_none.runs -->11<!-- /fig -->.
-The other <!-- fig:doctrine.d2.inconsistency -->63<!-- /fig --> call it an inconsistency or harmless, and none called it a defect before <!-- fig:doctrine.d2.first_defect -->22 September<!-- /fig -->.
+The other <!-- fig:doctrine.d2.inconsistency -->65<!-- /fig --> call it an inconsistency or harmless, and none called it a defect before <!-- fig:doctrine.d2.first_defect -->22 September<!-- /fig -->.
 
 ### Claude Opus 5.5, Sonnet 5.5, and every setup on the nine-task set
 
@@ -437,8 +437,13 @@ run's Wide audit as well), and the 7 October pages replaced them on 7 October. F
 full (no `cd` into the current folder, no `cd … &&` in front of a git command, no `~` and no shell variable in a path),
 because a non-interactive permission check refuses those and a refusal ends the task. The prediction registered for
 them was "within a point of their controls"; Fable's held it and Opus 5's, at <!-- fig:doctrine.held.gap.opus5_oct26 -->−3.1<!-- /fig -->, did not, though it held by the
-<!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule that decided the promotion. The four runs cost $58.39 against about $53 priced, the voided launch excluded. The pages that ship since 26 October are those two and Opus 5.5's
-7 October page; the
+<!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule that decided the promotion. The four runs cost $58.39 against about $53 priced, the voided launch excluded. The pages that shipped from 26 October were those two and Opus 5.5's
+7 October page; the Fable pages and Opus 5.5's have since been revised as the sections on Fable 5.2 and the harder
+set describe, and on 16 November Opus 5's 19 October page was replaced by its 14 November revision, which changes two
+things the other pages already carried: the pushback wording and the sentence that the report names every file a
+change touched. That revision was measured on the nine-task set, not this one, as a same-day pair on Opus 5 at high
+effort: 96 against 91 for the 19 October page ($36.17 against $38.19), one run each, the lead on the two tasks that
+move most between repeats, so it is read as no loss rather than a gain. The
 copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only where that plugin
 is installed. The Opus 5 page's copy also changes five more sentences: where the author's page records the author's own
 standing opt-in to agents, the copy reads "Installing this file is the opt-in to multi-agent work"; the sentence that
