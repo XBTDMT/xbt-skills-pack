@@ -74,7 +74,9 @@ def main(raw):
         return 0
     script = helper(os.path.dirname(os.path.realpath(__file__)))
     if script is None:
-        sys.stderr.write(NOT_FOUND)
+        # through say(), as bytes: a text-mode write turns the line's "\n" into "\r\n" on Windows, so the one line
+        # this hook prints itself would differ by platform (public CI run 44024678005, both Windows jobs)
+        say(NOT_FOUND.rstrip("\n").encode("utf-8"))
         return 0
     python = interpreter()
     if not python:
