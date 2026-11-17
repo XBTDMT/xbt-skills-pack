@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2521" width="470" height="1974.8" role="img" aria-labelledby="fznt fznd">
 <title id="fznt">The cheap end: the eighteen runs that cost under $30 for the nine tasks</title>
-<desc id="fznd">Bars of cost, cheapest first, for the 18 runs that cost under $30 for the nine tasks, each with its correctness. Sonnet 5.5 high, without a page: $5.19, 92. Sonnet 5.5 high, without a page, first pass: $5.88, 93. Sonnet 5.5 high, Opus 5 page, first pass: $6.87, 93. Sonnet 5.5 high, with a page: $8.38, 96. Opus 5.5 medium, without a page: $10.30, 93. Opus 5.5 medium, on the Opus 5 page: $11.03, 95. Opus 5.5 medium, with a page: $11.54, 96. Opus 5.5 high, on the Opus 5 page: $13.32, 96. Opus 5.5 high, with a page: $13.98, 98. Opus 5.5 high, without a page: $14.94, 95. Fable 5.1 low, without a page: $18.85, 90. Fable 5.1 low, with a page: $20.17, 98. Fable 5.2 low, without a page: $21.15, 96. Fable 5.1 medium, without a page: $21.25, 93. Fable 5.1 medium, with a page: $21.70, 97. Fable 5.2 low, with a page: $22.33, 95. Opus 5 high, without a page: $25.17, 92. Opus 5 high, with a page: $27.41, 97. Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise. One fresh session per task. How the pairs ran: Sonnet 5.5 high and max (both passes) ran without and with a page side by side, task by task (Sonnet 5.5 high and max, first pass, over 30 September and 5 October); Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium, Opus 5.5 medium, high and max and Fable 5.2 low on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 4.2: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 88.7 (on 5 October), 4.2 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page and the Opus 5 page of 15 September on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October, after a first pass without a page and on the Opus 5 page on 30 September and 5 October. Opus 5.5 high, repeated on its page: 96.4 (97.6 here); medium, run again on the revised 22 September page: 95.3, 2 agents. The pages that ship since 7 October were measured only on the held-out set.</desc>
+<desc id="fznd">Bars of cost, cheapest first, for the 18 runs that cost under $30 for the nine tasks, each with its correctness. Sonnet 5.5 high, without a page: $5.19, 92. Sonnet 5.5 high, without a page, first pass: $5.88, 93. Sonnet 5.5 high, Opus 5 page, first pass: $6.87, 93. Sonnet 5.5 high, with a page: $8.38, 98. Opus 5.5 medium, without a page: $10.30, 93. Opus 5.5 medium, on the Opus 5 page: $11.03, 95. Opus 5.5 medium, with a page: $11.54, 96. Opus 5.5 high, on the Opus 5 page: $13.32, 96. Opus 5.5 high, with a page: $13.98, 98. Opus 5.5 high, without a page: $14.94, 95. Fable 5.1 low, without a page: $18.85, 91. Fable 5.1 low, with a page: $20.17, 98. Fable 5.2 low, without a page: $21.15, 96. Fable 5.1 medium, without a page: $21.25, 93. Fable 5.1 medium, with a page: $21.70, 98. Fable 5.2 low, with a page: $22.33, 95. Opus 5 high, without a page: $25.17, 93. Opus 5 high, with a page: $27.41, 98. Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise. One fresh session per task. How the pairs ran: Sonnet 5.5 high and max (both passes) ran without and with a page side by side, task by task (Sonnet 5.5 high and max, first pass, over 30 September and 5 October); Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium, Opus 5.5 medium, high and max and Fable 5.2 low on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 3.1: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 89.8 (on 5 October), 3.1 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page and the Opus 5 page of 15 September on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October, after a first pass without a page and on the Opus 5 page on 30 September and 5 October. Opus 5.5 high, repeated on its page: 97.6 (97.6 here); medium, run again on the revised 22 September page: 95.3, 2 agents. The pages that ship since 7 October were measured only on the held-out set.</desc>
 <style>
 :root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
 @media (prefers-color-scheme: dark) {
@@ -32,7 +32,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <rect x="30" y="410.9" width="85.5" height="8" rx="2" style="fill:var(--s55)"/>
 <rect x="119.5" y="405.9" width="18.0" height="18.0" rx="2" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="cost" x="145.5" y="421.9">$6.87</text>
-<text class="num" x="570.0" y="467.9" text-anchor="end">96</text>
+<text class="num" x="570.0" y="467.9" text-anchor="end">98</text>
 <text class="name" x="30.0" y="467.9">Sonnet 5.5 high, with a page</text>
 <rect x="30" y="481.9" width="120.1" height="18" rx="2" style="fill:var(--s55)"/>
 <text class="cost" x="160.1" y="497.9">$8.38</text>
@@ -63,7 +63,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="name" x="30.0" y="954.9">Opus 5.5 high, without a page</text>
 <rect x="30" y="968.9" width="214.1" height="18" rx="2" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
 <text class="cost" x="254.1" y="984.9">$14.94</text>
-<text class="num" x="570.0" y="1030.9" text-anchor="end">90</text>
+<text class="num" x="570.0" y="1030.9" text-anchor="end">91</text>
 <text class="name" x="30.0" y="1030.9">Fable 5.1 low, without a page</text>
 <rect x="30" y="1044.9" width="270.2" height="18" rx="2" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
 <text class="cost" x="310.2" y="1060.9">$18.85</text>
@@ -79,7 +79,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="name" x="30.0" y="1258.9">Fable 5.1 medium, without a page</text>
 <rect x="30" y="1272.9" width="304.6" height="18" rx="2" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
 <text class="cost" x="344.6" y="1288.9">$21.25</text>
-<text class="num" x="570.0" y="1334.9" text-anchor="end">97</text>
+<text class="num" x="570.0" y="1334.9" text-anchor="end">98</text>
 <text class="name" x="30.0" y="1334.9">Fable 5.1 medium, with a page</text>
 <rect x="30" y="1348.9" width="311.0" height="18" rx="2" style="fill:var(--fable)"/>
 <text class="cost" x="351.0" y="1364.9">$21.70</text>
@@ -87,24 +87,24 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="name" x="30.0" y="1410.9">Fable 5.2 low, with a page</text>
 <rect x="30" y="1424.9" width="320.1" height="18" rx="2" style="fill:var(--fable)"/>
 <text class="cost" x="360.1" y="1440.9">$22.33</text>
-<text class="num" x="570.0" y="1486.9" text-anchor="end">92</text>
+<text class="num" x="570.0" y="1486.9" text-anchor="end">93</text>
 <text class="name" x="30.0" y="1486.9">Opus 5 high, without a page</text>
 <rect x="30" y="1500.9" width="360.8" height="18" rx="2" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
 <text class="cost" x="400.8" y="1516.9">$25.17</text>
-<text class="num" x="570.0" y="1562.9" text-anchor="end">97</text>
+<text class="num" x="570.0" y="1562.9" text-anchor="end">98</text>
 <text class="name" x="30.0" y="1562.9">Opus 5 high, with a page</text>
 <rect x="30" y="1576.9" width="392.9" height="18" rx="2" style="fill:var(--opus)"/>
 <text class="cost" x="432.9" y="1592.9">$27.41</text>
 <text class="axlabel" x="30.0" y="1668.9">without a page <tspan class="arw">→</tspan><tspan> with one</tspan></text>
 <text class="name" x="30.0" y="1714.9">Opus 5 high</text>
-<text class="num" x="570.0" y="1714.9" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 97 (+4.9)</tspan></text>
+<text class="num" x="570.0" y="1714.9" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 98 (+4.9)</tspan></text>
 <text class="delta" x="30.0" y="1744.9">better</text>
 <text class="name" x="30.0" y="1790.9">Fable 5.1 low</text>
-<text class="num" x="570.0" y="1790.9" text-anchor="end">90 <tspan class="arw">→</tspan><tspan> 98 (+8.2)</tspan></text>
+<text class="num" x="570.0" y="1790.9" text-anchor="end">91 <tspan class="arw">→</tspan><tspan> 98 (+7.1)</tspan></text>
 <text class="delta" x="30.0" y="1820.9">better</text>
 <text class="name" x="30.0" y="1866.9">Fable 5.1 medium</text>
-<text class="num" x="570.0" y="1866.9" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 97 (+3.5)</tspan></text>
-<text class="delta" x="30.0" y="1896.9">better, just past the 3-point rule</text>
+<text class="num" x="570.0" y="1866.9" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 98 (+4.6)</tspan></text>
+<text class="delta" x="30.0" y="1896.9">better</text>
 <text class="name" x="30.0" y="1942.9">Opus 5.5 medium</text>
 <text class="num" x="570.0" y="1942.9" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 96 (+3.2)</tspan></text>
 <text class="delta" x="30.0" y="1972.9">better, just past the 3-point rule</text>
@@ -112,8 +112,8 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="num" x="570.0" y="2018.9" text-anchor="end">95 <tspan class="arw">→</tspan><tspan> 98 (+3.0)</tspan></text>
 <text class="delta" x="30.0" y="2048.9">level within noise</text>
 <text class="name" x="30.0" y="2094.9">Sonnet 5.5 high</text>
-<text class="num" x="570.0" y="2094.9" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 96 (+3.4)</tspan></text>
-<text class="delta" x="30.0" y="2124.9">better, just past the 3-point rule</text>
+<text class="num" x="570.0" y="2094.9" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 98 (+5.6)</tspan></text>
+<text class="delta" x="30.0" y="2124.9">better</text>
 <text class="name" x="30.0" y="2170.9">Fable 5.2 low</text>
 <text class="num" x="570.0" y="2170.9" text-anchor="end">96 <tspan class="arw">→</tspan><tspan> 95 (−1.1)</tspan></text>
 <text class="delta" x="30.0" y="2200.9">level within noise</text>

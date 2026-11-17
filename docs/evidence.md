@@ -15,8 +15,8 @@ Two different things are measured, and they are not the same claim:
    set of eight tasks no page was written from, where the 29 September, 7 October and 19 October page revisions were each measured
    against the page they replaced, Opus 5.5 medium ran the 29 September page with no control run, and Sonnet 5.5 ran
    with the Opus 5.5 page and without one. Answer: on the nine-task set the page scored better than running without one on some configurations, better by just past
-   the noise rule on others, and level within noise on the rest; <!-- fig:doctrine.nine.pairs_lower -->5<!-- /fig --> of the <!-- fig:doctrine.nine.pairs -->17<!-- /fig --> pairs went the wrong way, all within
-   noise, the largest Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->. The verdicts per configuration are below. On the held-out set every page scored level within noise of the page it was
+   the noise rule on others, and level within noise on the rest; <!-- fig:doctrine.nine.pairs_lower -->5<!-- /fig --> of the <!-- fig:doctrine.nine.pairs -->17<!-- /fig --> pairs went the wrong way, four within
+   noise and one past it: Opus 5.5 at max on the page written for Opus 5, <!-- fig:doctrine.gap.ZD_Z -->−3.6<!-- /fig --> (<!-- fig:doctrine.verdict.ZD_Z -->worse, just past the 3-point rule<!-- /fig -->). The verdicts per configuration are below. On the held-out set every page scored level within noise of the page it was
    set against by the judge's scores (by the script alone Opus 5's 19 October page is <!-- fig:doctrine.held.script_gap.opus5_oct26 -->−5.7<!-- /fig -->, just past the rule),
    and cost is what separates the setups most, until 13 November 2026: a Fable 5.2 page tuned from that set's one
    shared miss scored <!-- fig:doctrine.HF2PT.score -->100<!-- /fig --> against <!-- fig:doctrine.HF2P2.score -->95<!-- /fig --> for the page it replaced, the first run to pass
@@ -242,24 +242,36 @@ files found, what reached git); its checks on diff size and on how the work was 
 the correctness figure, and no judge enters it. A model judge scored only the shape of the prose, in separate samples
 (the Sonnet 5 one below).
 
+One scoring rule changed on 16 November 2026, and every nine-task figure on this page and its charts is the rescored
+one. Until then the Review task was scored as defects found, less half a point for each of the two red herrings a review
+flagged as a defect, and the flag was decided by matching words near the herring. That match charged reviews that
+wrote "two changes are not defects" and missed others, so every scored review was read by hand, twice, by readers who
+could not see each other's verdicts. On the docstring herring the two readings agree for all 87 reviews. On the other,
+a call that behaves the same on macOS and differs only on Windows, they agree for 36 of 87: most reviews number it
+among their defects and say in the same passage that nothing changes on the Mac the project runs on, so no reading
+settles which they meant. A charge that two careful readers apply differently more often than not measures the reader,
+so it was removed: Review is now scored as defects found of five. 27 runs rose, most by one point, and none fell; the
+count of herrings flagged, which the skills comparison below used to show as a row, is no longer shown.
+
 Correctness, nine tasks weighted equally, 0–100, as recorded by the author's harness:
 
 | Model and effort | With a page | Without a page | Difference | Gap of the unrounded means, and its verdict |
 |---|---|---|---|---|
-| Claude Opus 5, high | 97 | 92 | +5 | <!-- fig:doctrine.gap.G_H -->+4.9<!-- /fig -->: <!-- fig:doctrine.verdict.G_H -->better<!-- /fig --> |
-| Claude Fable 5.1, low | 98 | 90 | +8 | <!-- fig:doctrine.gap.I_J -->+8.2<!-- /fig -->: <!-- fig:doctrine.verdict.I_J -->better<!-- /fig --> |
-| Claude Fable 5.1, medium | 97 | 93 | +4 | <!-- fig:doctrine.gap.M_N -->+3.5<!-- /fig -->: <!-- fig:doctrine.verdict.M_N -->better, just past the 3-point rule<!-- /fig --> |
+| Claude Opus 5, high | 98 | 93 | +5 | <!-- fig:doctrine.gap.G_H -->+4.9<!-- /fig -->: <!-- fig:doctrine.verdict.G_H -->better<!-- /fig --> |
+| Claude Fable 5.1, low | 98 | 91 | +7 | <!-- fig:doctrine.gap.I_J -->+7.1<!-- /fig -->: <!-- fig:doctrine.verdict.I_J -->better<!-- /fig --> |
+| Claude Fable 5.1, medium | 98 | 93 | +5 | <!-- fig:doctrine.gap.M_N -->+4.6<!-- /fig -->: <!-- fig:doctrine.verdict.M_N -->better<!-- /fig --> |
 | Claude Opus 5, max | 94 | 91 | +3 | <!-- fig:doctrine.gap.K_L -->+3.1<!-- /fig -->: <!-- fig:doctrine.verdict.K_L -->better, just past the 3-point rule<!-- /fig --> |
-| Claude Sonnet 5, max | 87 | 90 | −3 | <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig --> |
+| Claude Sonnet 5, max | 89 | 90 | −1 | <!-- fig:doctrine.gap.T_S -->−0.6<!-- /fig -->: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig --> |
 
-(Figures as rescored on 22 September 2026, after the two scorer corrections that moved them: No-change's explanation check
-accepting plain English (14 September) and Review's check crediting the off-by-one in words as well as symbols
-(22 September). The earlier version of this table, 94/86, 94/91 and 92/91 on the Fable and Opus-max rows, was the
-pre-correction scoring.)
+(Figures as rescored on 16 November 2026, after the three scorer corrections that moved them: No-change's explanation check
+accepting plain English (14 September), Review's check crediting the off-by-one in words as well as symbols
+(22 September), and Review's red-herring charge removed (16 November, above). The earlier versions of this table were
+94/86, 94/91 and 92/91 on the Fable and Opus-max rows before the first two corrections, and 97/92, 98/90, 97/93 and
+87/90 on the Opus-high, Fable and Sonnet rows before the third.)
 
 Those five and every configuration measured since, each with a page and without one (one fresh session per task).
 Three setups ran twice; the chart shows one run of each, and every gap uses the run shown: Opus 5.5 high with a page
-<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> (<!-- fig:doctrine.QT2.exact -->96.4<!-- /fig --> later the same day), Sonnet 5.5 high and max without a page <!-- fig:doctrine.SNQB.exact -->92.4<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->88.7<!-- /fig --> (first
+<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> (<!-- fig:doctrine.QT2.exact -->97.6<!-- /fig --> later the same day), Sonnet 5.5 high and max without a page <!-- fig:doctrine.SNQB.exact -->92.4<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->89.8<!-- /fig --> (first
 passes <!-- fig:doctrine.SNQ.exact -->93.4<!-- /fig --> and <!-- fig:doctrine.SNZ.exact -->92.9<!-- /fig -->, on the correctness-and-cost chart). The setups run twice side by side are on the
 page-revisions chart:
 
@@ -272,17 +284,17 @@ the <!-- fig:doctrine.nine.rule -->3<!-- /fig -->-point rule".
 **The Sonnet 5 row is the one to read first.** In a smaller sample on 3 September (three of the tasks, two sessions
 each, a model judge scoring the prose 0 to 10 without being told the arm), the page improved how Sonnet 5 reported its work,
 <!-- fig:doctrine.sonnet_sample.prose_bare -->3.5<!-- /fig --> without it against <!-- fig:doctrine.sonnet_sample.prose_page -->6.7<!-- /fig --> with it; on the nine tasks its results
-went the wrong way (<!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig --> on the unrounded means: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig -->); it also flagged both decoys in Review as real defects, which Sonnet without a page did not.
+went the wrong way (<!-- fig:doctrine.gap.T_S -->−0.6<!-- /fig --> on the unrounded means: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig -->).
 That is why the doctrine is optional, off by default, and why the README says to read it before installing it.
 
 A later, smaller run compared the 13 September pages (byte copies of the pages committed on 3 September) with the
-14 September pages on four of the tasks, one session per task per page (`doctrine-v2.svg`), on 14 September: the engineer seat then (Fable 5.1, low) went from <!-- fig:doctrine.Y.exact -->86.4<!-- /fig --> to <!-- fig:doctrine.X.exact -->96.4<!-- /fig --> for
-<!-- fig:doctrine.Y.cost -->$6.46<!-- /fig --> → <!-- fig:doctrine.X.cost -->$6.51<!-- /fig -->, and the reviewer seat then (Opus 5, high) from <!-- fig:doctrine.W.exact -->96.4<!-- /fig --> to <!-- fig:doctrine.V.exact -->97.5<!-- /fig -->. Four-task means are not judged by the
-nine-task set's noise rule: one task is a quarter of the mean, and one check on Migrate moves it by 3.6 points, more
-than the reviewer's +1.1. All of the engineer's gain, +10.0, was on one Review run; its repeat scored 100.0 on both
-pages. A re-check on 15 September, on the 15 September pages, scored the engineer
-<!-- fig:doctrine.X3.exact -->96.4<!-- /fig --> again (<!-- fig:doctrine.X3.cost -->$6.23<!-- /fig -->) and the reviewer <!-- fig:doctrine.V3.exact -->100.0<!-- /fig --> against <!-- fig:doctrine.V.exact -->97.5<!-- /fig --> (<!-- fig:doctrine.V3.cost -->$8.55<!-- /fig -->): the reviewer's difference is one decoy in
-Review, flagged as a defect in the earlier run and not in the re-check. Both runs are scored by the corrected scorer, like the nine-task table above (see the correction below).
+14 September pages on four of the tasks, one session per task per page (`doctrine-v2.svg`), on 14 September: the engineer seat then (Fable 5.1, low) went from <!-- fig:doctrine.Y.exact -->91.4<!-- /fig --> to <!-- fig:doctrine.X.exact -->96.4<!-- /fig --> for
+<!-- fig:doctrine.Y.cost -->$6.46<!-- /fig --> → <!-- fig:doctrine.X.cost -->$6.51<!-- /fig -->, and the reviewer seat then (Opus 5, high) from <!-- fig:doctrine.W.exact -->96.4<!-- /fig --> to <!-- fig:doctrine.V.exact -->100.0<!-- /fig -->. Four-task means are not judged by the
+nine-task set's noise rule: one task is a quarter of the mean, and one check on Migrate moves it by 3.6 points, which
+is the whole of the reviewer's +3.6. All of the engineer's gain, +5.0, was on one Review run, which found four of the
+five planted defects on the older page; its repeat scored 100.0 on both pages. A re-check on 15 September, on the 15 September pages, scored the engineer
+<!-- fig:doctrine.X3.exact -->96.4<!-- /fig --> again (<!-- fig:doctrine.X3.cost -->$6.23<!-- /fig -->) and the reviewer <!-- fig:doctrine.V3.exact -->100.0<!-- /fig --> against <!-- fig:doctrine.V.exact -->100.0<!-- /fig --> (<!-- fig:doctrine.V3.cost -->$8.55<!-- /fig -->): no difference. (Before the 16 November
+rescoring the earlier run read 97.5, one decoy in Review having been charged to it.) Both runs are scored by the corrected scorer, like the nine-task table above (see the correction below).
 
 <a href="doctrine-v2.svg"><picture><source media="(max-width: 1279px)" srcset="doctrine-v2-narrow.svg"><img src="doctrine-v2.svg" alt="What the 14 September pages changed against the 13 September pages: four tasks, one session each"></picture></a>
 
@@ -313,17 +325,17 @@ and two more runs followed that night (below). The runs without a page all misse
 |---|---|---|---|---|
 | medium (its default) | 93 | 95 | 96 | $10.30 / $11.03 / $11.54 |
 | high | 95 | 96 | 98 | $14.94 / $13.32 / $13.98 |
-| max | 92 | 90 | 96 | $47.28 / $87.80 / $51.86 |
+| max | 93 | 90 | 96 | $47.28 / $87.80 / $51.86 |
 
 Without a page Opus 5.5 lands where Opus 5 did and reaches 40 of 50 files on Wide audit without spawning anything. On the
 unrounded means the Opus 5 page against running without a page is <!-- fig:doctrine.verdict.PD_P -->level within noise<!-- /fig --> at medium (<!-- fig:doctrine.gap.PD_P -->+1.7<!-- /fig -->), <!-- fig:doctrine.verdict.QD_Q -->level within noise<!-- /fig --> at
-high (<!-- fig:doctrine.gap.QD_Q -->+0.9<!-- /fig -->) and <!-- fig:doctrine.verdict.ZD_Z -->level within noise<!-- /fig --> at max (<!-- fig:doctrine.gap.ZD_Z -->−2.5<!-- /fig -->), and at max its delegation rule fires (<!-- fig:doctrine.ZD.agents -->17<!-- /fig --> agents, <!-- fig:doctrine.ZD.t9_cost -->$58<!-- /fig --> on Wide audit alone)
+high (<!-- fig:doctrine.gap.QD_Q -->+0.9<!-- /fig -->) and <!-- fig:doctrine.verdict.ZD_Z -->worse, just past the 3-point rule<!-- /fig --> at max (<!-- fig:doctrine.gap.ZD_Z -->−3.6<!-- /fig -->), and at max its delegation rule fires (<!-- fig:doctrine.ZD.agents -->17<!-- /fig --> agents, <!-- fig:doctrine.ZD.t9_cost -->$58<!-- /fig --> on Wide audit alone)
 and costs <!-- fig:doctrine.ratio.ZD_Z.cost -->1.9<!-- /fig --> times as much as running without a page. The page written for 5.5, with no agents, is <!-- fig:doctrine.verdict.PT_P -->better, just past the 3-point rule<!-- /fig --> at medium
-(<!-- fig:doctrine.gap.PT_P -->+3.2<!-- /fig -->), <!-- fig:doctrine.verdict.QT_Q -->level within noise<!-- /fig --> at high (<!-- fig:doctrine.gap.QT_Q -->+3.0<!-- /fig -->) and <!-- fig:doctrine.verdict.ZT_Z -->better, just past the 3-point rule<!-- /fig --> at max (<!-- fig:doctrine.gap.ZT_Z -->+3.3<!-- /fig -->). Two more runs followed that night. High, repeated on the
-same page, scored <!-- fig:doctrine.QT2.exact -->96.4<!-- /fig --> (<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> the first time). Medium was run again on the revised 22 September page (it adds a
+(<!-- fig:doctrine.gap.PT_P -->+3.2<!-- /fig -->), <!-- fig:doctrine.verdict.QT_Q -->level within noise<!-- /fig --> at high (<!-- fig:doctrine.gap.QT_Q -->+3.0<!-- /fig -->) and <!-- fig:doctrine.verdict.ZT_Z -->level within noise<!-- /fig --> at max (<!-- fig:doctrine.gap.ZT_Z -->+2.2<!-- /fig -->). Two more runs followed that night. High, repeated on the
+same page, scored <!-- fig:doctrine.QT2.exact -->97.6<!-- /fig --> (<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> the first time). Medium was run again on the revised 22 September page (it adds a
 run-where-you-are rule), scored <!-- fig:doctrine.PT2.exact -->95.3<!-- /fig --> and spawned <!-- fig:doctrine.PT2.agents -->2<!-- /fig --> agents on Wide audit: a run of a different page, not a
 repeat. Without a page and on the 22 September page, effort barely matters on this model: the three efforts' scores
-lie within <!-- fig:doctrine.effort.opus55_bare_spread -->2.3<!-- /fig --> points of each other without a page and <!-- fig:doctrine.effort.opus55_o55_page_spread -->2.0<!-- /fig --> on that page, inside the
+lie within <!-- fig:doctrine.effort.opus55_bare_spread -->1.6<!-- /fig --> points of each other without a page and <!-- fig:doctrine.effort.opus55_o55_page_spread -->2.0<!-- /fig --> on that page, inside the
 <!-- fig:doctrine.nine.rule -->3<!-- /fig -->-point rule. On the Opus 5 page it does: max scored <!-- fig:doctrine.ZD.exact -->89.8<!-- /fig --> against <!-- fig:doctrine.QD.exact -->95.5<!-- /fig --> at high
 (<!-- fig:doctrine.gap.ZD_QD -->−5.7<!-- /fig -->), at <!-- fig:doctrine.ratio.ZD_QD.cost -->6.6<!-- /fig --> times the cost. The page has been revised since; the copy in
 `doctrine/opus-5-5-layer.md`, which the gate injects for Opus 5.5, is its 7 October page, measured on the held-out set
@@ -334,13 +346,14 @@ Sonnet 5.5 has no page of its own: the loader gives it the Opus 5 page (`opus-la
 On <!-- fig:doctrine.when.sonnet55_opus5_page -->30 September and 5 October<!-- /fig --> it ran without a page and with that page: <!-- fig:doctrine.SNQ.score -->93<!-- /fig --> against <!-- fig:doctrine.SNQD.score -->93<!-- /fig --> at high effort
 (<!-- fig:doctrine.gap.SNQD_SNQ -->−0.7<!-- /fig -->: <!-- fig:doctrine.verdict.SNQD_SNQ -->level within noise<!-- /fig -->), <!-- fig:doctrine.SNZ.score -->93<!-- /fig --> against <!-- fig:doctrine.SNZD.score -->91<!-- /fig --> at max (<!-- fig:doctrine.gap.SNZD_SNZ -->−2.1<!-- /fig -->: <!-- fig:doctrine.verdict.SNZD_SNZ -->level within noise<!-- /fig -->), where
 the page's delegation rule spawned <!-- fig:doctrine.SNZD.agents -->9<!-- /fig --> agents. On <!-- fig:doctrine.when.sonnet55_opus55_page -->5 October<!-- /fig --> it ran without a page again and with the Opus 5.5
-page of 29 September, which the loader does not give it, side by side: <!-- fig:doctrine.SNQB.score -->92<!-- /fig --> without against <!-- fig:doctrine.SNQT.score -->96<!-- /fig --> at high
-(<!-- fig:doctrine.gap.SNQT_SNQB -->+3.4<!-- /fig -->: <!-- fig:doctrine.verdict.SNQT_SNQB -->better, just past the 3-point rule<!-- /fig -->), <!-- fig:doctrine.SNZB.score -->89<!-- /fig --> against <!-- fig:doctrine.SNZT.score -->97<!-- /fig --> at max (<!-- fig:doctrine.gap.SNZT_SNZB -->+8.0<!-- /fig -->: <!-- fig:doctrine.verdict.SNZT_SNZB -->better<!-- /fig -->). These two
+page of 29 September, which the loader does not give it, side by side: <!-- fig:doctrine.SNQB.score -->92<!-- /fig --> without against <!-- fig:doctrine.SNQT.score -->98<!-- /fig --> at high
+(<!-- fig:doctrine.gap.SNQT_SNQB -->+5.6<!-- /fig -->: <!-- fig:doctrine.verdict.SNQT_SNQB -->better<!-- /fig -->), <!-- fig:doctrine.SNZB.score -->90<!-- /fig --> against <!-- fig:doctrine.SNZT.score -->97<!-- /fig --> at max (<!-- fig:doctrine.gap.SNZT_SNZB -->+6.9<!-- /fig -->: <!-- fig:doctrine.verdict.SNZT_SNZB -->better<!-- /fig -->). These two
 pairs are Sonnet 5.5's on the measurements chart. A setup run again on another day, on the same page or none, moved by up
-to <!-- fig:doctrine.nine.cross_day -->4.2<!-- /fig --> points, more than any side-by-side repeat: Sonnet 5.5 max without a page scored <!-- fig:doctrine.SNZ.exact -->92.9<!-- /fig --> on
-<!-- fig:doctrine.when.SNZ -->30 September and 5 October<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->88.7<!-- /fig --> on <!-- fig:doctrine.when.SNZB -->5 October<!-- /fig -->. How each pair the charts draw ran: Sonnet 5.5 high and max, in both
+to <!-- fig:doctrine.nine.cross_day -->3.1<!-- /fig --> points, more than any side-by-side repeat: Sonnet 5.5 max without a page scored <!-- fig:doctrine.SNZ.exact -->92.9<!-- /fig --> on
+<!-- fig:doctrine.when.SNZ -->30 September and 5 October<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->89.8<!-- /fig --> on <!-- fig:doctrine.when.SNZB -->5 October<!-- /fig -->. How each pair the charts draw ran: Sonnet 5.5 high and max, in both
 passes, ran without and with a page side by side, task by task (the first pass over 30 September and 5 October), as
-did every pair of the page-revisions chart; Opus 5 max on the same day, at overlapping times (the run with a page
+did every pair of the page-revisions chart but Fable 5.2's two, each launched as two whole runs minutes apart, one
+after the other (one on 12 November, one back to back on the night of 12–13 November); Opus 5 max on the same day, at overlapping times (the run with a page
 started about five minutes after the run without one, while seven of that run's nine sessions were still going);
 Fable 5.1 low and medium and Opus 5.5 medium, high and max on the same day, one after the other; Opus 5 high without
 a page over <!-- fig:doctrine.when.H -->2–3 September<!-- /fig --> (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at
@@ -351,7 +364,7 @@ the Opus 5.5 page was <!-- fig:doctrine.held.gap.sonnet55_high -->±0.0<!-- /fig
 the <!-- fig:doctrine.held.rule -->5<!-- /fig -->-point rule, and short of the bar registered before those runs for keeping the page (at least one effort
 <!-- fig:doctrine.held.sonnet_bar -->3<!-- /fig --> points or more above running without a page, neither below it beyond noise), so Sonnet 5.5's seat runs without one.
 
-**Fable 5.2 low on this set, 12 and 13 November 2026.** Fable 5.2 low scored <!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, where Fable 5.1 low scored <!-- fig:doctrine.J.score -->90<!-- /fig --> and 5.1 medium <!-- fig:doctrine.N.score -->93<!-- /fig -->: bare, it is the stronger model, and it starts near this set's ceiling. On 12 November it ran the Fable 5.1 page copied under its own name, a page written from 5.1's misses: <!-- fig:doctrine.F2P.score -->95<!-- /fig --> (<!-- fig:doctrine.gap.F2P_F2B -->−1.1<!-- /fig -->, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->). That is the pair the measurements chart draws, and it reads below 5.1 low's <!-- fig:doctrine.I.score -->98<!-- /fig --> with a page for two reasons: the gap is inside the <!-- fig:doctrine.nine.rule -->3<!-- /fig -->-point rule (and 5.1's runs were in September, where runs on different days moved up to <!-- fig:doctrine.nine.cross_day -->4.2<!-- /fig --> points), and one task was a real miss of the copied page, whose scope rule kept the session out of a folder the project's notes protect, so a removed parameter stayed behind. The page tuned from that miss ran on 13 November against a same-day control on the copied page: <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against <!-- fig:doctrine.F2P2.score -->94<!-- /fig --> (<!-- fig:doctrine.gap.F2PT_F2P2 -->+2.4<!-- /fig -->, <!-- fig:doctrine.verdict.F2PT_F2P2 -->level within noise<!-- /fig --> on this set, with the fix showing on the task it was written for); that pair is on the page-revisions chart, and the same page's held-out result is in the next section. A page built for one model does not carry to the next; the nine-task set, written from 5.1's misses, cannot show a 5.2 page much, which is why the harder set below exists.
+**Fable 5.2 low on this set, 12 and 13 November 2026.** Fable 5.2 low scored <!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, where Fable 5.1 low scored <!-- fig:doctrine.J.score -->91<!-- /fig --> and 5.1 medium <!-- fig:doctrine.N.score -->93<!-- /fig -->: bare, it is the stronger model, and it starts near this set's ceiling. On 12 November it ran the Fable 5.1 page copied under its own name, a page written from 5.1's misses: <!-- fig:doctrine.F2P.score -->95<!-- /fig --> (<!-- fig:doctrine.gap.F2P_F2B -->−1.1<!-- /fig -->, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->). That is the pair the measurements chart draws, and it reads below 5.1 low's <!-- fig:doctrine.I.score -->98<!-- /fig --> with a page for two reasons: the gap is inside the <!-- fig:doctrine.nine.rule -->3<!-- /fig -->-point rule (and 5.1's runs were in September, where runs on different days moved up to <!-- fig:doctrine.nine.cross_day -->3.1<!-- /fig --> points), and one task was a real miss of the copied page, whose scope rule kept the session out of a folder the project's notes protect, so a removed parameter stayed behind. The page tuned from that miss ran just after midnight on 13 November, back to back with its control on the copied page, which finished minutes before midnight: <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against <!-- fig:doctrine.F2P2.score -->96<!-- /fig --> (<!-- fig:doctrine.gap.F2PT_F2P2 -->+1.3<!-- /fig -->, <!-- fig:doctrine.verdict.F2PT_F2P2 -->level within noise<!-- /fig --> on this set, with the fix showing on the task it was written for); that pair is on the page-revisions chart, and the same page's held-out result is in the next section. A page built for one model does not carry to the next; the nine-task set, written from 5.1's misses, cannot show a 5.2 page much, which is why the harder set below exists.
 
 Three charts. The correctness-and-cost chart draws one dot per run: <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs of <!-- fig:doctrine.nine.overview_setups -->27<!-- /fig --> setups (Sonnet 5.5
 ran without a page twice at each effort), Fable, Opus 5 and Sonnet included; the second enlarges its cheap
@@ -407,8 +420,8 @@ fresh session per task: on the Fable 5.1 page (<!-- fig:doctrine.HF2C.score -->9
 earlier run had missed: after a change, the documents that repeat a count were left saying the old one. One page
 revision was written from that miss and from two the nine-task set showed the same day (a request parameter the
 platform had dropped kept as "deprecated and ignored"; a value in a folder the project's own notes protect left in
-place), each as one named paragraph; it was measured on the nine-task set against a same-day control first (97
-against 94, within that set's 3-point rule and with the fix showing on the task it was written for), then here on
+place), each as one named paragraph; it was measured on the nine-task set first, against a control run back to back with it (97
+against 96, within that set's 3-point rule and with the fix showing on the task it was written for), then here on
 13 November against the 12 November page, same day, same user: <!-- fig:doctrine.HF2PT.score -->100<!-- /fig --> against <!-- fig:doctrine.HF2P2.score -->95<!-- /fig -->,
 <!-- fig:doctrine.held.gap.fable52_tuned -->+5.2<!-- /fig --> (<!-- fig:doctrine.held.verdict.fable52_tuned -->better, just past the 5-point rule<!-- /fig -->), and the first run on this set to pass every
 check. The eight tasks cost <!-- fig:doctrine.held.cost.fable52_low -->$7.68–$10.56<!-- /fig --> on Fable 5.2 low (<!-- fig:doctrine.held.cost.fable51_nov12 -->$12.91<!-- /fig --> for the
@@ -442,7 +455,7 @@ them was "within a point of their controls"; Fable's held it and Opus 5's, at <!
 set describe, and on 16 November Opus 5's 19 October page was replaced by its 14 November revision, which changes two
 things the other pages already carried: the pushback wording and the sentence that the report names every file a
 change touched. That revision was measured on the nine-task set, not this one, as a same-day pair on Opus 5 at high
-effort: 96 against 91 for the 19 October page ($36.17 against $38.19), one run each, the lead on the two tasks that
+effort: 96 against 94 for the 19 October page ($36.17 against $38.19), one run each, the lead on the two tasks that
 move most between repeats, so it is read as no loss rather than a gain. The
 copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only where that plugin
 is installed. The Opus 5 page's copy also changes five more sentences: where the author's page records the author's own
@@ -511,16 +524,16 @@ each new model, planted on what that model actually gets wrong, and frozen befor
   on the Opus 5 page at each effort, three times (22 September, then twice side by side on <!-- fig:doctrine.when.opus5_page_repeats -->5 October<!-- /fig -->); Opus 5
   max and Sonnet 5 max on the Opus 5 page of 15 September, twice side by side (the page-revisions chart's repeats; their
   first runs, on 3 September, had the first Opus 5 page); Opus 5.5 high on the
-  22 September page, twice on 22 September (<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> and <!-- fig:doctrine.QT2.exact -->96.4<!-- /fig -->); Opus 5.5 medium on the revised 22 September page
+  22 September page, twice on 22 September (<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> and <!-- fig:doctrine.QT2.exact -->97.6<!-- /fig -->); Opus 5.5 medium on the revised 22 September page
   (<!-- fig:doctrine.PT2.exact -->95.3<!-- /fig --> on 22 September, <!-- fig:doctrine.PT3C.exact -->97.8<!-- /fig --> on <!-- fig:doctrine.when.PT3C -->30 September and 5 October<!-- /fig -->); Opus 5 high on the 15 September page
-  (<!-- fig:doctrine.V4C.exact -->95.1<!-- /fig --> on <!-- fig:doctrine.when.V4C -->29 September<!-- /fig -->, <!-- fig:doctrine.V5C.exact -->95.9<!-- /fig --> on <!-- fig:doctrine.when.V5C -->30 September<!-- /fig -->); and Sonnet 5.5 without a page at high and max. On the
+  (<!-- fig:doctrine.V4C.exact -->95.1<!-- /fig --> on <!-- fig:doctrine.when.V4C -->29 September<!-- /fig -->, <!-- fig:doctrine.V5C.exact -->97.0<!-- /fig --> on <!-- fig:doctrine.when.V5C -->30 September<!-- /fig -->); and Sonnet 5.5 without a page at high and max. On the
   held-out set: Sonnet 5.5 high with the page and without, twice each, the 29 September pages of Fable 5.1 low and
   Opus 5.5 high, once on each day; and Fable's 7 October page, on 7 October (<!-- fig:doctrine.HX5.score -->94<!-- /fig -->) and again as the control
   of <!-- fig:doctrine.when.oct26 -->23 and 25 October<!-- /fig --> (<!-- fig:doctrine.HX6C.score -->91<!-- /fig -->), under that run's other conditions, so not a repeat in the same
   environment. One task is a ninth of a run's score on the nine-task set (an eighth on the held-out set), so a single session that goes differently
   moves a run by several points: on the nine-task set the same setup run twice side by side moved by up to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig -->
-  points, and a setup run again on another day by up to <!-- fig:doctrine.nine.cross_day -->4.2<!-- /fig -->. A gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> points or less there is level within
-  noise, not a small win or loss (in the first table, Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->), and one under a point past it is only "just
+  points, and a setup run again on another day by up to <!-- fig:doctrine.nine.cross_day -->3.1<!-- /fig -->. A gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> points or less there is level within
+  noise, not a small win or loss (in the first table, Sonnet 5 max's <!-- fig:doctrine.gap.T_S -->−0.6<!-- /fig -->), and one under a point past it is only "just
   past the rule" (Opus 5 max's <!-- fig:doctrine.gap.K_L -->+3.1<!-- /fig -->); on the held-out set the rule, set before the run, is <!-- fig:doctrine.held.rule -->5<!-- /fig --> points.
 - It measured the **doctrine layer**, not the skills. Whether the skills were present depends on the run's date,
   never on a doctrine arm: the runs of <!-- fig:doctrine.when.first -->2–3 September<!-- /fig --> had none of them present; the runs of <!-- fig:doctrine.when.skills_present -->14–15 and 22 September<!-- /fig -->
@@ -549,7 +562,6 @@ one-turn probe: the session lists no skills). Counted per cell, not averaged.
 | Task | Skills absent (3 runs) | Skills present (3 runs) |
 |---|---|---|
 | Review: all five planted defects found | 3 of 3 | 2 of 3 |
-| Review: a red herring flagged as a defect | 1 of 3 | 1 of 3 |
 | Close-out: all nine checks | 3 of 3 | 3 of 3 |
 | Oracle migrate: trap found, fixed, verified | 3 of 3 | 3 of 3 |
 | Oracle migrate: the old model id left in the env example | 3 of 3 | 3 of 3 |
@@ -595,7 +607,6 @@ evening, under two hours earlier (launched 19:59–20:25 Pacific time, the invok
 | Task | Absent (3 runs) | Present, not invoked (3 runs) | Invoked (3 runs) |
 |---|---|---|---|
 | Review: all five planted defects found | 3 of 3 | 2 of 3 | 2 of 3 |
-| Review: a red herring flagged as a defect | 1 of 3 | 1 of 3 | 1 of 3 |
 | Close-out: all nine outcome checks | 3 of 3 | 3 of 3 | 3 of 3 |
 | Close-out: a handoff and an overview written, the pin re-derived | 0 of 3 | 0 of 3 | 3 of 3 |
 | Oracle migrate: trap found, fixed, verified | 3 of 3 | 3 of 3 | 3 of 3 |

@@ -59,21 +59,24 @@ answers of three held-out tasks were scored by a blind judge: an agent that read
 shuffled under labels, with the key from label to run held apart (one of those tasks' three checks, on the repository,
 stayed the script's). Once an answer's first line named its model and doctrine state; the judge set it aside, and
 later packets strip that line. And a smaller Sonnet 5 sample of 3 September, quoted below, had a model judge score the
-shape of its prose; no judge enters the nine-task correctness figures.
+shape of its prose; no judge enters the nine-task correctness figures. On 16 November 2026 one scoring rule on the
+nine-task set changed, and every figure here and on the charts is the rescored one: the Review task's charge for flagging
+a red herring was removed, because two independent readings of every review could not agree on it (27 runs rose, most
+by one point, none fell; [`docs/evidence.md`](docs/evidence.md) has the account).
 
 <a href="docs/measurements.svg"><picture><source media="(max-width: 1279px)" srcset="docs/measurements-narrow.svg"><img src="docs/measurements.svg" alt="Does a doctrine page help? Eleven configurations, nine tasks each, run with a page and without one"></picture></a>
 
-Fable 5.2 low's pair on this chart ran the Fable 5.1 page copied (<!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, <!-- fig:doctrine.F2P.score -->95<!-- /fig --> with it, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->); the page tuned for it scored <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against a same-day <!-- fig:doctrine.F2P2.score -->94<!-- /fig --> and is on the page-revisions chart. The pages were written from the misses on the nine-task set, so it is not held out. Its runs, Claude Opus 5.5 and Sonnet 5.5 included, are on the evidence page in three charts
+Fable 5.2 low's pair on this chart ran the Fable 5.1 page copied (<!-- fig:doctrine.F2B.score -->96<!-- /fig --> without a page, <!-- fig:doctrine.F2P.score -->95<!-- /fig --> with it, <!-- fig:doctrine.verdict.F2P_F2B -->level within noise<!-- /fig -->); the page tuned for it scored <!-- fig:doctrine.F2PT.score -->97<!-- /fig --> against <!-- fig:doctrine.F2P2.score -->96<!-- /fig --> for the copied page, run back to back with it that night, and is on the page-revisions chart. The pages were written from the misses on the nine-task set, so it is not held out. Its runs, Claude Opus 5.5 and Sonnet 5.5 included, are on the evidence page in three charts
 ([correctness and cost](docs/all-configurations-overview.svg), [the cheap end](docs/all-configurations-zoom.svg),
 [each page revision against the page it would replace](docs/all-configurations-revisions.svg)); the held-out set is
 [`docs/heldout.svg`](docs/heldout.svg). The skills control run, absent against present against invoked against
 typed, is one table in [`docs/control-run.svg`](docs/control-run.svg).
 
 Three setups on the measurements chart ran twice, and each gap there uses the run shown: Opus 5.5 high with a page
-<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> (<!-- fig:doctrine.QT2.exact -->96.4<!-- /fig --> later the same day), and Sonnet 5.5 high and max without a page <!-- fig:doctrine.SNQB.exact -->92.4<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->88.7<!-- /fig -->, from their
+<!-- fig:doctrine.QT.exact -->97.6<!-- /fig --> (<!-- fig:doctrine.QT2.exact -->97.6<!-- /fig --> later the same day), and Sonnet 5.5 high and max without a page <!-- fig:doctrine.SNQB.exact -->92.4<!-- /fig --> and <!-- fig:doctrine.SNZB.exact -->89.8<!-- /fig -->, from their
 second pass, of <!-- fig:doctrine.when.SNZB -->5 October<!-- /fig -->, run side by side with the Opus 5.5 page of 29 September (their first passes without a
-page, over <!-- fig:doctrine.when.SNZ -->30 September and 5 October<!-- /fig -->, scored <!-- fig:doctrine.SNQ.exact -->93.4<!-- /fig --> and <!-- fig:doctrine.SNZ.exact -->92.9<!-- /fig -->). So Sonnet 5.5 max's <!-- fig:doctrine.gap.SNZT_SNZB -->+8.0<!-- /fig --> is
-<!-- fig:doctrine.SNZB.score -->89<!-- /fig --> against <!-- fig:doctrine.SNZT.score -->97<!-- /fig --> in that second pass (<!-- fig:doctrine.verdict.SNZT_SNZB -->better<!-- /fig -->).
+page, over <!-- fig:doctrine.when.SNZ -->30 September and 5 October<!-- /fig -->, scored <!-- fig:doctrine.SNQ.exact -->93.4<!-- /fig --> and <!-- fig:doctrine.SNZ.exact -->92.9<!-- /fig -->). So Sonnet 5.5 max's <!-- fig:doctrine.gap.SNZT_SNZB -->+6.9<!-- /fig --> is
+<!-- fig:doctrine.SNZB.score -->90<!-- /fig --> against <!-- fig:doctrine.SNZT.score -->97<!-- /fig --> in that second pass (<!-- fig:doctrine.verdict.SNZT_SNZB -->better<!-- /fig -->).
 
 *Noted 28 September 2026: every Claude Opus 5.5 session of 22 September, without a page and with each page, had the plugins and skills
 synced from the author's claude.ai account present, 254 skills listed in all, 7 of them this pack's; the configurations
@@ -82,8 +85,8 @@ measured on <!-- fig:doctrine.when.first -->2–3 September<!-- /fig --> listed 
 
 The Sonnet 5 row is not a typo, and it is why the doctrine ships **off by default**: in a smaller sample the page
 improved how Sonnet 5 *reported* its work (a model judge scored the prose <!-- fig:doctrine.sonnet_sample.prose_bare -->3.5<!-- /fig --> of 10 without it and <!-- fig:doctrine.sonnet_sample.prose_page -->6.7<!-- /fig --> with
-it), while on the nine tasks its *results* went the wrong way, <!-- fig:doctrine.S.score -->90<!-- /fig --> without a page against <!-- fig:doctrine.T.score -->87<!-- /fig --> with it
-(<!-- fig:doctrine.gap.T_S -->−2.8<!-- /fig -->: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig -->). The Opus 5 max row is the other warning — the page's standing opt-in to agents let
+it), while on the nine tasks its *results* went the wrong way, <!-- fig:doctrine.S.score -->90<!-- /fig --> without a page against <!-- fig:doctrine.T.score -->89<!-- /fig --> with it
+(<!-- fig:doctrine.gap.T_S -->−0.6<!-- /fig -->: <!-- fig:doctrine.verdict.T_S -->level within noise<!-- /fig -->). The Opus 5 max row is the other warning — the page's standing opt-in to agents let
 Opus 5 at max effort spawn <!-- fig:doctrine.K.agents -->18<!-- /fig --> of them, and the bill went from <!-- fig:doctrine.L.cost -->$37<!-- /fig --> to <!-- fig:doctrine.K.cost -->$84<!-- /fig --> (<!-- fig:doctrine.ratio.K_L.cost -->2.3<!-- /fig --> times) for <!-- fig:doctrine.L.score -->91<!-- /fig --> → <!-- fig:doctrine.K.score -->94<!-- /fig -->
 (<!-- fig:doctrine.gap.K_L -->+3.1<!-- /fig -->: <!-- fig:doctrine.verdict.K_L -->better, just past the 3-point rule<!-- /fig -->). On the nine-task set the same setup run twice side by side moved by up
 to <!-- fig:doctrine.nine.repeat_spread -->2.7<!-- /fig --> points, so a gap of <!-- fig:doctrine.nine.rule -->3<!-- /fig --> or less there is level within noise; on the held-out set the rule, set before the
@@ -97,7 +100,7 @@ with the harder set's sentence added; since 16 November, the 14 November page fo
 Haiku (the 19 October page, which added one paragraph: write a path out in full, because a non-interactive permission
 check refuses a `cd` into the current folder, a `cd … &&` in front of a git command, a `~` or a shell variable, and a
 refusal ends the task; now with the pushback wording and the report sentence the other pages already carry; on the
-nine-task set on 16 November it scored 96 against 91 for the 19 October page the same day, one run each, read as no
+nine-task set on 16 November it scored 96 against 94 for the 19 October page the same day, one run each, read as no
 loss; measured on Opus 5 only) and the 7 October page for Claude Opus 5.5 (and for a
 model the loader cannot place); the copies in `doctrine/` add one clause to each, making superpowers' brainstorming rule apply only
 where that plugin is installed. The Opus 5 page's copy also changes five more sentences: its standing opt-in to agents

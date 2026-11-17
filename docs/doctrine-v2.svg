@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 891" width="1200" height="891" role="img" aria-labelledby="vt vd">
 <title id="vt">What the 14 September pages changed against the 13 September pages: four tasks, one session each</title>
-<desc id="vd">A scatter chart of correctness against cost on four tasks of the nine-task set, each seat's 13 September doctrine page (hollow) against its 14 September page (filled). Fable 5.1 low: the engineer seat on 14 September: 86.4 at $6.46 on the 13 September page, 96.4 at $6.51 on the 14 September page (+10.0). Opus 5 high: the reviewer seat on 14 September: 96.4 at $8.99 on the 13 September page, 97.5 at $8.72 on the 14 September page (+1.1). Hollow: the 13 September page of each seat (a byte copy of the page committed on 3 September); filled: the 14 September page. Fable 5.1 low moved +10.0, all of it on the Review task, whose repeat scored 100.0 on both pages; Opus 5 high moved +1.1, less than one check on the Migrate task is worth on a four-task mean (3.6 points). One session per task per page, run 14 September 2026. On four tasks one check moves the mean by several points (one check on the Migrate task by 3.6), so the nine-task set's 3-point rule does not apply here and a gap counts only once it repeats; the Review gap did not (corrected 22 September: the earlier claim rested on a scorer defect).</desc>
+<desc id="vd">A scatter chart of correctness against cost on four tasks of the nine-task set, each seat's 13 September doctrine page (hollow) against its 14 September page (filled). Fable 5.1 low: the engineer seat on 14 September: 91.4 at $6.46 on the 13 September page, 96.4 at $6.51 on the 14 September page (+5.0). Opus 5 high: the reviewer seat on 14 September: 96.4 at $8.99 on the 13 September page, 100.0 at $8.72 on the 14 September page (+3.6). Hollow: the 13 September page of each seat (a byte copy of the page committed on 3 September); filled: the 14 September page. Fable 5.1 low moved +5.0, all of it on the Review task, whose repeat scored 100.0 on both pages; Opus 5 high moved +3.6, less than one check on the Migrate task is worth on a four-task mean (3.6 points). One session per task per page, run 14 September 2026. On four tasks one check moves the mean by several points (one check on the Migrate task by 3.6), so the nine-task set's 3-point rule does not apply here and a gap counts only once it repeats; the Review gap did not (corrected 22 September: the earlier claim rested on a scorer defect).</desc>
 <style>
 :root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
 @media (prefers-color-scheme: dark) {
@@ -34,23 +34,23 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="tick" x="895.0" y="744.5" text-anchor="middle">$9</text>
 <text class="tick" x="1150.0" y="744.5" text-anchor="middle">$10</text>
 <text class="axlabel" x="1150.0" y="766.5" text-anchor="end">total cost of the four tasks at the metered rate</text>
-<!-- Fable 5.1 low: the engineer seat on 14 September: v1 86.4 @ $6.46 -> v2 96.4 @ $6.51 (Y -> X) -->
-<line class="casing" x1="247.3" y1="546.9" x2="260.0" y2="276.9" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="247.3,546.9,260.0,276.9" class="link cased" x1="247.3" y1="546.9" x2="260.0" y2="276.9" style="fill:none;stroke:var(--fable);stroke-width:2.0;stroke-opacity:0.8"/>
-<!-- Opus 5 high: the reviewer seat on 14 September: v1 96.4 @ $8.99 -> v2 97.5 @ $8.72 (W -> V) -->
-<line class="casing" x1="892.5" y1="276.9" x2="823.6" y2="248.0" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="892.5,276.9,823.6,248.0" class="link cased" x1="892.5" y1="276.9" x2="823.6" y2="248.0" style="fill:none;stroke:var(--opus);stroke-width:2.0;stroke-opacity:0.8"/>
-<circle class="casing" cx="247.3" cy="546.9" r="10.8" style="fill:var(--bg)"/><circle cx="247.3" cy="546.9" r="8.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<!-- Fable 5.1 low: the engineer seat on 14 September: v1 91.4 @ $6.46 -> v2 96.4 @ $6.51 (Y -> X) -->
+<line class="casing" x1="247.3" y1="411.9" x2="260.0" y2="276.9" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="247.3,411.9,260.0,276.9" class="link cased" x1="247.3" y1="411.9" x2="260.0" y2="276.9" style="fill:none;stroke:var(--fable);stroke-width:2.0;stroke-opacity:0.8"/>
+<!-- Opus 5 high: the reviewer seat on 14 September: v1 96.4 @ $8.99 -> v2 100.0 @ $8.72 (W -> V) -->
+<line class="casing" x1="892.5" y1="276.9" x2="823.6" y2="180.5" style="stroke:var(--bg);stroke-width:5.0"/><line data-line="892.5,276.9,823.6,180.5" class="link cased" x1="892.5" y1="276.9" x2="823.6" y2="180.5" style="fill:none;stroke:var(--opus);stroke-width:2.0;stroke-opacity:0.8"/>
+<circle class="casing" cx="247.3" cy="411.9" r="10.8" style="fill:var(--bg)"/><circle cx="247.3" cy="411.9" r="8.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
 <circle cx="260.0" cy="276.9" r="8.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
-<text class="name halo" x="278.0" y="281.9" style="fill:var(--fable)" data-of="247.3,546.9 260.0,276.9">Fable 5.1 low: the engineer seat on 14 September</text>
-<text class="delta halo" x="278.0" y="302.9">86.4 → 96.4 (+10.0)</text>
+<text class="name halo" x="278.0" y="281.9" style="fill:var(--fable)" data-of="247.3,411.9 260.0,276.9">Fable 5.1 low: the engineer seat on 14 September</text>
+<text class="delta halo" x="278.0" y="302.9">91.4 → 96.4 (+5.0)</text>
 <text class="delta halo" x="278.0" y="323.9">$6.46 → $6.51</text>
 <text class="delta halo" x="278.0" y="344.9">all of the gain on the Review task;</text>
 <text class="delta halo" x="278.0" y="365.9">its repeat the same evening scored 100.0 on both pages</text>
 <text class="delta halo" x="278.0" y="386.9">(corrected 22 September)</text>
 <circle class="casing" cx="892.5" cy="276.9" r="10.8" style="fill:var(--bg)"/><circle cx="892.5" cy="276.9" r="8.0" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
-<circle cx="823.6" cy="248.0" r="8.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
-<text class="name halo" x="857.6" y="312.0" text-anchor="middle" style="fill:var(--opus)" data-of="892.5,276.9 823.6,248.0">Opus 5 high: the reviewer seat on 14 September</text>
-<text class="delta halo" x="857.6" y="333.0" text-anchor="middle">96.4 → 97.5 (+1.1)</text>
-<text class="delta halo" x="857.6" y="354.0" text-anchor="middle">$8.99 → $8.72</text>
+<circle cx="823.6" cy="180.5" r="8.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<text class="name halo" x="805.6" y="185.5" text-anchor="end" style="fill:var(--opus)" data-of="892.5,276.9 823.6,180.5">Opus 5 high: the reviewer seat on 14 September</text>
+<text class="delta halo" x="805.6" y="206.5" text-anchor="end">96.4 → 100.0 (+3.6)</text>
+<text class="delta halo" x="805.6" y="227.5" text-anchor="end">$8.99 → $8.72</text>
 <line class="grid" x1="50" x2="1150" y1="780.5" y2="780.5"/>
 <circle class="casing" cx="62.5" cy="801.1" r="9.2" style="fill:var(--bg)"/><circle cx="62.5" cy="801.1" r="6.5" style="fill:var(--bg);stroke:var(--ink);stroke-width:2.5"/>
 <text class="legend" x="77.0" y="806.5">the 13 September page</text>
@@ -59,7 +59,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <circle cx="553.1" cy="801.1" r="6.5" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
 <text class="legend" x="567.6" y="806.5">Opus 5</text>
 <circle cx="661.3" cy="801.1" r="6.5" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
-<text class="legend" x="675.8" y="806.5">Fable 5.1</text>
+<text class="legend" x="675.8" y="806.5">Fable</text>
 <text class="note" x="50.0" y="838.5">On four tasks one check moves the mean by several points (one check on the Migrate task by 3.6), so the nine-task set's 3-point rule does not</text>
 <text class="note" x="50.0" y="861.3">apply here and a gap counts only once it repeats; the Review gap did not.</text>
 </svg>

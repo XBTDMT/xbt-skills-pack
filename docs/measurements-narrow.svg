@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2305" width="470" height="1805.6" role="img" aria-labelledby="mnt mnd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 2276" width="470" height="1782.9" role="img" aria-labelledby="mnt mnd">
 <title id="mnt">Does a doctrine page help? Eleven configurations, nine tasks each, run with a page and without one</title>
-<desc id="mnd">Rows, one per configuration, for 11 configurations on the nine-task set: each row places the run without a page (hollow dot) and with one (filled dot) on a correctness axis, and gives the gap, the verdict and the costs without and with the page. Opus 5 high: 92 at $25.17 without a page, 97 at $27.41 with one (+4.9, better). Opus 5 max: 91 at $36.99 without a page, 94 at $83.75 with one (+3.1, better, just past the 3-point rule, agents 0 → 18). Fable 5.1 low: 90 at $18.85 without a page, 98 at $20.17 with one (+8.2, better). Fable 5.1 medium: 93 at $21.25 without a page, 97 at $21.70 with one (+3.5, better, just past the 3-point rule). Sonnet 5 max: 90 at $32.75 without a page, 87 at $38.86 with one (−2.8, level within noise, agents 1 → 7). Opus 5.5 medium: 93 at $10.30 without a page, 96 at $11.54 with one (+3.2, better, just past the 3-point rule). Opus 5.5 high: 95 at $14.94 without a page, 98 at $13.98 with one (+3.0, level within noise). Opus 5.5 max: 92 at $47.28 without a page, 96 at $51.86 with one (+3.3, better, just past the 3-point rule). Sonnet 5.5 high: 92 at $5.19 without a page, 96 at $8.38 with one (+3.4, better, just past the 3-point rule). Sonnet 5.5 max: 89 at $31.78 without a page, 97 at $37.96 with one (+8.0, better). Fable 5.2 low: 96 at $21.15 without a page, 95 at $22.33 with one (−1.1, level within noise). Four setups ran twice; each gap uses the run shown: Opus 5.5 high with a page 97.6 (96.4 later the same day); Sonnet 5.5 high and max without a page 92.4 and 88.7 (first passes 93.4 and 92.9, on the correctness-and-cost chart); Fable 5.2 low with a page 95.0 (94.4 on 13 November). Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise; gaps come from the unrounded means. One fresh session per task. The setups run twice side by side are on the page-revisions chart. A gap over 3 and under 4 is just past the noise rule. How the pairs ran: Sonnet 5.5 high and max ran without and with a page side by side, task by task; Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium, Opus 5.5 medium, high and max and Fable 5.2 low on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 4.2: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 88.7 (on 5 October), 4.2 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October (its first pass, without a page and on the Opus 5 page, is on the correctness-and-cost chart). The pages that ship since 7 October were measured only on the held-out set. Correctness is the harness script's count inside each repo; no judge enters it.</desc>
+<desc id="mnd">Rows, one per configuration, for 11 configurations on the nine-task set: each row places the run without a page (hollow dot) and with one (filled dot) on a correctness axis, and gives the gap, the verdict and the costs without and with the page. Opus 5 high: 93 at $25.17 without a page, 98 at $27.41 with one (+4.9, better). Opus 5 max: 91 at $36.99 without a page, 94 at $83.75 with one (+3.1, better, just past the 3-point rule, agents 0 → 18). Fable 5.1 low: 91 at $18.85 without a page, 98 at $20.17 with one (+7.1, better). Fable 5.1 medium: 93 at $21.25 without a page, 98 at $21.70 with one (+4.6, better). Sonnet 5 max: 90 at $32.75 without a page, 89 at $38.86 with one (−0.6, level within noise, agents 1 → 7). Opus 5.5 medium: 93 at $10.30 without a page, 96 at $11.54 with one (+3.2, better, just past the 3-point rule). Opus 5.5 high: 95 at $14.94 without a page, 98 at $13.98 with one (+3.0, level within noise). Opus 5.5 max: 93 at $47.28 without a page, 96 at $51.86 with one (+2.2, level within noise). Sonnet 5.5 high: 92 at $5.19 without a page, 98 at $8.38 with one (+5.6, better). Sonnet 5.5 max: 90 at $31.78 without a page, 97 at $37.96 with one (+6.9, better). Fable 5.2 low: 96 at $21.15 without a page, 95 at $22.33 with one (−1.1, level within noise). Four setups ran twice; each gap uses the run shown: Opus 5.5 high and Fable 5.2 low with a page 97.6 and 95.0 (97.6 and 95.6 later the same day); Sonnet 5.5 high and max without a page 92.4 and 89.8 (first passes 93.4 and 92.9, on the correctness-and-cost chart). Noise: one setup run twice side by side moved by up to 2.7 points, so a gap of 3 points or less is level within noise; gaps come from the unrounded means. One fresh session per task. The setups run twice side by side are on the page-revisions chart. A gap over 3 and under 4 is just past the noise rule. How the pairs ran: Sonnet 5.5 high and max ran without and with a page side by side, task by task; Opus 5 max on the same day, at overlapping times; Fable 5.1 low and medium, Opus 5.5 medium, high and max and Fable 5.2 low on the same day, one after the other; Opus 5 high without a page over 2–3 September (Oracle migrate, No-change and Wide audit on 2 September, the other six on 3 September at overlapping times with the run with a page), with one on 3 September; Sonnet 5 max (2 September without a page, 3 September with one) on different days. Runs on different days moved up to 3.1: Sonnet 5.5 max without a page scored 92.9 (its tasks split between 30 September and 5 October) and 89.8 (on 5 October), 3.1 points apart. Pages: Opus 5, Fable 5.1 and Sonnet 5 (the last on the Opus 5 page) ran the first pages on 2–3 September 2026 (rescored on 22 September); Opus 5.5 ran its 22 September page on 22 September; Sonnet 5.5 ran the Opus 5.5 page of 29 September on 5 October (its first pass, without a page and on the Opus 5 page, is on the correctness-and-cost chart). The pages that ship since 7 October were measured only on the held-out set. Correctness is the harness script's count inside each repo; no judge enters it.</desc>
 <style>
 :root { --bg:#fbfaf7; --ink:#1d1d1f; --muted:#5c5c63; --line:#8e8b84; --grid:#e9e6df; --hi:#d2daf1; --opus:#1c6ce5; --o55:#4b1f86; --fable:#7c052c; --sonnet:#926411; --s55:#00665a; --gain:#0f5f8a; --loss:#a3360a; }
 @media (prefers-color-scheme: dark) {
@@ -12,7 +12,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 .h{font-size:26px;font-weight:700;letter-spacing:-0.2px;} .h2{font-size:23.5px;font-weight:700;} .sub{font-size:21.4px;font-weight:400;fill:var(--muted);} .name{font-size:22.5px;font-weight:650;} .delta{font-size:21.4px;font-weight:400;fill:var(--muted);} .note{font-size:21.4px;font-weight:400;fill:var(--muted);} .tick{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .axlabel{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .legend{font-size:21.4px;font-weight:400;} .num{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .cost{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;fill:var(--muted);} .grp{font-size:21.4px;font-weight:700;fill:var(--muted);letter-spacing:0.5px;text-transform:uppercase;} .seat{font-size:21.4px;font-weight:650;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .out{font-size:21.4px;font-weight:650;} .small{font-size:21.4px;font-weight:400;fill:var(--muted);} .th{font-size:22px;font-weight:650;} .thm{font-size:21.4px;font-weight:400;fill:var(--muted);} .td{font-size:21.4px;font-weight:400;} .tdn{font-size:21.4px;font-weight:400;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdg{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;} .tdl{font-size:21.4px;font-weight:700;font-family:ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", "Courier New", monospace;font-style:italic;} .arw{font-family:-apple-system, BlinkMacSystemFont, Helvetica, Arial, "Liberation Sans", sans-serif;}
 </style>
-<rect class="bg" x="0" y="0" width="600" height="2305" rx="14"/>
+<rect class="bg" x="0" y="0" width="600" height="2276" rx="14"/>
 <text class="h" x="30.0" y="44.0">Does a doctrine page help? Eleven</text>
 <text class="h" x="30.0" y="79.9">configurations, nine tasks each, run with a</text>
 <text class="h" x="30.0" y="115.8">page and without one</text>
@@ -23,7 +23,7 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="tick" x="429.0" y="195.8" text-anchor="middle">96</text>
 <text class="tick" x="558.0" y="195.8" text-anchor="middle">100</text>
 <text class="name" x="30.0" y="235.8">Opus 5 high</text>
-<text class="num" x="570.0" y="235.8" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 97 (+4.9)</tspan></text>
+<text class="num" x="570.0" y="235.8" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 98 (+4.9)</tspan></text>
 <text class="delta" x="30.0" y="265.8">better</text>
 <text class="delta" x="30.0" y="295.3">$25.17 → $27.41</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="318.1" y2="318.1"/>
@@ -32,9 +32,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="313.1" y2="323.1"/>
 <line class="grid" x1="429.0" x2="429.0" y1="313.1" y2="323.1"/>
 <line class="grid" x1="558.0" x2="558.0" y1="313.1" y2="323.1"/>
-<line class="casing" x1="307.2" y1="318.1" x2="464.8" y2="318.1" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="307.2" y1="318.1" x2="464.8" y2="318.1" style="fill:none;stroke:var(--opus);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="307.2" cy="318.1" r="13.8" style="fill:var(--bg)"/><circle cx="307.2" cy="318.1" r="11.0" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
-<circle cx="464.8" cy="318.1" r="11.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="343.0" y1="318.1" x2="500.7" y2="318.1" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="343.0" y1="318.1" x2="500.7" y2="318.1" style="fill:none;stroke:var(--opus);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="343.0" cy="318.1" r="13.8" style="fill:var(--bg)"/><circle cx="343.0" cy="318.1" r="11.0" data-pair="Opus5high-track" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
+<circle cx="500.7" cy="318.1" r="11.0" data-pair="Opus5high-track" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="373.1">Opus 5 max</text>
 <text class="num" x="570.0" y="373.1" text-anchor="end">91 <tspan class="arw">→</tspan><tspan> 94 (+3.1)</tspan></text>
 <text class="delta" x="30.0" y="403.1">better, just past the 3-point rule</text>
@@ -46,10 +46,10 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="429.0" x2="429.0" y1="450.4" y2="460.4"/>
 <line class="grid" x1="558.0" x2="558.0" y1="450.4" y2="460.4"/>
 <line class="casing" x1="266.3" y1="455.4" x2="365.6" y2="455.4" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="266.3" y1="455.4" x2="365.6" y2="455.4" style="fill:none;stroke:var(--opus);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="266.3" cy="455.4" r="13.8" style="fill:var(--bg)"/><circle cx="266.3" cy="455.4" r="11.0" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
-<circle cx="365.6" cy="455.4" r="11.0" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="266.3" cy="455.4" r="13.8" style="fill:var(--bg)"/><circle cx="266.3" cy="455.4" r="11.0" data-pair="Opus5max-track" style="fill:var(--bg);stroke:var(--opus);stroke-width:2.5"/>
+<circle cx="365.6" cy="455.4" r="11.0" data-pair="Opus5max-track" style="fill:var(--opus);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="510.3">Fable 5.1 low</text>
-<text class="num" x="570.0" y="510.3" text-anchor="end">90 <tspan class="arw">→</tspan><tspan> 98 (+8.2)</tspan></text>
+<text class="num" x="570.0" y="510.3" text-anchor="end">91 <tspan class="arw">→</tspan><tspan> 98 (+7.1)</tspan></text>
 <text class="delta" x="30.0" y="540.3">better</text>
 <text class="delta" x="30.0" y="569.8">$18.85 → $20.17</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="592.6" y2="592.6"/>
@@ -58,12 +58,12 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="587.6" y2="597.6"/>
 <line class="grid" x1="429.0" x2="429.0" y1="587.6" y2="597.6"/>
 <line class="grid" x1="558.0" x2="558.0" y1="587.6" y2="597.6"/>
-<line class="casing" x1="235.6" y1="592.6" x2="500.7" y2="592.6" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="235.6" y1="592.6" x2="500.7" y2="592.6" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="235.6" cy="592.6" r="13.8" style="fill:var(--bg)"/><circle cx="235.6" cy="592.6" r="11.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
-<circle cx="500.7" cy="592.6" r="11.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="271.4" y1="592.6" x2="500.7" y2="592.6" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="271.4" y1="592.6" x2="500.7" y2="592.6" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="271.4" cy="592.6" r="13.8" style="fill:var(--bg)"/><circle cx="271.4" cy="592.6" r="11.0" data-pair="Fable5.1low-track" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="500.7" cy="592.6" r="11.0" data-pair="Fable5.1low-track" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="647.6">Fable 5.1 medium</text>
-<text class="num" x="570.0" y="647.6" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 97 (+3.5)</tspan></text>
-<text class="delta" x="30.0" y="677.6">better, just past the 3-point rule</text>
+<text class="num" x="570.0" y="647.6" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 98 (+4.6)</tspan></text>
+<text class="delta" x="30.0" y="677.6">better</text>
 <text class="delta" x="30.0" y="707.1">$21.25 → $21.70</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="729.9" y2="729.9"/>
 <line class="grid" x1="42.0" x2="42.0" y1="724.9" y2="734.9"/>
@@ -71,11 +71,11 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="724.9" y2="734.9"/>
 <line class="grid" x1="429.0" x2="429.0" y1="724.9" y2="734.9"/>
 <line class="grid" x1="558.0" x2="558.0" y1="724.9" y2="734.9"/>
-<line class="casing" x1="337.0" y1="729.9" x2="450.5" y2="729.9" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="337.0" y1="729.9" x2="450.5" y2="729.9" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="337.0" cy="729.9" r="13.8" style="fill:var(--bg)"/><circle cx="337.0" cy="729.9" r="11.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
-<circle cx="450.5" cy="729.9" r="11.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="337.0" y1="729.9" x2="486.3" y2="729.9" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="337.0" y1="729.9" x2="486.3" y2="729.9" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="337.0" cy="729.9" r="13.8" style="fill:var(--bg)"/><circle cx="337.0" cy="729.9" r="11.0" data-pair="Fable5.1medium-track" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="486.3" cy="729.9" r="11.0" data-pair="Fable5.1medium-track" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="784.9">Sonnet 5 max</text>
-<text class="num" x="570.0" y="784.9" text-anchor="end">90 <tspan class="arw">→</tspan><tspan> 87 (−2.8)</tspan></text>
+<text class="num" x="570.0" y="784.9" text-anchor="end">90 <tspan class="arw">→</tspan><tspan> 89 (−0.6)</tspan></text>
 <text class="delta" x="30.0" y="814.9">level within noise</text>
 <text class="delta" x="30.0" y="844.4">$32.75 → $38.86, agents 1 → 7</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="867.2" y2="867.2"/>
@@ -84,9 +84,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="862.2" y2="872.2"/>
 <line class="grid" x1="429.0" x2="429.0" y1="862.2" y2="872.2"/>
 <line class="grid" x1="558.0" x2="558.0" y1="862.2" y2="872.2"/>
-<line class="casing" x1="225.5" y1="867.2" x2="135.3" y2="867.2" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="225.5" y1="867.2" x2="135.3" y2="867.2" style="fill:none;stroke:var(--sonnet);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="225.5" cy="867.2" r="13.8" style="fill:var(--bg)"/><circle cx="225.5" cy="867.2" r="11.0" style="fill:var(--bg);stroke:var(--sonnet);stroke-width:2.5"/>
-<circle cx="135.3" cy="867.2" r="11.0" style="fill:var(--sonnet);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="225.5" y1="867.2" x2="206.9" y2="867.2" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="225.5" y1="867.2" x2="206.9" y2="867.2" style="fill:none;stroke:var(--sonnet);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="225.5" cy="867.2" r="13.8" style="fill:var(--bg)"/><circle cx="225.5" cy="867.2" r="11.0" data-pair="Sonnet5max-track" style="fill:var(--bg);stroke:var(--sonnet);stroke-width:2.5"/>
+<circle cx="206.9" cy="867.2" r="11.0" data-pair="Sonnet5max-track" style="fill:var(--sonnet);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="922.1">Opus 5.5 medium</text>
 <text class="num" x="570.0" y="922.1" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 96 (+3.2)</tspan></text>
 <text class="delta" x="30.0" y="952.1">better, just past the 3-point rule</text>
@@ -98,8 +98,8 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="429.0" x2="429.0" y1="999.4" y2="1009.4"/>
 <line class="grid" x1="558.0" x2="558.0" y1="999.4" y2="1009.4"/>
 <line class="casing" x1="332.8" y1="1004.4" x2="435.1" y2="1004.4" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="332.8" y1="1004.4" x2="435.1" y2="1004.4" style="fill:none;stroke:var(--o55);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="332.8" cy="1004.4" r="13.8" style="fill:var(--bg)"/><circle cx="332.8" cy="1004.4" r="11.0" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
-<circle cx="435.1" cy="1004.4" r="11.0" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="332.8" cy="1004.4" r="13.8" style="fill:var(--bg)"/><circle cx="332.8" cy="1004.4" r="11.0" data-pair="Opus5.5medium-track" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="435.1" cy="1004.4" r="11.0" data-pair="Opus5.5medium-track" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="1059.4">Opus 5.5 high</text>
 <text class="num" x="570.0" y="1059.4" text-anchor="end">95 <tspan class="arw">→</tspan><tspan> 98 (+3.0)</tspan></text>
 <text class="delta" x="30.0" y="1089.4">level within noise</text>
@@ -111,11 +111,11 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="429.0" x2="429.0" y1="1136.7" y2="1146.7"/>
 <line class="grid" x1="558.0" x2="558.0" y1="1136.7" y2="1146.7"/>
 <line class="casing" x1="384.0" y1="1141.7" x2="479.2" y2="1141.7" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="384.0" y1="1141.7" x2="479.2" y2="1141.7" style="fill:none;stroke:var(--o55);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="384.0" cy="1141.7" r="13.8" style="fill:var(--bg)"/><circle cx="384.0" cy="1141.7" r="11.0" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
-<circle cx="479.2" cy="1141.7" r="11.0" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="384.0" cy="1141.7" r="13.8" style="fill:var(--bg)"/><circle cx="384.0" cy="1141.7" r="11.0" data-pair="Opus5.5high-track" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="479.2" cy="1141.7" r="11.0" data-pair="Opus5.5high-track" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="1196.6">Opus 5.5 max</text>
-<text class="num" x="570.0" y="1196.6" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 96 (+3.3)</tspan></text>
-<text class="delta" x="30.0" y="1226.6">better, just past the 3-point rule</text>
+<text class="num" x="570.0" y="1196.6" text-anchor="end">93 <tspan class="arw">→</tspan><tspan> 96 (+2.2)</tspan></text>
+<text class="delta" x="30.0" y="1226.6">level within noise</text>
 <text class="delta" x="30.0" y="1256.1">$47.28 → $51.86</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="1279.0" y2="1279.0"/>
 <line class="grid" x1="42.0" x2="42.0" y1="1274.0" y2="1284.0"/>
@@ -123,12 +123,12 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="1274.0" y2="1284.0"/>
 <line class="grid" x1="429.0" x2="429.0" y1="1274.0" y2="1284.0"/>
 <line class="grid" x1="558.0" x2="558.0" y1="1274.0" y2="1284.0"/>
-<line class="casing" x1="308.3" y1="1279.0" x2="413.6" y2="1279.0" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="308.3" y1="1279.0" x2="413.6" y2="1279.0" style="fill:none;stroke:var(--o55);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="308.3" cy="1279.0" r="13.8" style="fill:var(--bg)"/><circle cx="308.3" cy="1279.0" r="11.0" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
-<circle cx="413.6" cy="1279.0" r="11.0" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="344.1" y1="1279.0" x2="413.6" y2="1279.0" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="344.1" y1="1279.0" x2="413.6" y2="1279.0" style="fill:none;stroke:var(--o55);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="344.1" cy="1279.0" r="13.8" style="fill:var(--bg)"/><circle cx="344.1" cy="1279.0" r="11.0" data-pair="Opus5.5max-track" style="fill:var(--bg);stroke:var(--o55);stroke-width:2.5"/>
+<circle cx="413.6" cy="1279.0" r="11.0" data-pair="Opus5.5max-track" style="fill:var(--o55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="1333.9">Sonnet 5.5 high</text>
-<text class="num" x="570.0" y="1333.9" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 96 (+3.4)</tspan></text>
-<text class="delta" x="30.0" y="1363.9">better, just past the 3-point rule</text>
+<text class="num" x="570.0" y="1333.9" text-anchor="end">92 <tspan class="arw">→</tspan><tspan> 98 (+5.6)</tspan></text>
+<text class="delta" x="30.0" y="1363.9">better</text>
 <text class="delta" x="30.0" y="1393.4">$5.19 → $8.38</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="1416.2" y2="1416.2"/>
 <line class="grid" x1="42.0" x2="42.0" y1="1411.2" y2="1421.2"/>
@@ -136,11 +136,11 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="1411.2" y2="1421.2"/>
 <line class="grid" x1="429.0" x2="429.0" y1="1411.2" y2="1421.2"/>
 <line class="grid" x1="558.0" x2="558.0" y1="1411.2" y2="1421.2"/>
-<line class="casing" x1="311.5" y1="1416.2" x2="421.8" y2="1416.2" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="311.5" y1="1416.2" x2="421.8" y2="1416.2" style="fill:none;stroke:var(--s55);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="311.5" cy="1416.2" r="13.8" style="fill:var(--bg)"/><circle cx="311.5" cy="1416.2" r="11.0" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
-<circle cx="421.8" cy="1416.2" r="11.0" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="311.5" y1="1416.2" x2="493.5" y2="1416.2" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="311.5" y1="1416.2" x2="493.5" y2="1416.2" style="fill:none;stroke:var(--s55);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="311.5" cy="1416.2" r="13.8" style="fill:var(--bg)"/><circle cx="311.5" cy="1416.2" r="11.0" data-pair="Sonnet5.5high-track" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<circle cx="493.5" cy="1416.2" r="11.0" data-pair="Sonnet5.5high-track" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="1471.2">Sonnet 5.5 max</text>
-<text class="num" x="570.0" y="1471.2" text-anchor="end">89 <tspan class="arw">→</tspan><tspan> 97 (+8.0)</tspan></text>
+<text class="num" x="570.0" y="1471.2" text-anchor="end">90 <tspan class="arw">→</tspan><tspan> 97 (+6.9)</tspan></text>
 <text class="delta" x="30.0" y="1501.2">better</text>
 <text class="delta" x="30.0" y="1530.7">$31.78 → $37.96</text>
 <line class="grid track" x1="42.0" x2="558.0" y1="1553.5" y2="1553.5"/>
@@ -149,9 +149,9 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="300.0" x2="300.0" y1="1548.5" y2="1558.5"/>
 <line class="grid" x1="429.0" x2="429.0" y1="1548.5" y2="1558.5"/>
 <line class="grid" x1="558.0" x2="558.0" y1="1548.5" y2="1558.5"/>
-<line class="casing" x1="194.8" y1="1553.5" x2="453.7" y2="1553.5" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="194.8" y1="1553.5" x2="453.7" y2="1553.5" style="fill:none;stroke:var(--s55);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="194.8" cy="1553.5" r="13.8" style="fill:var(--bg)"/><circle cx="194.8" cy="1553.5" r="11.0" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
-<circle cx="453.7" cy="1553.5" r="11.0" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
+<line class="casing" x1="230.6" y1="1553.5" x2="453.7" y2="1553.5" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="230.6" y1="1553.5" x2="453.7" y2="1553.5" style="fill:none;stroke:var(--s55);stroke-width:3.5;stroke-opacity:0.8"/>
+<circle class="casing" cx="230.6" cy="1553.5" r="13.8" style="fill:var(--bg)"/><circle cx="230.6" cy="1553.5" r="11.0" data-pair="Sonnet5.5max-track" style="fill:var(--bg);stroke:var(--s55);stroke-width:2.5"/>
+<circle cx="453.7" cy="1553.5" r="11.0" data-pair="Sonnet5.5max-track" style="fill:var(--s55);stroke:var(--bg);stroke-width:1.5"/>
 <text class="name" x="30.0" y="1608.4">Fable 5.2 low</text>
 <text class="num" x="570.0" y="1608.4" text-anchor="end">96 <tspan class="arw">→</tspan><tspan> 95 (−1.1)</tspan></text>
 <text class="delta" x="30.0" y="1638.4">level within noise</text>
@@ -163,8 +163,8 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <line class="grid" x1="429.0" x2="429.0" y1="1685.8" y2="1695.8"/>
 <line class="grid" x1="558.0" x2="558.0" y1="1685.8" y2="1695.8"/>
 <line class="casing" x1="435.1" y1="1690.8" x2="398.3" y2="1690.8" style="stroke:var(--bg);stroke-width:6.5"/><line class="link cased" x1="435.1" y1="1690.8" x2="398.3" y2="1690.8" style="fill:none;stroke:var(--fable);stroke-width:3.5;stroke-opacity:0.8"/>
-<circle class="casing" cx="435.1" cy="1690.8" r="13.8" style="fill:var(--bg)"/><circle cx="435.1" cy="1690.8" r="11.0" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
-<circle cx="398.3" cy="1690.8" r="11.0" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
+<circle class="casing" cx="435.1" cy="1690.8" r="13.8" style="fill:var(--bg)"/><circle cx="435.1" cy="1690.8" r="11.0" data-pair="Fable5.2low-track" style="fill:var(--bg);stroke:var(--fable);stroke-width:2.5"/>
+<circle cx="398.3" cy="1690.8" r="11.0" data-pair="Fable5.2low-track" style="fill:var(--fable);stroke:var(--bg);stroke-width:1.5"/>
 <text class="tick" x="42.0" y="1731.7" text-anchor="middle">84</text>
 <text class="tick" x="171.0" y="1731.7" text-anchor="middle">88</text>
 <text class="tick" x="300.0" y="1731.7" text-anchor="middle">92</text>
@@ -190,12 +190,11 @@ text { font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, "Libera
 <text class="note" x="30.0" y="1977.2">verdict and the costs of the nine tasks at the metered</text>
 <text class="note" x="30.0" y="2006.7">rate (and agents, where a run spawned any). Four</text>
 <text class="note" x="30.0" y="2036.2">setups ran twice; each gap uses the run shown:</text>
-<text class="note" x="30.0" y="2065.7">Opus 5.5 high with a page 97.6 (96.4 later the same</text>
-<text class="note" x="30.0" y="2095.2">day); Sonnet 5.5 high and max without a page 92.4 and</text>
-<text class="note" x="30.0" y="2124.7">88.7 (first passes 93.4 and 92.9, on the</text>
-<text class="note" x="30.0" y="2154.2">correctness-and-cost chart); Fable 5.2 low with a page</text>
-<text class="note" x="30.0" y="2183.7">95.0 (94.4 on 13 November).</text>
-<text class="note" x="30.0" y="2216.2">Noise: one setup run twice side by side moved by up to</text>
-<text class="note" x="30.0" y="2245.7">2.7 points, so a gap of 3 points or less is level within</text>
-<text class="note" x="30.0" y="2275.2">noise; gaps come from the unrounded means.</text>
+<text class="note" x="30.0" y="2065.7">Opus 5.5 high and Fable 5.2 low with a page 97.6 and</text>
+<text class="note" x="30.0" y="2095.2">95.0 (97.6 and 95.6 later the same day); Sonnet 5.5 high</text>
+<text class="note" x="30.0" y="2124.7">and max without a page 92.4 and 89.8 (first passes 93.4</text>
+<text class="note" x="30.0" y="2154.2">and 92.9, on the correctness-and-cost chart).</text>
+<text class="note" x="30.0" y="2186.7">Noise: one setup run twice side by side moved by up to</text>
+<text class="note" x="30.0" y="2216.2">2.7 points, so a gap of 3 points or less is level within</text>
+<text class="note" x="30.0" y="2245.7">noise; gaps come from the unrounded means.</text>
 </svg>
