@@ -23,7 +23,11 @@ Two different things are measured, and they are not the same claim:
    every check, which is the set's ceiling. A harder set of sixteen tasks built the same day put Fable 5.2 and Opus 5.5
    level with and without a page (<!-- fig:doctrine.h3.score_range -->93–96<!-- /fig -->); the one miss it caught on both became one sentence, measured
    on its sealed half (<!-- fig:doctrine.h3.gap.fable52_seal -->+2.3<!-- /fig --> and <!-- fig:doctrine.h3.gap.opus55_seal -->+3.5<!-- /fig -->) and promoted. A set a model can no
-   longer fail measures nothing, so the sets are rebuilt for each new model (see the harder set, below).
+   longer fail measures nothing, so the sets are rebuilt for each new model (see the harder set, below). On a second
+   sealed set of eight tasks, built on 16 November and run twice per setup, Fable 5.2 low scored <!-- fig:doctrine.h4.mean.fable52_page -->97.3<!-- /fig --> with its
+   page against <!-- fig:doctrine.h4.mean.fable52_bare -->91.6<!-- /fig --> without one (<!-- fig:doctrine.h4.gap.fable52 -->+5.7<!-- /fig -->: <!-- fig:doctrine.h4.verdict.fable52 -->better, just past the 5-point rule<!-- /fig -->), the first result here
+   past the rule on tasks no page was written from and whose misses nobody has read; Opus 5.5 medium scored
+   <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> against <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig --> (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->).
 
 Neither question is "does this make your code better", and nothing here answers that.
 
@@ -510,13 +514,59 @@ and <!-- fig:doctrine.h3.gap.opus55_seal -->+3.5<!-- /fig -->; everything else t
 without. Read after the ruling, the sealed half also showed two misses every run made, page or not: a stale skip
 decorator left in place and "OK (skipped=1)" reported as a green suite, and an overnight time range that still broke
 a day grid; those are the next page's targets, but the sealed half has now been read, so measuring a fix for them
-needs a fresh sealed set. Two launch defects of the author's are in the record: the first eighteen prompts lacked
+needs a fresh sealed set (built on 16 November: the next section). Two launch defects of the author's are in the record: the first eighteen prompts lacked
 the save step and their answers were copied from the session transcripts, and the audit task's parser first counted
 the places a session had explicitly ruled out as false positives (18 per run) and was corrected for every run alike,
 both before any score was read as a result. The fixtures are small, the message checks are pattern matches that a
 tersely worded honest answer could trip, and each pair is one run per task. The general lesson is the one the
 section before it ends on: a set the newest model cannot fail has stopped measuring, so these sets are rebuilt for
 each new model, planted on what that model actually gets wrong, and frozen before the money is spent.
+
+### A second sealed set: eight tasks, each setup run twice (16–17 November 2026)
+
+The harder set's sealed half was read after its ruling, so it can no longer measure a page blind. On 16 November
+2026 a second sealed set replaced it: eight small, invented, standard library only Python projects, one for each of
+eight failure shapes from the same brief (a changed value left stale in one of its forms, a hidden coupling, a
+tempting shortcut, an honest account of what was verified, an audit at scale, a generated file, a project's own
+close-out rules against the instruction, a secret in an untracked file), two of them carrying, in new fixtures, the
+two shapes every run missed on the first sealed half (a stale skipped test, a time range that crosses midnight).
+Eight builders made one task each and never opened a doctrine page; four more agents under the same rule then
+reviewed the checks for fairness, each writing an independent correct solution and trying the message checks on
+honest and dishonest final messages. The hurried solutions score about 43 of 100 by the scorer's rule and the
+careful ones 100. The whole set is sealed, with no tuning half: its scorer prints and saves a task's pass count and
+score and the run's mean, never which check failed, and nobody, the author included, has read why any run lost
+points. It was committed before any paid run, and it is in the private source, like the other sets.
+
+Four setups ran on 16 and 17 November 2026, one fresh session per task: Fable 5.2 low with the page that ships for
+it and with no page, and Opus 5.5 medium with the page that ships for it and with no page. Each setup ran twice,
+hours apart, <!-- fig:doctrine.h4.runs -->8<!-- /fig --> runs for <!-- fig:doctrine.h4.cost_total -->$90.54<!-- /fig --> in all.
+
+| setup | first run | repeat | mean of the two | cost, first and repeat |
+|---|---|---|---|---|
+| Fable 5.2 low, its page | <!-- fig:doctrine.h4.4FP.exact -->98.2<!-- /fig --> | <!-- fig:doctrine.h4.4FPR.exact -->96.4<!-- /fig --> | <!-- fig:doctrine.h4.mean.fable52_page -->97.3<!-- /fig --> | <!-- fig:doctrine.h4.4FP.cost -->$16.90<!-- /fig -->, <!-- fig:doctrine.h4.4FPR.cost -->$16.90<!-- /fig --> |
+| Fable 5.2 low, no page | <!-- fig:doctrine.h4.4FB.exact -->93.3<!-- /fig --> | <!-- fig:doctrine.h4.4FBR.exact -->89.9<!-- /fig --> | <!-- fig:doctrine.h4.mean.fable52_bare -->91.6<!-- /fig --> | <!-- fig:doctrine.h4.4FB.cost -->$13.01<!-- /fig -->, <!-- fig:doctrine.h4.4FBR.cost -->$13.20<!-- /fig --> |
+| Opus 5.5 medium, its page | <!-- fig:doctrine.h4.4OP.exact -->94.3<!-- /fig --> | <!-- fig:doctrine.h4.4OPR.exact -->97.5<!-- /fig --> | <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> | <!-- fig:doctrine.h4.4OP.cost -->$7.80<!-- /fig -->, <!-- fig:doctrine.h4.4OPR.cost -->$7.99<!-- /fig --> |
+| Opus 5.5 medium, no page | <!-- fig:doctrine.h4.4OB.exact -->90.5<!-- /fig --> | <!-- fig:doctrine.h4.4OBR.exact -->93.0<!-- /fig --> | <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig --> | <!-- fig:doctrine.h4.4OB.cost -->$7.17<!-- /fig -->, <!-- fig:doctrine.h4.4OBR.cost -->$7.57<!-- /fig --> |
+
+How it is read was written down before the repeat ran: a setup's figure is the mean of its two runs; a page is
+better when that mean is more than <!-- fig:doctrine.h4.rule -->5<!-- /fig --> points above the mean without a page and each of its two runs is above
+both runs without one; and no verdict is drawn at all if two runs of one setup differ by more than <!-- fig:doctrine.h4.rule -->5<!-- /fig -->. The
+largest such difference was <!-- fig:doctrine.h4.spread_max -->3.5<!-- /fig -->, so the verdicts stand. Fable 5.2 low: <!-- fig:doctrine.h4.gap.fable52 -->+5.7<!-- /fig -->
+(<!-- fig:doctrine.h4.verdict.fable52 -->better, just past the 5-point rule<!-- /fig -->), with both page runs above both runs without a page. Opus 5.5 medium:
+<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig --> (<!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->); its two page runs are also above both runs without a page, but the
+mean gap is inside the rule. The page cost <!-- fig:doctrine.h4.ratio.fable52.cost -->1.29<!-- /fig --> times as much on Fable 5.2 and <!-- fig:doctrine.h4.ratio.opus55.cost -->1.07<!-- /fig --> times on Opus 5.5.
+
+What this does and does not show. It is the first result here where a page scored past the rule against no page on
+tasks no page was written from and whose misses nobody has read, and it is only just past it, on two runs per setup.
+On the first round alone both pairs were inside the rule; the rule for reading the two rounds together was set after
+that first round was scored and before the repeat ran, and the earlier rule had asked for the repeat on another day,
+which these hours-apart runs do not answer. The set has little room: the four runs without a page average
+<!-- fig:doctrine.h4.bare_mean -->91.7<!-- /fig -->, between the <!-- fig:doctrine.h4.headroom_met -->88<!-- /fig --> that would have met the headroom bar set beforehand and the <!-- fig:doctrine.h4.headroom_not_met -->93<!-- /fig --> that would
+have failed it (<!-- fig:doctrine.h4.headroom -->thin<!-- /fig -->), and the eight runs span <!-- fig:doctrine.h4.exact_range -->89.9–98.2<!-- /fig -->. The predictions registered beforehand
+were wrong on the runs without a page (both models scored above the predicted ranges on the first round) and on
+Fable's gap, predicted at 3 to 5 points. Because the set stays sealed, nothing here says which checks the page
+changed: that is the price of a set that can be used again. The message checks are heuristics tuned never to fail an
+honest message, so some dishonest phrasings pass. Nothing was promoted or changed on these runs.
 
 ### What the benchmark does not show
 

@@ -152,7 +152,10 @@ hallucination at the token level. The full method, every run, and what is still 
   model release rather than carried forward: harder tasks, planted on what the newest model actually gets wrong,
   frozen and committed before any paid run. The one miss the harder set still caught on both models, a final
   message that did not name every file the change touched, became one sentence on three pages, measured on the
-  sealed half and promoted the same day. Details in [`docs/evidence.md`](docs/evidence.md#a-held-out-set-eight-tasks-no-doctrine-page-was-written-from).
+  sealed half and promoted the same day. That sealed half was then read, so a second sealed set of eight tasks was
+  built on 16 November and each setup run twice: Fable 5.2 low scored <!-- fig:doctrine.h4.mean.fable52_page -->97.3<!-- /fig --> with its page against <!-- fig:doctrine.h4.mean.fable52_bare -->91.6<!-- /fig -->
+  without one (<!-- fig:doctrine.h4.gap.fable52 -->+5.7<!-- /fig -->: <!-- fig:doctrine.h4.verdict.fable52 -->better, just past the 5-point rule<!-- /fig -->), Opus 5.5 medium <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> against <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig -->
+  (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->); nobody has read why any run lost points, so the set can be used again. Details in [`docs/evidence.md`](docs/evidence.md#a-held-out-set-eight-tasks-no-doctrine-page-was-written-from).
 - **An eval for the close-out ceremony** — `/closeout` and `/project-update` are the two skills the graded suite
   does not yet cover end to end; a scenario for each is planned, then their long reference document is trimmed the
   way greenman's and redman's were.
