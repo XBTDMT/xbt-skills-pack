@@ -14,7 +14,7 @@ Free, GPL-3.0-or-later, no account, no telemetry, nothing to buy.
 git clone https://github.com/XBTDMT/xbt-skills-pack.git
 cd xbt-skills-pack
 python3 install.py --dry-run     # shows what would change
-python3 install.py               # the skills, plus the end-of-turn doc check
+python3 install.py               # the skills, plus the two doc checks
 ```
 
 ## What it is for, and what it is not for
@@ -187,7 +187,7 @@ hallucination at the token level. The full method, every run, and what is still 
 | `skills/greenman/` | Always on. At a real choice or a failed fix: routes that work differently, the shortcut test on each, the correct long-term route at a depth matched to the stakes, and a record in the project's decisions folder. `REFERENCE.md` holds the record formats. |
 | `skills/redman/` | `/redman` (manual only): a failed step answers what failed, why and the goal it served; side findings are sized, filed to the project's ledger and asked now-or-later. `/redman <path>` interrogates one document until nothing is undecided (`DEEP-RUN.md`). |
 | `skills/eli5/` | `/eli5`: every substantial answer ends with a fixed receipt (did, why, result, proof, files; redman, greenman; next, what it needs from you; the goal, then one sentence). |
-| `skills/doc-guardrails/` | Everything links to the roadmap. `LINKING.md` is the contract. Three layers: `turn_check.py` (end of every turn, for the documents that session wrote, named or committed; installed by default), `hook.sh` (right after each Write or Edit, optional, macOS and Linux) and a per-project commit gate `/closeout` registers, which catches the rest. Reports; never edits. |
+| `skills/doc-guardrails/` | Everything links to the roadmap. `LINKING.md` is the contract. Three layers: `turn_check.py` (end of every turn, for the documents that session wrote, named or committed; installed by default), `hook.py` (right after each Write or Edit; installed by default, Windows included) and a per-project commit gate `/closeout` registers, which catches the rest. Reports; never edits. |
 | `skills/closeout/` | `/closeout`: prove what closed, update every doc, carry findings and decisions into the plan, write the handoff and overview, audit, commit. Holds `UPDATING.md` (the steps both doc skills share) and `closeout.py` (the deterministic helper: `facts`, `memory`, `worklist`, `tree`, `stamp`, `audit`, `link-audit`, `install-gate`). |
 | `skills/project-update/` | `/project-update`: nothing has closed and work goes on; make every doc, figure, overview and memory entry match the project as it is now. |
 | `skills/axiom-macos/`, `skills/axiom-swiftui/` | Apple-platform references that switch on by themselves. Trimmed copies of [charleswiltgen/axiom](https://github.com/charleswiltgen/axiom) (MIT); each folder's `SOURCE.md` lists what was trimmed. `axiom-graphics`, which one `axiom-macos` page refers to, is not included. |
@@ -238,13 +238,16 @@ You need [Claude Code](https://claude.com/claude-code), Python 3.9 or newer, and
 git clone https://github.com/XBTDMT/xbt-skills-pack.git
 cd xbt-skills-pack
 python3 install.py --dry-run         # shows what would change
-python3 install.py                   # the skills, plus the end-of-turn doc check in settings.json
+python3 install.py                   # the skills, plus the two doc checks in settings.json
 ```
 
 What the installer registers in `settings.json`, each hook run through a short launcher that exits quietly if its
 script is gone:
 
-- `Stop`: `skills/doc-guardrails/turn_check.py`, the end-of-turn doc check (`--no-doc-check` leaves it out);
+- `Stop`: `skills/doc-guardrails/turn_check.py`, the end-of-turn doc check (`--no-doc-check` leaves out this hook
+  and the next);
+- `PostToolUse` (on `Write|Edit`): `skills/doc-guardrails/hook.py`, the per-write doc check: an unlinked document is
+  named the moment Claude writes or edits it;
 - `UserPromptSubmit`: `skills/eli5/skill_fresh.py`, which tells a running session, once per change, that a skill it
   loaded has changed on disk since, and which file to read again with the Read tool (`--no-skill-checks` leaves out
   this hook and the next two);
@@ -272,26 +275,16 @@ The installer is safe to run again. It prints every file it writes and backs up 
 you already have. It honours `CLAUDE_CONFIG_DIR` if you've set it: everywhere this README and the skills say
 `~/.claude/…`, read that folder instead.
 
-### The per-write hook (optional; macOS, or Linux with zsh)
+### The per-write hook
 
 The end-of-turn check catches every unlinked document the session wrote, named or committed; the commit gate catches
-the rest. If you also want the warning
-the moment Claude writes or edits a file, add this to `~/.claude/settings.json` (it is a zsh script, so not on
-Windows):
+the rest. The per-write hook adds the warning the moment Claude writes or edits a file. It is
+`skills/doc-guardrails/hook.py`, plain Python, so it runs on macOS, Linux and Windows, and the installer registers
+it with the end-of-turn check (`--no-doc-check` leaves both out).
 
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      { "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "$HOME/.claude/skills/doc-guardrails/hook.sh", "timeout": 15 }] }
-    ]
-  }
-}
-```
-
-That is the whole file if you have no `settings.json` yet (`--no-doc-check` leaves none); otherwise add the
-`"PostToolUse"` entry inside the `"hooks"` block you already have.
+Earlier versions shipped it as a zsh script, `hook.sh`, for you to add to `settings.json` by hand. `hook.sh` still
+ships and now runs `hook.py`, so an entry that names it keeps working; the installer replaces such an entry with the
+`hook.py` one, so a write is never reported twice.
 
 ### The commit gate (per project)
 
@@ -338,8 +331,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->564<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.90<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$36.84<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->580<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.79<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$36.84<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,

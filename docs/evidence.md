@@ -168,6 +168,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-15 | 10 (quick) | 0 / 10 | `failed_fork` on Fable; `large_stop` on Fable; `pushback_ruling` on Fable; `redman_eli5` on Fable; `redman_no_edit` on Fable; `redman_side_finding` on Fable; `shell_doc` on Fable; `shell_doc_eli5` on Fable; `skill_changed_midsession` on Fable; the Fable candidate page (fable-layer-2026-11-14, the one-operation paragraph) forced through DOCTRINE_LAYER: the layer check fails by design on a page that is not the live one; the behaviour checks passed in 9 of 10 (vendored_fork edited the fixture's CLAUDE.md); chained Bash calls 19 → 0 against the same cases on the live page |
 | 2026-11-15 | 19 (quick) | 17 / 19 | `gate_block` on Opus 5.5; `gate_block_own` on Opus 5.5 |
 | 2026-11-15 | 49 | **49 / 49** | — |
+| 2026-11-16 | 19 (quick) | **19 / 19** | — |
 
 plus 64 targeted runs (`--only`), 70/104 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -712,8 +713,8 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->564<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$9.90<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$36.84<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->580<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.79<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$36.84<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. A

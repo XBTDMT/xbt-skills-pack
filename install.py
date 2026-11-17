@@ -48,11 +48,12 @@ def shipped_skills(root=KIT):
 
 
 SKILLS = shipped_skills()
-# doc-guardrails checks documents in three layers. This installer registers the end-of-turn check,
-# skills/doc-guardrails/turn_check.py (a Stop hook in Python, so it runs on Windows too): it checks every linked-kind
-# document the session changed since its previous turn, however it was written. The per-write hook, hook.sh, is a zsh
-# script for macOS and Linux and is left for you to add by hand (README: "The per-write hook"). The third layer, the
-# commit gate, is added per project by /closeout.
+# doc-guardrails checks documents in three layers. This installer registers two of them, both in Python, so they run
+# on Windows too: the end-of-turn check, skills/doc-guardrails/turn_check.py (a Stop hook: every linked-kind document
+# the session changed since its previous turn, however it was written), and the per-write hook,
+# skills/doc-guardrails/hook.py (PostToolUse on Write|Edit: the one file just written, at once). An entry for
+# hook.sh, the per-write hook's older zsh entry point that earlier READMEs had you add by hand, is replaced by it.
+# The third layer, the commit gate, is added per project by /closeout.
 DOCTRINE_FILES = ("gate.py", "opus-layer.md", "opus-5-5-layer.md", "fable-layer.md", "fable-5-2-layer.md", "desktop-architect.md",
                   "SEATS.md", "brief.py", "key-rules.md")
 PROFILE_BEGIN = "# >>> xbt-skills-pack >>>"
@@ -170,9 +171,11 @@ class Installer:
 
     # ------------------------------------------------------------------------------------------------ settings
 
-    def settings(self, python_exe, doctrine=False, doc_check=True, skill_checks=True):
+    def settings(self, python_exe, doctrine=False, doc_check=True, skill_checks=True, write_check=None):
+        write_check = doc_check if write_check is None else write_check   # the two doc-guardrails hooks go together
         self.say("Settings: " + " and ".join(n for n, on in (("the doctrine hook", doctrine),
                                                               ("the doc-guardrails turn check", doc_check),
+                                                              ("the doc-guardrails hook on Write and Edit", write_check),
                                                               ("eli5's skill checks", skill_checks)) if on))
         path = self.dir / "settings.json"
         try:
@@ -182,7 +185,7 @@ class Installer:
             self.say(f"  STOP    {self.problems[-1]}")
             return
         merged = registered(data, python_exe, self.dir, doctrine=doctrine, doc_check=doc_check,
-                            skill_checks=skill_checks)
+                            skill_checks=skill_checks, write_check=write_check)
         if merged == data:
             self.say(f"  same    {path}")
             return
@@ -430,6 +433,30 @@ def merge_turn_check(settings, python_exe, script):
     return add_hook_group(without_hooks(settings, "Stop", is_turn_check_hook), "Stop", launched(python_exe, script, 30))
 
 
+WRITE_EVENT, WRITE_MATCHER = "PostToolUse", "Write|Edit"
+
+
+def is_write_hook(hook):
+    """True for the doc-guardrails per-write hook in either form: hook.py, or hook.sh (its older entry point, which
+    runs hook.py), in a folder named doc-guardrails. A hook.py or hook.sh of anyone else's is not ours."""
+    import re as _re
+    args = [str(a) for a in hook.get("args") or []]
+    if args[:1] == ["-c"]:
+        words = args[2:3]
+    else:
+        words = _re.findall(r'"[^"]*"|\'[^\']*\'|\S+', hook.get("command", "")) + args
+    return any(_re.split(r"[\\/]", w.strip("\"'"))[-2:] in (["doc-guardrails", "hook.py"], ["doc-guardrails", "hook.sh"])
+               for w in words)
+
+
+def merge_write_hook(settings, python_exe, script):
+    """Settings with exactly one doc-guardrails per-write hook, on PostToolUse for Write|Edit, in exec form through the
+    tolerant launcher (no shell, so it runs on Windows; a missing script never blocks). An entry for hook.sh, added by
+    hand from an earlier README, is replaced, so a write is never reported twice; every other PostToolUse hook is kept."""
+    return add_hook_group(without_hooks(settings, WRITE_EVENT, is_write_hook), WRITE_EVENT,
+                          launched(python_exe, script, 15), WRITE_MATCHER)
+
+
 def merge_script_hook(settings, event, python_exe, script, timeout, matcher=None):
     """Settings with exactly one entry on `event` that runs a script of this file name, through the tolerant launcher,
     in a group of its own (with the matcher, if one is given); every other hook on that event, and the same script on
@@ -439,17 +466,21 @@ def merge_script_hook(settings, event, python_exe, script, timeout, matcher=None
                           launched(python_exe, script, timeout), matcher)
 
 
-def registered(base, python_exe, claude_dir, doctrine=False, doc_check=True, skill_checks=True):
+def registered(base, python_exe, claude_dir, doctrine=False, doc_check=True, skill_checks=True, write_check=False):
     """`base` (a settings value) with the pack's hooks merged in, for the options given; reads and writes no file.
     Every script path is built under `claude_dir`, the Claude Code folder the entries will run from. The installer
     passes the user's settings and its own folder; the evals' sealed builder passes {} and the sealed folder, so the
-    hooks every user gets and the hooks the evals measure come from this one function."""
+    hooks every user gets and the hooks the evals measure come from this one function. `write_check` (the per-write
+    hook) is off unless asked for: the installer asks for it with the doc check; a caller that names its own
+    per-write entry (the evals' sealed manifest names hook.sh, which runs the same hook.py) leaves it off."""
     merged = json.loads(json.dumps(base))
     if doctrine:
         merged = merge_hook(merged, python_exe, str(Path(claude_dir) / "doctrine" / "gate.py"))
         merged = merge_brief_hook(merged, python_exe, str(Path(claude_dir) / "doctrine" / "brief.py"))
     if doc_check:
         merged = merge_turn_check(merged, python_exe, str(Path(claude_dir) / "skills" / "doc-guardrails" / "turn_check.py"))
+    if write_check:
+        merged = merge_write_hook(merged, python_exe, str(Path(claude_dir) / "skills" / "doc-guardrails" / "hook.py"))
     if skill_checks:
         # eli5's two hooks: a session running on skill text that changed on disk since it loaded it is told which file
         # to Read (on every prompt, and when it resumes); with eli5 on, a tool-using turn that ends without the receipt
@@ -515,7 +546,8 @@ def main(argv=None):
     ap.add_argument("--with-plugins", action="store_true", help="also install the plugins in plugins.json")
     ap.add_argument("--skip-plugins", action="store_true", help="do not install the plugins, whatever the defaults say")
     ap.add_argument("--no-doc-check", action="store_true",
-                    help="do not register the doc-guardrails end-of-turn check (a Stop hook in settings.json)")
+                    help="do not register the doc-guardrails end-of-turn check and per-write hook (a Stop and a "
+                         "PostToolUse hook in settings.json)")
     ap.add_argument("--no-skill-checks", action="store_true",
                     help="do not register eli5's skill freshness notice and live receipt check (hooks in settings.json)")
     ap.add_argument("--profile", help="PowerShell profile to add the cc command to, with the doctrine "
@@ -561,7 +593,7 @@ def main(argv=None):
         print("Doctrine\n  skipped (add --with-doctrine to install it)")
     if options["doctrine"] or options["doc_check"] or options["skill_checks"]:
         inst.settings(sys.executable, doctrine=options["doctrine"], doc_check=options["doc_check"],
-                      skill_checks=options["skill_checks"])
+                      skill_checks=options["skill_checks"], write_check=options["doc_check"])
     if options["plugins"]:
         inst.plugins(json.loads((KIT / "plugins.json").read_text(encoding="utf-8")))
     else:

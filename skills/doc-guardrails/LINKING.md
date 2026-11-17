@@ -218,7 +218,8 @@ and line (redman: `filed`, `asked · later`, `asked · now`, `open-for-user`, `r
 - This contract: `LINKING.md` in the doc-guardrails skill's folder, read by `/doc-guardrails`, `/closeout` and `/project-update`.
 - The always-on parts, three layers, all switched off by `guardrails: off` in the doc map (the
   on-demand `link-audit` and the close-out `audit` still report):
-  1. `doc-guardrails/hook.sh`, a PostToolUse hook on Write and Edit: the one file just written, at once.
+  1. `doc-guardrails/hook.py`, a PostToolUse hook on Write and Edit: the one file just written, at once. Plain
+     Python, so it runs on Windows too; `hook.sh` beside it is the older entry point and runs it.
   2. `doc-guardrails/turn_check.py`, a Stop hook: a changed document of a linked kind is this session's when the
      session is shown to have written, named or committed it this turn; nothing else is. Shown means written with its
      write tools, named in the input or output of one of its own tool calls (a shell command, a script it wrote, a

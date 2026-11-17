@@ -100,6 +100,9 @@ class InstallRun(unittest.TestCase):
             "Stop": [{"hooks": [install.launched(sys.executable, str(self.claude_dir / "skills" / "doc-guardrails" /
                                                                      "turn_check.py"), 30)]},
                      {"hooks": [install.launched(sys.executable, str(eli5 / "receipt_check.py"), 10)]}],
+            "PostToolUse": [{"matcher": "Write|Edit",
+                             "hooks": [install.launched(sys.executable, str(self.claude_dir / "skills" / "doc-guardrails" /
+                                                                            "hook.py"), 15)]}],
             "UserPromptSubmit": [{"hooks": [fresh]}], "SessionStart": [{"matcher": "resume", "hooks": [fresh]}]})
         self.assertFalse(self.profile.exists())
         self.assertEqual(self.calls(), [])
@@ -288,6 +291,58 @@ class InstallRun(unittest.TestCase):
         self.assertNotIn("PreToolUse", self.hooks())
         self.assertNotIn("SubagentStart", self.hooks())
         self.assertFalse(any(install.is_brief_hook(h) for gs in self.hooks().values() for g in gs for h in g["hooks"]))
+
+    def test_the_per_write_hook_is_registered_once_and_replaces_a_hand_added_hook_sh(self):
+        """Two installs over a settings file that carries the hand-added hook.sh entry of an earlier README and two
+        PostToolUse hooks of the user's own: one Write|Edit entry for hook.py through the tolerant launcher, timeout 15,
+        under the install's folder; the hook.sh entry gone (a write is never reported twice); the user's hooks kept."""
+        self.claude_dir.mkdir(parents=True)
+        by_hand = {"type": "command", "command": "$HOME/.claude/skills/doc-guardrails/hook.sh", "timeout": 15}
+        mine = {"type": "command", "command": "/usr/local/bin/format-on-write"}
+        other = {"type": "command", "command": "/x/another-tool/hook.sh"}          # a hook.sh that is not the pack's
+        (self.claude_dir / "settings.json").write_text(json.dumps({"hooks": {"PostToolUse": [
+            {"matcher": "Write|Edit", "hooks": [by_hand, mine]}, {"matcher": "Bash", "hooks": [other]}]}}), encoding="utf-8")
+        for _ in range(2):
+            code, out = self.install()
+            self.assertEqual(code, 0, out)
+        self.assertIn("the doc-guardrails hook on Write and Edit", out)
+        script = self.claude_dir / "skills" / "doc-guardrails" / "hook.py"
+        entry = install.launched(sys.executable, str(script), 15)
+        self.assertEqual(self.hooks()["PostToolUse"], [{"matcher": "Write|Edit", "hooks": [mine]},
+                                                       {"matcher": "Bash", "hooks": [other]},
+                                                       {"matcher": "Write|Edit", "hooks": [entry]}])
+        self.assertTrue(script.is_file())
+        self.assertTrue((script.parent / "hook.sh").is_file())                    # the older entry point still ships
+        # the entry as Claude Code runs it: an unlinked document is reported (exit 2), a linked one is silent
+        proj = self.root / "proj"
+        (proj / "knowledge").mkdir(parents=True)
+        (proj / "CLAUDE.md").write_text("# p\n\n## Doc map\nroadmap: knowledge/00-ROADMAP.md\n"
+                                        "id form: bullet tags `R-<n>`\nlinked kinds: knowledge/*.md\n"
+                                        "guardrails: report\n", encoding="utf-8")
+        (proj / "knowledge" / "00-ROADMAP.md").write_text("## Now\n- R-1 a thing\n", encoding="utf-8")
+        seen = {}
+        for name, text in (("02-spec.md", "# spec\n"), ("03-spec.md", "# spec\nroadmap: R-1\n")):
+            doc = proj / "knowledge" / name
+            doc.write_text(text, encoding="utf-8")
+            payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": str(doc)}}).encode("utf-8")
+            r = subprocess.run([entry["command"], *entry["args"]], input=payload, capture_output=True, timeout=60)
+            seen[name] = (r.returncode, r.stdout, b"02-spec.md" in r.stderr, r.stderr == b"")
+        self.assertEqual(seen, {"02-spec.md": (2, b"", True, False), "03-spec.md": (0, b"", False, True)})
+        # with its script gone the entry never blocks a write
+        script.unlink()
+        r = subprocess.run([entry["command"], *entry["args"]], input=payload, capture_output=True, timeout=60)
+        self.assertEqual((r.returncode, r.stdout), (0, b""))
+
+    def test_no_doc_check_leaves_the_per_write_hook_out_and_a_hand_added_one_alone(self):
+        self.claude_dir.mkdir(parents=True)
+        by_hand = {"type": "command", "command": "$HOME/.claude/skills/doc-guardrails/hook.sh", "timeout": 15}
+        (self.claude_dir / "settings.json").write_text(json.dumps({"hooks": {"PostToolUse": [
+            {"matcher": "Write|Edit", "hooks": [by_hand]}]}}), encoding="utf-8")
+        code, out = self.install("--no-doc-check")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("Write and Edit", out)
+        self.assertEqual(self.hooks()["PostToolUse"], [{"matcher": "Write|Edit", "hooks": [by_hand]}])
+        self.assertNotIn("turn_check.py", json.dumps(self.hooks()))
 
     def test_no_doc_check_installs_the_skills_and_nothing_else(self):
         code, out = self.install("--no-doc-check", "--no-skill-checks")
@@ -490,6 +545,17 @@ class HookMatching(unittest.TestCase):
                                 ("python3 ~/hooks/my_turn_check.py", False, False)):
             hook = {"type": "command", "command": cmd}
             self.assertEqual((install.is_gate_hook(hook), install.is_turn_check_hook(hook)), (gate, turn), cmd)
+        for hook, ours in (({"command": "$HOME/.claude/skills/doc-guardrails/hook.sh"}, True),
+                           ({"command": "'C:\\cfg\\skills\\doc-guardrails\\hook.sh'"}, True),
+                           ({"command": "/usr/bin/python3 /x/doc-guardrails/hook.py"}, True),
+                           ({"command": "/usr/bin/python3", "args": ["/x/doc-guardrails/hook.py"]}, True),
+                           (install.launched("/py", "/c/skills/doc-guardrails/hook.py", 15), True),
+                           (install.launched("/py", "C:\\c\\skills\\doc-guardrails\\hook.py", 15), True),
+                           ({"command": "/x/another-tool/hook.sh"}, False), ({"command": "python3 ~/hooks/hook.py"}, False),
+                           ({"command": "/x/doc-guardrails/turn_check.py"}, False),
+                           (install.launched("/py", "/c/skills/doc-guardrails/turn_check.py", 30), False),
+                           (install.launched("/py", "/c/skills/eli5/hook.py", 5), False)):
+            self.assertEqual(install.is_write_hook(hook), ours, hook.get("command"))
         self.assertTrue(install.is_gate_hook({"command": "/usr/bin/python3", "args": ["/c/doctrine/gate.py"]}))
         self.assertFalse(install.is_gate_hook({"command": "/usr/bin/python3", "args": ["/c/navigate.py"]}))
         self.assertTrue(install.is_brief_hook(install.launched("/py", "/c/doctrine/brief.py", 5)))
@@ -511,6 +577,12 @@ class HookMatching(unittest.TestCase):
         self.assertNotIn("SubagentStart", install.registered({}, "/py", "/cfg", doctrine=False))
         self.assertEqual(install.registered({}, "/py", "/cfg", doctrine=False, doc_check=False, skill_checks=False), {})
         self.assertEqual(install.registered({}, "/py", "/cfg"), install.registered({}, "/py", "/cfg", doc_check=True))
+        # the per-write hook is the installer's to ask for: registered() alone adds none (the evals' sealed manifest
+        # names its own), and asked for, it is one Write|Edit group under the folder given
+        self.assertNotIn("PostToolUse", install.registered({}, "/py", "/cfg", doctrine=True)["hooks"])
+        self.assertEqual(install.registered({}, "/py", "/cfg", doc_check=False, skill_checks=False, write_check=True),
+                         {"hooks": {"PostToolUse": [{"matcher": "Write|Edit", "hooks": [
+                             install.launched("/py", str(Path("/cfg") / "skills" / "doc-guardrails" / "hook.py"), 15)]}]}})
 
 
 class Launcher(unittest.TestCase):

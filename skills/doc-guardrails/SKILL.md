@@ -11,7 +11,7 @@ never lost. **This skill is the live guardrail, not the fixer.** Read `LINKING.m
 
 ## What runs, and when
 
-- **Always on — three layers.** (1) `hook.sh` after every Write or Edit: the file just written; it does not see a
+- **Always on — three layers.** (1) `hook.py` after every Write or Edit: the file just written; it does not see a
   file a shell command or a script wrote. (2) `turn_check.py` at the end of every turn (a Stop hook): a changed
   document of a linked kind is this session's when the session is shown to have written, named or committed it this
   turn; nothing else is. It does not judge an unnamed script's output the session neither names nor commits, nor
