@@ -179,6 +179,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-17 | 27 (Fable 5.2) | 26 / 27 | `shell_doc_eli5` on Fable 5.2 |
 | 2026-11-17 | 19 (quick) | **19 / 19** | — |
 | 2026-11-17 | 53 | **53 / 53** | — |
+| 2026-11-17 | 19 (quick) | **19 / 19** | — |
 
 plus 68 targeted runs (`--only`), 76/110 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -770,7 +771,7 @@ check as unreviewed, never a pass, so its results are not comparable with the ru
 lists are reviewed into `evals/sealed.json`.
 
 As this tree ships: <!-- fig:tests.public -->583<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.69<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+<!-- fig:run.quick.cost -->$10.45<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. A
