@@ -212,6 +212,41 @@ class MissingBlock(Fixture):
     def test_no_tools_silent(self):
         self.assertIsNone(self.check(self.transcript(prompt("what is R-3?"), text("R-3 is the loader."))))
 
+    def test_an_answer_only_turn_that_carries_a_block_is_judged(self):
+        """Known-bad for a check that reads a receipt only on a tool-using turn: the six real misses the replay pilot
+        was built from (2026-11-17) each answered and asked with no tool call, a route choice beside a bare
+        `Greenman: NA`, and the check returned before reading the block. A block on an answer-only turn is judged as on
+        a tool turn; an answer with no block stays silent (a bare acknowledgement owes none)."""
+        ask = block().replace("- Need from you: none", "- Need from you: keep the download, or take the fallback? — it "
+                              "sets whether the erase is tonight")
+        t = self.transcript(prompt("any other way to download it quicker"), text("Two ways.\n\n" + ask))
+        self.assertFalse(closeout.turn_facts(t)["ran_tools"])
+        d = self.check(t)
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("a question beside a bare `Greenman: NA`", d["reason"])
+        self.assertIsNone(self.check(t, active=True))
+        # a sound block on an answer-only turn: silent
+        self.assertIsNone(self.check(self.transcript(prompt("what is R-3?"), text("The loader.\n\n" + block()))))
+        # a malformed one: held, the shape named
+        bad = block().replace("- Result: worked", "- Result: done")
+        d = self.check(self.transcript(prompt("what is R-3?"), text("The loader.\n\n" + bad)))
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("breaks its shape", d["reason"])
+        # an older-version block on an answer-only turn is not the current one, and owes nothing there
+        old = block().replace("ELI5 v5", "ELI5 v4")
+        self.assertIsNone(self.check(self.transcript(prompt("what is R-3?"), text("The loader.\n\n" + old))))
+
+    def test_an_answer_only_turn_citing_an_unrecorded_id_is_held(self):
+        """The id check runs where the block is read: an answer-only turn citing a decision with no record is held in a
+        held project, as a tool turn is."""
+        self.held(self.proj)
+        t = self.transcript(prompt("which way?"),
+                            text("Recorded.\n\n" + block("G-2 (M): awaiting you — a or b? → knowledge/decisions/G-2-x.md")))
+        self.assertFalse(closeout.turn_facts(t)["ran_tools"])
+        d = self.check(t)
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("G-2", d["reason"])
+
     def test_a_peer_message_only_acknowledged_is_silent(self):
         """Known-bad for a reader that takes a peer session's message (a meta record) for part of the previous turn:
         live 2026-09-29, two acknowledgements with no tool call were held "this turn ran tools" because the reply

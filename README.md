@@ -255,8 +255,9 @@ script is gone:
   loaded has changed on disk since, and which file to read again with the Read tool (`--no-skill-checks` leaves out
   this hook and the next two);
 - `SessionStart` (on resume): `skills/eli5/skill_fresh.py` again, for a session that resumes after a change;
-- `Stop`: `skills/eli5/receipt_check.py`, which, while `/eli5` is on, holds a turn that ran tools once when it ends
-  without the receipt block or with one that breaks its shape (each error named), and reports a decision id on its Greenman line that has no record.
+- `Stop`: `skills/eli5/receipt_check.py`, which, while `/eli5` is on, holds once a turn that ran tools and ends
+  without the receipt block, and any turn whose block breaks its shape (each error named, a question beside a bare
+  `Greenman: NA` among them), and reports a decision id on its Greenman line that has no record.
 
 `python3 install.py --no-doc-check --no-skill-checks` installs the skills without touching `settings.json`. Add the
 optional pieces when you want them — the doctrine only after reading its measurements above:
@@ -334,8 +335,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->583<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.45<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->585<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$11.23<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,

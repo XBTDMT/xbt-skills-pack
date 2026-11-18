@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The live receipt check, a Stop hook: while eli5 is on in a session, a turn that ran tools must end with the ELI5
-block in its shape, and the decision ids its Greenman line cites must have a record.
+block, any turn that ends with one must keep its shape, and the decision ids its Greenman line cites must have a record.
 
 - A tool-using turn whose last message has no block of the current version is held once (`decision: block`); the
   reason names the absolute eli5/SKILL.md, so a session whose compaction dropped the skill's text knows what to read.
@@ -16,8 +16,10 @@ block in its shape, and the decision ids its Greenman line cites must have a rec
   tools/receipt_ids.json, and only reported (`systemMessage`) anywhere else: a project's records can live outside the
   folders its cwd declares. Neither text asks for a record to be written; a record written only to quiet the check
   would be a duplicate.
-- Nothing at all on a continuation (`stop_hook_active`), in a session that never loaded eli5, or in a turn that ran
-  no tool. A turn starts at a prompt, a task notice or another session's message (closeout.turn_facts), so a bare
+- A turn that ran no tool owes no block, so one that ends without it is let through; one that ends with a block of the
+  current version is judged as a tool turn is (its shape, the question beside a bare `Greenman: NA`, its ids): the real
+  misses that rule was written for were answer-only turns, which a tool-only gate never read.
+- Nothing at all on a continuation (`stop_hook_active`) or in a session that never loaded eli5. A turn starts at a prompt, a task notice or another session's message (closeout.turn_facts), so a bare
   acknowledgement of a peer's message is not charged with the tools of the reply before it.
 
 It reads the transcript's last turn and, only when the Greenman line names an id, that project's decision records and
@@ -62,8 +64,6 @@ def check(payload, ids_file=IDS_FILE):
     if not eli5:
         return None
     turn = closeout.turn_facts(transcript)
-    if not turn["ran_tools"]:
-        return None
     skill_md = Path(eli5[-1]) / "SKILL.md"
     if not skill_md.is_file():
         skill_md = HERE / "SKILL.md"
@@ -74,6 +74,8 @@ def check(payload, ids_file=IDS_FILE):
         last = turn["last_text"]
     blocks = [b for b in closeout.receipt_facts(last) if b["title"] == title]
     if not blocks:
+        if not turn["ran_tools"]:   # an answer or an acknowledgement with no block owes none (the skill's own exemption)
+            return None
         return json.dumps({"decision": "block", "reason": (
             f"eli5 is on in this session and this turn ran tools, but the last message has no {title} block; end the "
             f"turn with it ({skill_md}).")})

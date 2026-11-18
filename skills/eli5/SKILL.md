@@ -84,9 +84,10 @@ pasted into any turn's block is worthless.
   `off`). `NA` when no real choice came up this turn (never `decided 0 small`). **When Need from you asks a question, a bare
   `NA` is not allowed: say what the question is.** A choice between routes that work differently is greenman's call, so
   the line is its `awaiting you` form with the record written this turn. Otherwise `NA — go-ahead` (approve, time or
-  order one action already settled: run it, push, now or later), `NA — info` (a fact, a file, which one you mean, a
+  order one action already settled: run it, push, now or later; two ways forward that work differently are a choice,
+  however small: "race the download from the other Mac, or let this one run?" is not a go-ahead), `NA — info` (a fact, a file, which one you mean, a
   matter of taste) or `NA — scope` (do an extra piece of work or leave it). The end-of-turn check holds a question
-  beside a bare `NA`; `decided N small → <ledger path>` when only small calls were
+  beside a bare `NA`, on any turn that ends with a block, with or without a tool call; `decided N small → <ledger path>` when only small calls were
   made (never listed); `G-<n> (M): <chose> over <the others>, <shortcut> rejected` when a medium decision was made
   and acted on; `G-<n>` is the record's id as its project or lane writes it (a lane with `decision ids: G-A<n>`
   writes `G-A<n>`, its letter before the number); `G-<n> (L): awaiting you — <the question>` when a large one stopped for the user (the same question goes
