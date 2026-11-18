@@ -11,15 +11,21 @@ chat without its record leave the call untracked.
 
 ## When it runs
 
-On a choice that is **costly to undo, or one a reasonable person would argue with**: before building; when a fix
-failed or the obvious fix is ruled out by a constraint (a vendored, generated or do-not-edit file) and the goal still
-stands ("what routes still reach the goal?", not "can this step work?"); when the user proposes a route on such a choice;
-when asked. **Not** on a permission refusal or sandbox block: that is the user's red, not a problem to route around. Report
+On a choice that is **costly to undo, or one a reasonable person would argue with**: before building; when the user
+proposes a route on such a choice; when asked; and at three moments easy to miss:
+
+- **A fix failed, or the obvious fix is ruled out** (a vendored, generated or do-not-edit file), and
+  the goal still stands: "what routes still reach the goal?", not "can this step work?". With more than one way
+  forward, taking one is the call: record it, asked or not.
+- **A limit is about to be reported** ("it can't", "won't be able to", "out of scope", "not supported"): that is a
+  choice to stop. Find the routes that reach the goal and try one first. A limit that stands is reported with
+  what was tried, what blocked it (output, document, figure) and what it would take.
+- **A turn ends with routes for the user**: it asks him to pick, or leaves a pick he reserved ("I'll pick"). That is a
+  call awaiting the user: record it that turn, at its own depth.
+
+**Not** on a permission refusal or sandbox block: that is the user's red, not a problem to route around. Report
 it and wait; never run the denied operation again in another form (split out of a combined command, `git -C`, another path, its pieces one by one); the denied part of a combined command stays undone. Not on taste (a name, a wording: the user's), or
-on a choice with one sensible answer (do it). Brainstorming settles *what*; greenman settles *how*. They are not
-turns apart: a turn that ends asking the user to pick between routes has made a call awaiting the user, so it is recorded in
-that turn (an L record `awaiting the user`), even while brainstorming is still settling the what. Options that exist only
-in chat are lost when the session ends.
+on a choice with one sensible answer (do it). Brainstorming settles *what*; greenman settles *how*.
 
 ## The run
 
@@ -48,21 +54,18 @@ in chat are lost when the session ends.
    project grows. A labelled shortcut can be right, never a silent one: its record says
    `shortcut taken — real fix owed` until the real fix lands. A project's CLAUDE.md wins where it says otherwise:
    one may forbid a labelled shortcut as the state an item closes on, allowing it only as a step inside the work.
-6. **Widen and refine (L).** Keep the best five; make five more from their strengths, at least two by forbidding the
-   leader. Stop when round two beats nothing from round one.
+6. **Widen and refine (L):** the second round, as `REFERENCE.md` gives it.
 7. **Evidence where cheap:** a prototype, a failing test, a measurement. Name the source of any claim about a
    library, SDK or platform, or say it is unverified.
 8. **Recommend in plain English** (the route, why it beats the others, what it costs), then act or ask by depth. At L
    the message ends with the menu and one question.
 9. **Record, in the project's own tree.** Every call is a row in the greenman ledger of the call's lane; M and L also
-   write a `G-<n>-<slug>.md` beside it (a lane's form, such as `G-A<n>-<slug>.md`). **Which lane:** the lane of the
-   roadmap item the work serves; else the lane whose pin this session read first; else the project's, and the report
-   says so (the rule redman's ledger uses). **Where:** that lane's `decisions:` folder in the doc map (`## Doc map`, or
+   write a `G-<n>-<slug>.md` beside it. **Which lane:** the lane of the roadmap item the work serves; else the lane
+   whose pin this session read first; else the project's, and the report says so. **Where:** that lane's `decisions:` folder in the doc map (`## Doc map`, or
    `## Doc map: lane <name>`), else `<project root>/knowledge/decisions/` (`docs/decisions/` in a project without
    `knowledge/`). **None exists:** create it there, add `decisions: <path>` to the doc map and say so. Never in the pack
-   folder. **The id** is `closeout.py facts` → `lanes.<lane>.next_decision_id` (`closeout.py` is in the closeout skill's
-   folder, beside this skill's base directory: never search the disk for it); an id is never reused and never
-   changed. Commit records by name with the work they decided; if the turn commits nothing, say in the report that the
+   folder. **The id** is `closeout.py facts` → `next_decision_id` (`closeout.py` sits in the closeout skill's folder
+   beside this one: never search the disk for it), never reused or changed. Commit records by name with the work they decided; if the turn commits nothing, say in the report that the
    record is uncommitted. **Read `REFERENCE.md` in this skill's base directory before writing either**: formats,
    statuses, columns. Never edit the roadmap. **When the task forbids edits** (a review or an audit that says "do
    not edit anything"), that instruction wins: the call is still made and reported, no row or file is written, and
@@ -82,9 +85,7 @@ between the two skills, and greenman's ledger holds the ruling.
 
 The eli5 receipt's `Greenman:` line, directly under `Redman:`; the forms are listed once, in the eli5 skill's
 `SKILL.md` (the `eli5` folder beside this skill's base directory); without eli5 the same line closes the turn: read
-that list for its form. An L call's question also goes in Need from you. Several calls in one turn: the
-highest-depth one, then `+N more → <ledger path>`. No call made is `NA`, never `decided 0 small`. S calls are never
-listed in chat.
+that list for its form. An L call's question also goes in Need from you. S calls are never listed in chat.
 
 ## Never
 

@@ -34,6 +34,11 @@ revisit:   <the condition that would reopen this>
 A status can combine states (`ruled by the user …: … — shortcut taken — real fix owed`); `facts` reads it anywhere on
 the line. When the user rules, rewrite `status:` and `chose:` in place, and the record's ledger row with them.
 
+## At L: widen and refine
+
+Keep the best five; make five more from their strengths, at least two by forbidding the leader. Stop when round two
+beats nothing from round one.
+
 ## The ledger — `<decisions folder>/LEDGER.md` (every call)
 
 One file per project: the index of every call, so a small "also considered" never lives only in a chat that ends.

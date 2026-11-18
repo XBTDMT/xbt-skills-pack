@@ -36,7 +36,7 @@ ELI5 v5
 - Files:
 
 - Redman: off | NA | filed N small → <ledger path> | held N — no edits allowed | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
-- Greenman: NA | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected → <record path> | G-<n> (M): awaiting you — <question> → <record path> | G-<n> (L): awaiting you — <question> → <record path> | G-<n> (L): <chose> over <others> — delegated by the user → <record path> | G-<n> (<depth>): shortcut taken — real fix owed → <record path> | held — no edits allowed (<depth> call in the report) | ruled by the user → <ledger path>
+- Greenman: NA | NA — go-ahead | NA — info | NA — scope | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected → <record path> | G-<n> (M): awaiting you — <question> → <record path> | G-<n> (L): awaiting you — <question> → <record path> | G-<n> (L): <chose> over <others> — delegated by the user → <record path> | G-<n> (<depth>): shortcut taken — real fix owed → <record path> | held — no edits allowed (<depth> call in the report) | ruled by the user → <ledger path>
 
 - Next:
 - Need from you: <one question, and how it serves the goal | none>
@@ -81,7 +81,12 @@ pasted into any turn's block is worthless.
   and the pack's side ledger names both paths. Nothing filed is `NA`, never `filed 0 small`. Always present, so a
   missing line can never be mistaken for "nothing found".
 - **Greenman** — always directly under Redman, and always present (greenman is on all the time, so it has no
-  `off`). `NA` when no real choice came up this turn (never `decided 0 small`); `decided N small → <ledger path>` when only small calls were
+  `off`). `NA` when no real choice came up this turn (never `decided 0 small`). **When Need from you asks a question, a bare
+  `NA` is not allowed: say what the question is.** A choice between routes that work differently is greenman's call, so
+  the line is its `awaiting you` form with the record written this turn. Otherwise `NA — go-ahead` (approve, time or
+  order one action already settled: run it, push, now or later), `NA — info` (a fact, a file, which one you mean, a
+  matter of taste) or `NA — scope` (do an extra piece of work or leave it). The end-of-turn check holds a question
+  beside a bare `NA`; `decided N small → <ledger path>` when only small calls were
   made (never listed); `G-<n> (M): <chose> over <the others>, <shortcut> rejected` when a medium decision was made
   and acted on; `G-<n>` is the record's id as its project or lane writes it (a lane with `decision ids: G-A<n>`
   writes `G-A<n>`, its letter before the number); `G-<n> (L): awaiting you — <the question>` when a large one stopped for the user (the same question goes
@@ -90,7 +95,7 @@ pasted into any turn's block is worthless.
   wrote for the call, so an id with no record behind it shows; a record outside this checkout (a build worktree's,
   not yet merged) is named by its absolute path, which the end-of-turn check accepts as the record.
   `G-<n> (M): awaiting you — <the question>` when a medium call asks instead of acting, because its route is not
-  reversible or not in scope (the question goes in Need from you). `G-<n> (L): <chose> over <the others> — delegated by the user` when a large call was made and acted on because
+  reversible or not in scope, or the user reserved the pick (the question goes in Need from you). `G-<n> (L): <chose> over <the others> — delegated by the user` when a large call was made and acted on because
   the user plainly delegated it; it stays L. `G-<n> (<depth>): shortcut taken — real fix owed` when a labelled shortcut
   was taken at the call's depth and the real fix is still owed. `held — no edits allowed (<depth> call in the report)`
   when a call was made under a task that forbids edits: no row or file was written, and the call is in the report.

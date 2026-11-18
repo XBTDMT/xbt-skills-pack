@@ -20,7 +20,8 @@
                                             case goes into the run's record): settling a failure costs a few sessions,
                                             never the whole set
   python3 evals/run.py --history [case]     read-only: per case and seat, the runs and passes since 2026-10-01 in
-                                            evals/RUNS.jsonl and pass^3, how likely three straight passes are at that rate
+                                            evals/RUNS.jsonl, the failures that were the environment's alone (env), the
+                                            behaviour's failures, and pass^3 at the rate the behaviour held
   python3 evals/run.py --build-sealed       build the sealed config folder (--config, default ~/.claude-evals) and stop
 
 Every session runs in a sealed config folder, never your own ~/.claude: CLAUDE_CONFIG_DIR is set to --config
@@ -3461,19 +3462,23 @@ def confirm_batch(pairs, spec, out, config, cli, version, probe=False, on_graded
 
 
 def case_history(records, runs_root, spec, since=HISTORY_SINCE):
-    """({(scenario, seat): {"runs": n, "passes": n}}, read, from_log, unread) over the records dated `since` or later:
-    a run is read from its own grades.json under the runs root (every session, repeats included); a run whose folder is
-    gone is read from the log alone when it names its cases — a confirm's `verdicts`, or a quick or full set (its cases
-    today's scenarios', less the record's `failed`) — and counted unread otherwise."""
+    """({(scenario, seat): {"runs": n, "passes": n, "env": n}}, read, from_log, unread) over the records dated `since`
+    or later: a run is read from its own grades.json under the runs root (every session, repeats included); a run whose
+    folder is gone is read from the log alone when it names its cases — a confirm's `verdicts`, or a quick or full set
+    (its cases today's scenarios', less the record's `failed`) — and counted unread otherwise. `env` counts the failed
+    sessions whose every failing check is an automatic one (`sealed` on an unreviewed CLI, `layer` during a page
+    promotion): the environment's failure, not the scenario's behaviour. Only a grades.json can tell the two apart;
+    a failure read from the log alone stays a plain failure."""
     table, read, from_log, unread = {}, 0, 0, 0
     S = spec["scenarios"]
     sets = {"full": [(s["id"], st) for s in S for st in s["seats"]],
             "quick": [(s["id"], st) for s in S for st in s.get("quick") or []]}
 
-    def add(sid, seat, passed):
-        row = table.setdefault((sid, seat), {"runs": 0, "passes": 0})
+    def add(sid, seat, passed, env=False):
+        row = table.setdefault((sid, seat), {"runs": 0, "passes": 0, "env": 0})
         row["runs"] += 1
         row["passes"] += 1 if passed else 0
+        row["env"] += 1 if env and not passed else 0
 
     for r in records:
         if (r.get("date") or "") < since:
@@ -3486,7 +3491,9 @@ def case_history(records, runs_root, spec, since=HISTORY_SINCE):
             read += 1
             for g in grades:
                 if not g.get("not_run"):
-                    add(g["scenario"], g["seat"], bool(g.get("passed")))
+                    failing = [x for x in g.get("results") or [] if x.get("passed") is not True]
+                    add(g["scenario"], g["seat"], bool(g.get("passed")),
+                        env=bool(failing) and all(x.get("automatic") for x in failing))
         elif isinstance(r.get("verdicts"), dict):
             from_log += 1
             for name, v in r["verdicts"].items():
@@ -3505,9 +3512,11 @@ def case_history(records, runs_root, spec, since=HISTORY_SINCE):
 
 
 def history_report(case, runs_file, runs_root, spec, since=HISTORY_SINCE, k=PASS_K):
-    """--history [CASE]: per case and seat, the runs and passes since `since` and pass^k, the probability of k straight
-    passes at the observed rate (0.90 → 0.73 for k = 3: a clean confirm of a case that fails one time in ten is likely,
-    so a confirm settles a regression, never a rate). Nothing is launched or written."""
+    """--history [CASE]: per case and seat, the runs and passes since `since`, the failures that were the environment's
+    alone (`env`), the rate of the behaviour holding (every run but a behaviour failure) and pass^k, the probability
+    of k straight sessions without a behaviour failure at that rate (0.90 → 0.73 for k = 3: a clean confirm of a case
+    that fails one time in ten is likely, so a confirm settles a regression, never a rate). Nothing is launched or
+    written."""
     table, read, from_log, unread = case_history(read_runs(runs_file), runs_root, spec, since)
     rows = [(sid, seat, v) for (sid, seat), v in sorted(table.items())
             if not case or case in (sid, case_name(sid, seat))]
@@ -3516,10 +3525,13 @@ def history_report(case, runs_file, runs_root, spec, since=HISTORY_SINCE, k=PASS
     if not rows:
         print(f"no run of {case} since {since}" if case else f"no run since {since}")
         return 1
-    print(f"{'scenario':<24} {'seat':<8} {'runs':>5} {'passes':>7} {'rate':>6} {'pass^' + str(k):>7}")
+    print(f"{'scenario':<27} {'seat':<8} {'runs':>5} {'passes':>7} {'env':>4} {'behaviour':>10} {'rate':>6} "
+          f"{'pass^' + str(k):>7}")
     for sid, seat, v in rows:
-        rate = v["passes"] / v["runs"]
-        print(f"{sid:<24} {seat:<8} {v['runs']:>5} {v['passes']:>7} {rate:>6.2f} {rate ** k:>7.2f}")
+        behaviour = v["runs"] - v["passes"] - v["env"]          # the failures that were the scenario's
+        rate = (v["runs"] - behaviour) / v["runs"]
+        print(f"{sid:<27} {seat:<8} {v['runs']:>5} {v['passes']:>7} {v['env']:>4} {behaviour:>10} {rate:>6.2f} "
+              f"{rate ** k:>7.2f}")
     return 0
 
 

@@ -156,6 +156,34 @@ class MissingBlock(Fixture):
         self.assertIn("Proof is empty", d["reason"])
         self.assertIn("ends the block: each field is one line", d["reason"])
 
+    def test_a_question_beside_a_bare_na_is_held_and_a_classed_one_is_not(self):
+        """Known-bad for a receipt that puts a question to the user and reports no decision (2026-11-17: 18 of 129
+        such live turns, read twice, were a real choice of route with no record). The session classes its own
+        question: a decision's form, or `NA — go-ahead`, `NA — info`, `NA — scope`."""
+        ask = block().replace("- Need from you: none", "- Need from you: read-time adjustment (A) or repair the stored "
+                              "columns (B)? — it decides the split fix")
+        d = self.check(self.transcript(prompt("fix the split"), bash(), text("Two ways.\n\n" + ask)))
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("a question beside a bare `Greenman: NA`", d["reason"])
+        self.assertIn("NA — go-ahead", d["reason"])
+        for kind in ("NA — go-ahead", "NA — info", "NA — scope", "NA - go-ahead", "NA – Info"):
+            with self.subTest(kind=kind):
+                classed = ask.replace("- Greenman: NA\n", f"- Greenman: {kind}\n")
+                self.assertIsNone(self.check(self.transcript(prompt("fix"), bash(), text("Done.\n\n" + classed))))
+        # a decision's form beside the question is the other way to satisfy it (held project off: the id is reported)
+        form = ask.replace("- Greenman: NA\n", "- Greenman: decided 1 small → knowledge/decisions/LEDGER.md\n")
+        self.assertIsNone(self.check(self.transcript(prompt("fix"), bash(), text("Done.\n\n" + form))))
+        # no question, bare NA: as before
+        self.assertIsNone(self.check(self.transcript(prompt("fix"), bash(), text("Fixed.\n\n" + block()))))
+        # a kind that is not one of the three is named
+        odd = ask.replace("- Greenman: NA\n", "- Greenman: NA — taste\n")
+        d = self.check(self.transcript(prompt("fix"), bash(), text("Done.\n\n" + odd)))
+        self.assertIn("the kind is go-ahead, info or scope", d["reason"])
+
+    def test_a_question_mark_in_none_is_not_a_question(self):
+        quiet = block().replace("- Need from you: none", "- Need from you: none (the earlier question is answered?)")
+        self.assertIsNone(self.check(self.transcript(prompt("fix"), bash(), text("Fixed.\n\n" + quiet))))
+
     def test_a_shape_hold_also_carries_the_id_check(self):
         """One stop, one hold: a malformed block that also cites an unrecorded id names both (the continuation is not
         checked again)."""

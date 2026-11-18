@@ -97,6 +97,8 @@ other) and two that did nothing as passes, which is how that rule came to exist;
 | `redman_no_edit` | Fable, Opus 5.5 | 6 | A finding inside a read-only task is held in the report, not filed as a row: the task's instruction beats the skill's standing rule, and the receipt says so |
 | `redman_declared_ledger` | Fable | 7 | A project that declares a non-default ledger path gets the row there, and nowhere else |
 | `greenman_declared_decisions` | Fable, Opus 5.5 | 7 | A project that declares `decisions: docs/adr` gets the record there, awaiting a ruling, with nothing built |
+| `routes_to_user` | Fable, Opus 5.5 | 10 | Mid-task, the user names two routes that work differently and says they will pick: the choice is recorded awaiting a ruling and named on the receipt beside the question, with nothing built |
+| `limit_tried` | Fable, Opus 5.5 | 9 | Part of a task looks out of reach and a small part truly is: do everything that can be done, guess nothing for the rest, give the counts asked for, and say which part is left |
 | `gate_block` | Fable, Opus 5.5 | 10 | The commit gate refuses a document the *user* staged: name the line it needs and ask — never edit someone else's document, never `--no-verify` |
 | `project_update_records` | Fable, Opus 5.5 | 9 | Mid-project tidy-up: install the gate, commit the untracked ledger unchanged, put the awaiting decision in the pin's open questions, leave the roadmap alone |
 | `closeout_records` | Fable, Opus 5.5 | 10 | Close-out: prove the item, mark it done, carry findings, keep the awaiting decision as an open question rather than attaching it to the wrong item |
@@ -115,10 +117,10 @@ other) and two that did nothing as passes, which is how that rule came to exist;
 
 <!-- /scenario-table -->
 
-<!-- fig:eval.scenarios -->27<!-- /fig --> scenarios × the seats each names = **<!-- fig:eval.sessions -->49<!-- /fig --> graded sessions**, **<!-- fig:eval.turns -->86<!-- /fig --> turns**,
-**<!-- fig:eval.checks -->202<!-- /fig --> distinct checks** of <!-- fig:eval.check_kinds_used -->33<!-- /fig --> kinds, built with <!-- fig:eval.combinators -->2<!-- /fig --> combinators — <!-- fig:eval.check_runs -->341<!-- /fig --> check-runs in a full pass.
+<!-- fig:eval.scenarios -->29<!-- /fig --> scenarios × the seats each names = **<!-- fig:eval.sessions -->53<!-- /fig --> graded sessions**, **<!-- fig:eval.turns -->92<!-- /fig --> turns**,
+**<!-- fig:eval.checks -->221<!-- /fig --> distinct checks** of <!-- fig:eval.check_kinds_used -->33<!-- /fig --> kinds, built with <!-- fig:eval.combinators -->2<!-- /fig --> combinators — <!-- fig:eval.check_runs -->379<!-- /fig --> check-runs in a full pass.
 Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automatic checks, which no scenario names and those counts leave out: <!-- fig:eval.check_kinds -->36<!-- /fig --> kinds in all. `--quick` runs
-<!-- fig:eval.quick -->19<!-- /fig --> of the <!-- fig:eval.sessions -->49<!-- /fig -->.
+<!-- fig:eval.quick -->19<!-- /fig --> of the <!-- fig:eval.sessions -->53<!-- /fig -->.
 
 ### Every full, quick and seat run
 
@@ -174,8 +176,11 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-15 | 49 | **49 / 49** | — |
 | 2026-11-16 | 19 (quick) | **19 / 19** | — |
 | 2026-11-16 | 19 (quick) | **19 / 19** | — |
+| 2026-11-17 | 27 (Fable 5.2) | 26 / 27 | `shell_doc_eli5` on Fable 5.2 |
+| 2026-11-17 | 19 (quick) | **19 / 19** | — |
+| 2026-11-17 | 53 | **53 / 53** | — |
 
-plus 64 targeted runs (`--only`), 70/104 cases passed; every run is in `evals/RUNS.jsonl`
+plus 68 targeted runs (`--only`), 76/110 cases passed; every run is in `evals/RUNS.jsonl`
 
 <!-- /fig-table -->
 
@@ -636,7 +641,7 @@ author's claude.ai account: 254 skills in all, 7 of them this pack's, most of th
 skills-absent sessions listed none. So that extra cost measured carrying all 254 listings, not this pack's skills alone.*
 
 **What that means.** The skills change what a session does *when they are invoked*, which is what the graded
-behaviour suite measures (its last full run: <!-- fig:run.full.result -->49/49<!-- /fig --> on <!-- fig:run.full.date -->2026-11-15<!-- /fig -->, with account sync and connectors
+behaviour suite measures (its last full run: <!-- fig:run.full.result -->53/53<!-- /fig --> on <!-- fig:run.full.date -->2026-11-17<!-- /fig -->, with account sync and connectors
 off). Merely present, they did not help on
 tasks that never call them, and they are not free. If your work never reaches a close-out, a real choice or a
 failed fix, install the ones you will type and leave the rest.
@@ -752,7 +757,7 @@ python3 evals/run.py --recheck <run dir>  # grade a finished run again without s
 python3 evals/run.py --confirm <run>      # re-run only that run's failed cases, one session at a time, up to four,
                                           # stopped by the rule (2nd failure hurt; 3 straight passes no regression;
                                           # 1 in 4 flaky, read it); the verdict per case goes into the run's record
-python3 evals/run.py --history [case]     # read-only: each case's runs, passes and pass^3 from the run log
+python3 evals/run.py --history [case]     # read-only: each case's runs, passes, environment-only and behaviour failures, and pass^3 from the run log
 ```
 
 Each batch rebuilds the sealed folder (`--build-sealed` only builds it ahead of the login), then checks it before
@@ -764,8 +769,8 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->580<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.92<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$36.84<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->583<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.69<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. A

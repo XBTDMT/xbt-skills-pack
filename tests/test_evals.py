@@ -4237,21 +4237,47 @@ class Repeats(unittest.TestCase):
             {"scenario": "b", "seat": "opus55", "passed": False, "not_run": "an API error"}]), encoding="utf-8")
         table, read, from_log, unread = evals.case_history(evals.read_runs(log), root, spec)
         self.assertEqual((read, from_log, unread), (1, 2, 1))
-        self.assertEqual(table, {("a", "fable"): {"runs": 6, "passes": 4},     # 0/1 folder + 3/4 confirm + 1/1 quick
-                                 ("a", "opus55"): {"runs": 1, "passes": 1},
-                                 ("b", "fable"): {"runs": 2, "passes": 1}})    # the NOT RUN opus55 session is no run
+        self.assertEqual(table, {("a", "fable"): {"runs": 6, "passes": 4, "env": 0},     # 0/1 folder + 3/4 confirm + 1/1 quick
+                                 ("a", "opus55"): {"runs": 1, "passes": 1, "env": 0},
+                                 ("b", "fable"): {"runs": 2, "passes": 1, "env": 0}})    # the NOT RUN opus55 session is no run
         with contextlib.redirect_stdout(io.StringIO()) as out:
             code = evals.history_report("a", log, root, spec)
         text = out.getvalue()
         self.assertEqual(code, 0)
         self.assertIn("history since 2026-10-01: 1 run(s) read from their folders, 2 from the log alone, 1 unread", text)
-        self.assertRegex(text, r"a\s+fable\s+6\s+4\s+0\.67\s+0\.30")           # (4/6)^3 = 0.296
-        self.assertRegex(text, r"a\s+opus55\s+1\s+1\s+1\.00\s+1\.00")
+        self.assertRegex(text, r"a\s+fable\s+6\s+4\s+0\s+2\s+0\.67\s+0\.30")           # (4/6)^3 = 0.296
+        self.assertRegex(text, r"a\s+opus55\s+1\s+1\s+0\s+0\s+1\.00\s+1\.00")
         self.assertNotIn("\nb ", text)
         with contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertEqual(evals.history_report("zzz", log, root, spec), 1)
         self.assertIn("no run of zzz since 2026-10-01", out.getvalue())
         self.assertEqual(log.read_text(encoding="utf-8"), "".join(json.dumps(r) + "\n" for r in records))  # read-only
+
+    def test_history_counts_an_environment_only_failure_apart_from_the_behaviour(self):
+        """Known-bad for a history that calls a session failed by its environment a failure of the scenario (2026-11-17:
+        pushback_ruling on Opus 5.5 read 11 of 16 where all five failures were the `sealed` check on an unreviewed CLI,
+        and was taken for greenman's weakest case). A failed session whose every failing check is automatic is `env`;
+        one with any failing behaviour check is the scenario's."""
+        spec = {"scenarios": [{"id": "a", "seats": ["opus55"], "quick": []}]}
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root, log = Path(tmp.name) / "runs", Path(tmp.name) / "RUNS.jsonl"
+        sealed = {"check": ["sealed"], "passed": None, "detail": "unreviewed: cli_version", "automatic": True}
+        behaviour = {"check": ["unchanged", "tests"], "passed": False, "detail": "changed"}
+        ok = {"check": ["tests_pass"], "passed": True}
+        runs = {"20261006-120000": [ok, sealed], "20261007-120000": [behaviour, sealed], "20261008-120000": [ok]}
+        records = [{"run": r, "date": f"2026-10-{r[6:8]}", "selection": "full", "failed": []} for r in runs]
+        log.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+        for r, results in runs.items():
+            (root / r).mkdir(parents=True)
+            (root / r / "grades.json").write_text(json.dumps([{
+                "scenario": "a", "seat": "opus55", "results": results,
+                "passed": all(x.get("passed") is True for x in results)}]), encoding="utf-8")
+        table, _, _, _ = evals.case_history(evals.read_runs(log), root, spec)
+        self.assertEqual(table, {("a", "opus55"): {"runs": 3, "passes": 1, "env": 1}})
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            evals.history_report("a", log, root, spec)
+        self.assertRegex(out.getvalue(), r"a\s+opus55\s+3\s+1\s+1\s+1\s+0\.67\s+0\.30")   # one behaviour failure in three
 
     def test_history_is_a_read_only_report_of_the_run_log(self):
         with tempfile.TemporaryDirectory() as t, mock.patch.object(evals, "RUNS_FILE", Path(t) / "RUNS.jsonl"), \

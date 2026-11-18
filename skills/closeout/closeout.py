@@ -3756,6 +3756,9 @@ RECEIPT_FIELD_RE = re.compile(r"^- (Did|Why|Result|Proof|Fail|Files|Redman|Green
                               r"In one sentence):[ \t]?(.*)$")
 RECEIPT_GROUPS = [["Did", "Why", "Result", "Proof", "Fail", "Files"], ["Redman", "Greenman"], ["Next", "Need from you"],
                   ["Goal", "In one sentence"]]
+# `Greenman: NA — <kind>`: what a question in Need from you is, when it is not a choice of route (eli5 SKILL.md)
+RECEIPT_NA_KINDS = ("go-ahead", "info", "scope")
+RECEIPT_NA_KIND_RE = re.compile(r"^NA\s*(?:—|–|--|-)\s*(\S.*)$")
 # the reason rule (eli5 SKILL.md, 2026-09-22): Why names the defect, goal or mechanism, never "the user said so"
 REASON_RULE_RE = re.compile(r"(?i)^(because\s+)?(you|the user)\s+(asked|said|requested|wanted|told)\b")
 
@@ -3807,6 +3810,16 @@ def receipt_facts(text):
         for name in ("Goal", "In one sentence"):
             if not values.get(name):
                 errors.append(f"{name} is missing")
+        # A question put to the user is classed by the session that asks it: beside one, the Greenman line is a
+        # decision's form or says what kind of question it is, never a bare NA (a real choice of route put to the
+        # user with no record was 18 of 129 such turns read twice, 2026-11-17).
+        need, green = values.get("Need from you", ""), values.get("Greenman", "").strip()
+        kind = RECEIPT_NA_KIND_RE.match(green)
+        if kind and kind.group(1).lower() not in RECEIPT_NA_KINDS:
+            errors.append(f"Greenman is {green!r}: after `NA —` the kind is go-ahead, info or scope")
+        elif green == "NA" and "?" in need and not need.lower().startswith("none"):
+            errors.append("Need from you asks a question beside a bare `Greenman: NA`: write the decision's form, "
+                          "or `NA — go-ahead`, `NA — info` or `NA — scope`")
         # A field that spilled onto indented lines ends the block, and the fields after it read as missing or empty;
         # name the line that ended it so the rewrite aims at the right fault (redman 2026-10-11). Only beside the
         # errors above, so the verdict is the same one the evals grade.
