@@ -3572,7 +3572,7 @@ class SkillChangedKnownRuns(unittest.TestCase):
     def test_read_file_reads_past_a_system_record_whose_message_is_text(self):
         """Known-bad for a reader that takes every record's `message` as an object: CLI 2.1.323 writes a refused
         command as `{"type": "system", "subtype": "permission_denied", "message": "<the reason>"}`, and the check
-        raised AttributeError on every case of assumption_unread whose session had a command refused (2026-11-18). The
+        raised AttributeError on every graded case whose session had a command refused (2026-11-18). The
         record is skipped; a full Read after it still counts."""
         with tempfile.TemporaryDirectory() as d:
             case = Path(d)
