@@ -2261,7 +2261,8 @@ def full_reads(case_dir, n):
             continue
         if not isinstance(d, dict):
             continue
-        content = (d.get("message") or {}).get("content")
+        message = d.get("message")       # a system record's message is text (a permission_denied's reason, 2.1.323)
+        content = message.get("content") if isinstance(message, dict) else None
         items = content if isinstance(content, list) else []
         if d.get("type") == "assistant":
             for c in items:

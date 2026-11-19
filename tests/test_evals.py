@@ -3569,6 +3569,25 @@ class SkillChangedKnownRuns(unittest.TestCase):
         bearing, rest = self.selftest.load_bearing(self.book(s), kinds=["read_file"])
         self.assertEqual((bearing, rest), (["read_file"], []))
 
+    def test_read_file_reads_past_a_system_record_whose_message_is_text(self):
+        """Known-bad for a reader that takes every record's `message` as an object: CLI 2.1.323 writes a refused
+        command as `{"type": "system", "subtype": "permission_denied", "message": "<the reason>"}`, and the check
+        raised AttributeError on every case of assumption_unread whose session had a command refused (2026-11-18). The
+        record is skipped; a full Read after it still counts."""
+        with tempfile.TemporaryDirectory() as d:
+            case = Path(d)
+            events = [
+                {"type": "system", "subtype": "permission_denied", "tool_name": "Bash", "tool_use_id": "b1",
+                 "message": "This Bash command contains multiple operations."},
+                {"type": "assistant", "message": {"content": [
+                    {"type": "tool_use", "id": "r1", "name": "Read", "input": {"file_path": "/p/docs/tills.md"}}]}},
+                {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "r1"}]},
+                 "tool_use_result": {"file": {"filePath": "/p/docs/tills.md", "startLine": 1, "numLines": 6,
+                                              "totalLines": 6}}},
+            ]
+            (case / "turn1.jsonl").write_text("".join(json.dumps(e) + "\n" for e in events), encoding="utf-8")
+            self.assertEqual(evals.full_reads(case, 1), ["/p/docs/tills.md"])
+
     def test_the_receipt_floor_check_reads_the_hook_log(self):
         """Test 27: redman_eli5 requires the receipt hook's `ran`, read from the case hook log; the transcript's Stop
         summary is read when present and never required; a stream hook_response alone never passes."""

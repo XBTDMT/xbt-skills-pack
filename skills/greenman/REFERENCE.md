@@ -27,9 +27,17 @@ gates:     <what every option had to pass>
 options:   | option | how it works | best case | cons | shortcut test |
 chose:     <option>, because <why it beats the others>
 rejected:  <each shortcut and why>
-evidence:  <what was run or read, or "argued, not tested">
+assumptions: <each one the pick rests on: checked (the read or command, and what it showed) or unchecked (why not, and how the pick holds either way)>
+evidence:  <tested: what was run or measured; read: what was read; argued: what neither settles, or "argued, not tested">
 revisit:   <the condition that would reopen this>
 ```
+
+An assumption is what would change the pick if it were false: a size, a version, a rule, what the data holds, what a
+user does. Each one a read or a command can settle is checked before the pick and recorded with what it showed; one
+that cannot be checked stays named, as unchecked, and the pick takes the route that holds whichever way it turns
+out, or asks: naming an assumption is never a licence to bet on it (an API whose rate limit is unknown gets retries with
+backoff, not the hope that the limit is generous). `none` is a real answer
+only when no fact the pick rests on is in doubt.
 
 A status can combine states (`ruled by the user …: … — shortcut taken — real fix owed`); `facts` reads it anywhere on
 the line. When the user rules, rewrite `status:` and `chose:` in place, and the record's ledger row with them.

@@ -38,6 +38,7 @@ repo, named in brackets.
 | A turn ends with "done" and no evidence for it | The doctrine and the receipt make a claim carry its proof, and the receipt check holds a turn whose Proof line is empty [`redman_eli5`, `shell_doc_eli5`] |
 | The model takes the shortcut that makes a check pass — weakens an assertion, special-cases the test | greenman runs the shortcut test at a real choice and picks the long-term route; the call is written down [`pushback_ruling`, `vendored_fork`, `failed_fork`] |
 | A design choice is made and the reason is gone three days later | Every real choice lands in the project's decisions folder, at a depth matched to the stakes; big ones stop and wait for you [`large_stop`, `greenman_declared_decisions`] |
+| A pick rests on a fact nobody checked, or on a bet named as an assumption | The record names what the pick rests on, checks each fact a read or a command can settle, and takes the route that holds either way for one it cannot; in the two scenarios for this, sessions found the planted fact with or without the rule, so they show it does no harm, not that it helps [`assumption_checked`, `assumption_unread`] |
 | A document appears that nothing can trace back to the plan | Three layers check that every document names its roadmap item — including one written from a shell script, which no tool hook can see [`shell_doc`, `gate_block`, `gate_block_own`] |
 | A permission you refused gets worked around another way | Refusals are terminal: report and stop, never retry the denied thing in another form [`refusal`] |
 | The session ends and everything it knew goes with it | A pin and a handoff are written at the finish (the close-out also writes an overview), so the next session starts from them [`closeout_records`, `project_update_records`] |
@@ -49,7 +50,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 
 | | |
 |---|---|
-| **The skills** | <!-- fig:eval.scenarios -->29<!-- /fig --> scenarios · <!-- fig:eval.sessions -->53<!-- /fig --> graded sessions · <!-- fig:eval.checks -->221<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->53/53<!-- /fig -->** (<!-- fig:run.full.date -->2026-11-17<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
+| **The skills** | <!-- fig:eval.scenarios -->31<!-- /fig --> scenarios · <!-- fig:eval.sessions -->57<!-- /fig --> graded sessions · <!-- fig:eval.checks -->235<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->53/53<!-- /fig -->** (<!-- fig:run.full.date -->2026-11-17<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
 | **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->11<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->57<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->24<!-- /fig --> runs: the 29 September, 7 October and 19 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
@@ -187,7 +188,7 @@ hallucination at the token level. The full method, every run, and what is still 
 
 | Piece | What it is for |
 |---|---|
-| `skills/greenman/` | Always on. At a real choice or a failed fix: routes that work differently, the shortcut test on each, the correct long-term route at a depth matched to the stakes, and a record in the project's decisions folder. `REFERENCE.md` holds the record formats. |
+| `skills/greenman/` | Always on. At a real choice or a failed fix: routes that work differently, the shortcut test on each, the correct long-term route at a depth matched to the stakes, and a record in the project's decisions folder. The record names the assumptions the pick rests on, checked or not, and tells what was tested from what is argued; an assumption that cannot be checked gets the route that holds either way, never a bet. `REFERENCE.md` holds the record formats. |
 | `skills/redman/` | `/redman` (manual only): a failed step answers what failed, why and the goal it served; side findings are sized, filed to the project's ledger and asked now-or-later. `/redman <path>` interrogates one document until nothing is undecided (`DEEP-RUN.md`). |
 | `skills/eli5/` | `/eli5`: every substantial answer ends with a fixed receipt (did, why, result, proof, files; redman, greenman; next, what it needs from you; the goal, then one sentence). |
 | `skills/doc-guardrails/` | Everything links to the roadmap. `LINKING.md` is the contract. Three layers: `turn_check.py` (end of every turn, for the documents that session wrote, named or committed; installed by default), `hook.py` (right after each Write or Edit; installed by default, Windows included) and a per-project commit gate `/closeout` registers, which catches the rest. Reports; never edits. |
@@ -335,8 +336,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->585<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$11.23<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->586<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$11.27<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,

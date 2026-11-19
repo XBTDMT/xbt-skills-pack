@@ -5,9 +5,8 @@ description: Use whenever a real choice comes up, or a fix fails or is ruled out
 
 # /greenman — find the route that really reaches the goal, and say why
 
-**Green means the goal is really reached, not that a check turned green.** Redman keeps watch; greenman makes the
-call. It is **on all the time**, with or without redman. Invoke it as a skill: options laid out in
-chat without its record leave the call untracked.
+**Green means the goal is really reached, not that a check turned green.** It is **on all the time**. Invoke it
+as a skill: options laid out in chat without its record leave the call untracked.
 
 ## When it runs
 
@@ -19,7 +18,7 @@ proposes a route on such a choice; when asked; and at three moments easy to miss
   forward, taking one is the call: record it, asked or not.
 - **A limit is about to be reported** ("it can't", "won't be able to", "out of scope", "not supported"): that is a
   choice to stop. Find the routes that reach the goal and try one first. A limit that stands is reported with
-  what was tried, what blocked it (output, document, figure) and what it would take.
+  what was tried, what blocked it and what it would take.
 - **A turn ends with routes for the user**: it asks him to pick, or leaves a pick he reserved ("I'll pick"). That is a
   call awaiting the user: record it that turn, at its own depth.
 
@@ -30,7 +29,7 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
 ## The run
 
 1. **The real goal.** One line: what must be true when done. Is it the goal, or a stand-in ("tests pass", "CI is
-   green", "the error is gone")? Judge everything against the real goal; against a stand-in the shortcut wins.
+   green")? Judge everything against the real goal; against a stand-in the shortcut wins.
 2. **The depth, from the stakes.**
 
    | depth | when | options | acts alone? | record |
@@ -44,10 +43,10 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
    `decided — delegated by the user <date>`. Never lower a depth to justify acting.
 3. **Gates, then trade-offs.** Before writing options, name the gates (reaches the real goal; not a silent shortcut;
    within constraints, permissions and the user's rulings) and the trade-offs survivors are compared on (long-term cost,
-   reversibility, blast radius, time). Gates remove; trade-offs are compared in words. No scores.
+   reversibility, blast radius, time). Gates remove; trade-offs are compared in words.
 4. **Options that differ in how they work.** At M and L also list *do nothing / defer* and *change the requirement*.
    Any route the user gave is on the list. Each option gets its best case (who would pick it, and why); one
-   nobody would pick is dropped. Fewer real routes than the number: say so; never pad.
+   nobody would pick is dropped. Fewer real routes than the number: say so.
 5. **The shortcut test, on each.** A shortcut makes the check pass without the goal being true: weakening, skipping or
    deleting a test; mocking the hard part; special-casing the failing input; swallowing an error; widening a timeout
    or tolerance; quietly narrowing scope. The correct route fixes the problem where it starts and still holds as the
@@ -55,20 +54,21 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
    `shortcut taken — real fix owed` until the real fix lands. A project's CLAUDE.md wins where it says otherwise:
    one may forbid a labelled shortcut as the state an item closes on, allowing it only as a step inside the work.
 6. **Widen and refine (L):** the second round, as `REFERENCE.md` gives it.
-7. **Evidence where cheap:** a prototype, a failing test, a measurement. Name the source of any claim about a
-   library, SDK or platform, or say it is unverified.
-8. **Recommend in plain English** (the route, why it beats the others, what it costs), then act or ask by depth. At L
-   the message ends with the menu and one question.
+7. **Assumptions, then evidence.** Name the assumptions the pick rests on (a size, a version, a rule, what the data
+   holds) and check each one a read or a command can settle; an unsettled one takes the route that holds either way, or a
+   question, never a bet. Test the route where cheap (a prototype, a failing test). Name the source of any claim about a library, SDK or platform, or say it is unverified.
+8. **Recommend in plain English** (the route, why it beats the others, what it costs, what was tested and what is
+   argued), then act or ask by depth. At L the message ends with the menu and one question.
 9. **Record, in the project's own tree.** Every call is a row in the greenman ledger of the call's lane; M and L also
    write a `G-<n>-<slug>.md` beside it. **Which lane:** the lane of the roadmap item the work serves; else the lane
    whose pin this session read first; else the project's, and the report says so. **Where:** that lane's `decisions:` folder in the doc map (`## Doc map`, or
    `## Doc map: lane <name>`), else `<project root>/knowledge/decisions/` (`docs/decisions/` in a project without
    `knowledge/`). **None exists:** create it there, add `decisions: <path>` to the doc map and say so. Never in the pack
-   folder. **The id** is `closeout.py facts` → `next_decision_id` (`closeout.py` sits in the closeout skill's folder
-   beside this one: never search the disk for it), never reused or changed. Commit records by name with the work they decided; if the turn commits nothing, say in the report that the
-   record is uncommitted. **Read `REFERENCE.md` in this skill's base directory before writing either**: formats,
-   statuses, columns. Never edit the roadmap. **When the task forbids edits** (a review or an audit that says "do
-   not edit anything"), that instruction wins: the call is still made and reported, no row or file is written, and
+   folder. **The id** is `closeout.py facts` → `next_decision_id` (in the closeout skill's folder beside this one:
+   never search the disk for it), never reused or changed. Commit records by name with the work they decided, or say
+   the record is uncommitted. **Read `REFERENCE.md` in this skill's base directory before writing either**: formats,
+   statuses, columns. **When the task forbids edits** (a review or an audit that says "do not edit anything"), that
+   instruction wins: the call is still made and reported, no row or file is written, and
    the line reads `held — no edits allowed (<depth> call in the report)`.
 
 ## Pushback — when the user's route loses
@@ -78,14 +78,13 @@ taste): say so **before acting, at the top, in plain English**: what you would d
 and what it costs if the user goes ahead. **Once.** Then **wait for the user's answer**; never carry out your route in place
 of the user's. If the user reaffirms, it is the user's call: do it, and **in the same turn** add a ledger row
 `ruled by the user <date>: <the user's words>` with what you recommended and why (and the `G-` file at M or L), and say where
-you recorded it. Do not raise it again without new evidence. With redman on, it is one pushback per suggestion
-between the two skills, and greenman's ledger holds the ruling.
+you recorded it. With redman on, it is one pushback between the two skills; greenman's ledger holds the ruling.
 
 ## How it surfaces
 
 The eli5 receipt's `Greenman:` line, directly under `Redman:`; the forms are listed once, in the eli5 skill's
 `SKILL.md` (the `eli5` folder beside this skill's base directory); without eli5 the same line closes the turn: read
-that list for its form. An L call's question also goes in Need from you. S calls are never listed in chat.
+that list for its form. An L call's question also goes in Need from you.
 
 ## Never
 
