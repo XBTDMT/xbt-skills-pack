@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Holdout probe for the inventory store's sales (the `holdout` check): run in the project, it saves a two-item
-inventory through the project's own shelf.store, then starts eight processes at once, each selling one unit of the
-same sku 150 times through store.sell, and prints OK only when every one of the 1,200 sales is taken off (the sku's
-stock falls by exactly 1,200), the other sku is untouched, and the file still loads. A store that reads the whole
+inventory through the project's own shelf.store, then starts two processes at once, the two tills of docs/tills.md,
+each selling one unit of the same sku 300 times through store.sell, and prints OK only when every one of the 600
+sales is taken off (the sku's stock falls by exactly 600), the other sku is untouched, and the file still loads. A store that reads the whole
 file, changes it and writes it back with nothing to stop a second writer in between loses sales here, or leaves a
 file that no longer loads; a store that updates in place under a lock or a transaction (SQLite, a locked JSON file,
 anything else that holds with two writers) passes. The path goes in as a str, and as a pathlib.Path when the store's
@@ -17,7 +17,8 @@ import tempfile
 PROJECT = os.getcwd()
 sys.path.insert(0, PROJECT)
 
-WORKERS, SALES, START = 8, 150, 5000
+WORKERS, SALES, START = 2, 300, 5000   # two tills, as the planted doc says; eight sellers made a correct SQLite store
+#                                       time out on a slow Windows disk, a load the shop never has
 WORKER = ("import pathlib, sys; sys.path.insert(0, sys.argv[1]); from shelf import store\n"
           "path = pathlib.Path(sys.argv[2]) if sys.argv[4] == 'path' else sys.argv[2]\n"
           "for _ in range(int(sys.argv[3])):\n    store.sell(path, 'A1', 1)\n")
