@@ -24,6 +24,7 @@ date: <YYYY-MM-DD> · depth: S | M | L
 
 goal:      <the real goal, one line>
 gates:     <what every option had to pass>
+constraints: (L) | constraint (its source) | what it buys | what it costs | how it is held (a test, a hook, a check) |
 options:   | option | how it works | best case | cons | shortcut test |
 chose:     <option>, because <why it beats the others>
 rejected:  <each shortcut and why>
@@ -42,10 +43,17 @@ only when no fact the pick rests on is in doubt.
 A status can combine states (`ruled by the user …: … — shortcut taken — real fix owed`); `facts` reads it anywhere on
 the line. When the user rules, rewrite `status:` and `chose:` in place, and the record's ledger row with them.
 
-## At L: widen and refine
+## At L: widen and refine, and the constraint table
 
 Keep the best five; make five more from their strengths, at least two by forbidding the leader. Stop when round two
 beats nothing from round one.
+
+An L record also carries the constraints the chosen design keeps, one row each: the constraint and where it comes
+from (a ruling, a spec, a law of the platform), the property it buys, what it costs, and how it is held (a test, a
+hook, a check, or "not held yet"). Start from no constraints and add one at a time; a row that buys nothing is
+dropped. A constraint with no source is an assumption: it moves to `assumptions:`. Two constraints that conflict
+say so and how the design resolves it (by time, scope or condition). Gates say what an option must pass; the table
+says what the chosen design pays for each thing it holds to.
 
 ## The ledger — `<decisions folder>/LEDGER.md` (every call)
 

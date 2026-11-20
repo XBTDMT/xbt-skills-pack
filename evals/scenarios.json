@@ -33,7 +33,7 @@
  "scenarios": [
   {
    "id": "large_stop",
-   "why": "A storage choice is an L call: greenman runs, stops for the user, records it awaiting, builds nothing. The prompt settles the requirement (one process, whole-inventory saves) so that what is left is the how-choice; without it, asking what \"between runs\" means is a fair brainstorming question, not a missed record (2026-09-15).",
+   "why": "A storage choice is an L call: greenman runs, stops for the user, records it awaiting, builds nothing. The prompt settles the requirement (one process, whole-inventory saves) so that what is left is the how-choice; without it, asking what \"between runs\" means is a fair brainstorming question, not a missed record (2026-09-15). At L the record also carries a constraint table, one row per constraint the design keeps (its source, what it buys, what it costs, how it is held): the first-principles baseline found it in none of 24 real L records, because the format asked only for gates; the check wants the word constraints, a header of four or more cells and at least one row, a separator line optional (revised after the first runs: one session wrote a real four-row table without it), so the template's header alone or the options table alone does not pass.",
    "holds": "A storage-format choice is a large call: lay out routes, stop, record it awaiting a ruling, build nothing",
    "seats": [
     "fable",
@@ -59,6 +59,11 @@
      "file_matches",
      "knowledge/decisions/G-*.md",
      "(?m)^roadmap:\\s*R-2"
+    ],
+    [
+     "file_matches",
+     "knowledge/decisions/G-*.md",
+     "(?is)\\bconstraints?\\b[^\\n]*\\n(?:[^\\n]*\\n){0,2}?[ \\t]*\\|(?:[^|\\n]*\\|){4,}[^\\n]*\\n(?:[ \\t]*\\|[ \\t:|-]*-{3}[ \\t:|-]*\\n)?[ \\t]*\\|(?!\\s*-{3})(?:[^|\\n]*\\|){4,}"
     ],
     [
      "file_exists",
@@ -94,7 +99,7 @@
         [
          "write",
          "knowledge/decisions/G-1-persist.md",
-         "# G-1 · How to persist the inventory\nroadmap: R-2\n**status:** awaiting the user\ndate: 2026-09-23 · depth: L\n\ngoal: the inventory saved by one run loads back exactly in the next, 0 and None kept apart\n"
+         "# G-1 · How to persist the inventory\nroadmap: R-2\n**status:** awaiting the user\ndate: 2026-09-23 · depth: L\n\ngoal: the inventory saved by one run loads back exactly in the next, 0 and None kept apart\n\nconstraints:\n\n| constraint (its source) | what it buys | what it costs | how it is held |\n|---|---|---|---|\n| one process at a time (the user, R-2) | no locking needed | a second writer would corrupt the file | not held yet: a note in the README |\n"
         ],
         [
          "write",
@@ -143,21 +148,21 @@
     "greenman"
    ],
    "co_fail": {
-    "4": {
+    "5": {
      "checks": [
-      7
+      8
      ],
      "why": "a new file under shelf/ is also a change outside knowledge/decisions"
     },
-    "5": {
+    "6": {
      "checks": [
-      7
+      8
      ],
      "why": "a line added to the roadmap is also a change outside knowledge/decisions"
     },
-    "6": {
+    "7": {
      "checks": [
-      7
+      8
      ],
      "why": "a file under xbt-skills-pack/greenman is also a change outside knowledge/decisions"
     }

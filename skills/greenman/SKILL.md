@@ -53,10 +53,10 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
    project grows. A labelled shortcut can be right, never a silent one: its record says
    `shortcut taken — real fix owed` until the real fix lands. A project's CLAUDE.md wins where it says otherwise:
    one may forbid a labelled shortcut as the state an item closes on, allowing it only as a step inside the work.
-6. **Widen and refine (L):** the second round, as `REFERENCE.md` gives it.
+6. **Widen and refine (L):** the second round and the constraint table, as `REFERENCE.md` gives them.
 7. **Assumptions, then evidence.** Name the assumptions the pick rests on (a size, a version, a rule, what the data
    holds) and check each one a read or a command can settle; an unsettled one takes the route that holds either way, or a
-   question, never a bet. Test the route where cheap (a prototype, a failing test). Name the source of any claim about a library, SDK or platform, or say it is unverified.
+   question, never a bet. Test the route where cheap (a prototype, a failing test). Name the source of any claim about a library or platform, or say it is unverified.
 8. **Recommend in plain English** (the route, why it beats the others, what it costs, what was tested and what is
    argued), then act or ask by depth. At L the message ends with the menu and one question.
 9. **Record, in the project's own tree.** Every call is a row in the greenman ledger of the call's lane; M and L also
@@ -66,8 +66,7 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
    `knowledge/`). **None exists:** create it there, add `decisions: <path>` to the doc map and say so. Never in the pack
    folder. **The id** is `closeout.py facts` → `next_decision_id` (in the closeout skill's folder beside this one:
    never search the disk for it), never reused or changed. Commit records by name with the work they decided, or say
-   the record is uncommitted. **Read `REFERENCE.md` in this skill's base directory before writing either**: formats,
-   statuses, columns. **When the task forbids edits** (a review or an audit that says "do not edit anything"), that
+   the record is uncommitted. **Read `REFERENCE.md` in this skill's base directory before writing either.** **When the task forbids edits** (a review or an audit that says "do not edit anything"), that
    instruction wins: the call is still made and reported, no row or file is written, and
    the line reads `held — no edits allowed (<depth> call in the report)`.
 

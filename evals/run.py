@@ -2754,12 +2754,18 @@ def _run_cases(runs_root, record):
 
 
 def last_run_line(selection, path=None, cases=None, runs_root=None):
-    """The dry run's last-run line. `only` names an ad-hoc set, so it is matched on that set's scenarios and seats (each
-    run's own grades.json under runs_root), never on the kind alone; quick, seat and full are matched by kind."""
+    """The dry run's last-run line. `only` and `repeat` name an ad-hoc set, so each is matched on that set's scenarios
+    and seats (each run's own grades.json under runs_root), never on the kind alone, a repeat whatever its number of
+    repeats; quick, seat and full are matched by kind."""
     last = [r for r in read_runs(path) if r.get("selection") == selection]
-    if selection == "only" and cases is not None:
-        want = sorted([s["id"], st] for s, st in cases)
-        last = [r for r in last if _run_cases(runs_root or Path.home() / "xbt-evals", r) == want]
+    if selection in ("only", "repeat") and cases is not None:
+        root = runs_root or Path.home() / "xbt-evals"
+        if selection == "only":
+            want = sorted([s["id"], st] for s, st in cases)
+            last = [r for r in last if _run_cases(root, r) == want]
+        else:
+            want = sorted({(s["id"], st) for s, st in cases})
+            last = [r for r in last if sorted({tuple(c) for c in _run_cases(root, r) or []}) == want]
         if not last:
             return "last run of this selection: none recorded for these cases"
     if not last:

@@ -4008,6 +4008,26 @@ class RunLog(unittest.TestCase):
         self.assertEqual(last("--only", "pushback_ruling", "--seat", "opus55"),
                          "last run of this selection: none recorded for these cases")
 
+    def test_a_repeat_dry_run_names_the_last_repeat_of_the_same_cases(self):
+        """Ledger row 2026-11-18 (misleading figure): a repeated `--only` is recorded as `repeat`, and the dry run
+        matched it on the kind alone, so `--only assumption_unread --repeat 3`, never run, printed full_flow's repeat
+        run (0/4, $15.70). A repeat is matched on its scenarios and seats, whatever the number of repeats."""
+        def last(*argv):
+            with mock.patch.object(evals, "RUNS_FILE", self.runs), contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(evals.main(["--dry-run", *argv, "--out", str(self.root)]), 0)
+            return out.getvalue().strip().splitlines()[-1]
+        self.mkrun("20261115-004609", [("full_flow-fable", [("2.1.323", 15.7)])])     # a repeat's grades name each
+        self.mkrun("20261118-150344", [("refusal-fable", [("2.1.323", 0.4)]),         # case once per repeat; the
+                                       ("refusal-opus55", [("2.1.323", 0.4)])])     # match reads their set
+        self.runs.write_text("".join(json.dumps(r) + "\n" for r in (
+            {"run": "20261115-004609", "date": "2026-11-15", "selection": "repeat", "cases": 4, "passed": 0, "cost": 15.7},
+            {"run": "20261118-150344", "date": "2026-11-18", "selection": "repeat", "cases": 4, "passed": 4, "cost": 0.8})),
+            encoding="utf-8")
+        self.assertEqual(last("--only", "pushback_ruling", "--repeat", "3"),
+                         "last run of this selection: none recorded for these cases")
+        self.assertEqual(last("--only", "refusal", "--repeat", "3"),
+                         "last run of this selection: 2026-11-18 4/4 $0.80 (20261118-150344)")
+
 
 
 class Repeats(unittest.TestCase):
