@@ -1,6 +1,6 @@
 ---
 name: greenman
-description: Use whenever a real choice comes up, or a fix fails or is ruled out by a constraint (never a permission refusal) and the goal still stands - before a design, architecture, data model, storage format, library or fix is picked; when starting a roadmap item whose route is not chosen ("let's start on R-2"), including mid-brainstorm when a turn would stop for the user with competing routes on the table; when the user proposes a route, asks for what looks like a shortcut (change a test to match the code, silence a failure) or reaffirms after pushback; or on "/greenman", "options for", "what's the best way", "is this a shortcut". Lays out routes that genuinely differ, runs the shortcut test, picks the long-term route at a depth matched to the stakes, acts or asks by that depth, and records the call. Redman's partner - redman keeps watch, greenman makes the call.
+description: Use whenever a real choice comes up, or a fix fails or is ruled out by a constraint (never a permission refusal) and the goal still stands - before a design, architecture, data model, storage format, library or fix is picked; when starting a roadmap item whose route is not chosen ("let's start on R-2"), including mid-brainstorm when a turn would stop for the user with competing routes on the table; before pushing back on a route the user proposes for such a choice (the pushback is this run, its record awaiting a ruling); when the user asks for what looks like a shortcut (change a test to match the code, silence a failure) or reaffirms after pushback; or on "/greenman", "options for", "what's the best way", "is this a shortcut". Lays out routes that genuinely differ, runs the shortcut test, picks the long-term route at a depth matched to the stakes, and records the call. Redman's partner - redman keeps watch, greenman makes the call.
 ---
 
 # /greenman — find the route that really reaches the goal, and say why
@@ -19,11 +19,11 @@ proposes a route on such a choice; when asked; and at three moments easy to miss
 - **A limit is about to be reported** ("it can't", "won't be able to", "out of scope", "not supported"): that is a
   choice to stop. Find the routes that reach the goal and try one first. A limit that stands is reported with
   what was tried, what blocked it and what it would take.
-- **A turn ends with routes for the user**: it asks him to pick, or leaves a pick he reserved ("I'll pick"). That is a
+- **A turn ends with routes for the user**: it asks them to pick, or leaves a pick they reserved ("I'll pick"). That is a
   call awaiting the user: record it that turn, at its own depth.
 
 **Not** on a permission refusal or sandbox block: that is the user's red, not a problem to route around. Report
-it and wait; never run the denied operation again in another form (split out of a combined command, `git -C`, another path, its pieces one by one); the denied part of a combined command stays undone. Not on taste (a name, a wording: the user's), or
+it and wait; never run the denied operation again in any form. Not on taste (a name, a wording: the user's), or
 on a choice with one sensible answer (do it). Brainstorming settles *what*; greenman settles *how*.
 
 ## The run
@@ -74,18 +74,19 @@ on a choice with one sensible answer (do it). Brainstorming settles *what*; gree
 
 When the user's route is wrong (incorrect, a shortcut, a real risk, or against evidence or the user's recorded rulings; never
 taste): say so **before acting, at the top, in plain English**: what you would do instead, why in a sentence or two,
-and what it costs if the user goes ahead. **Once.** Then **wait for the user's answer**; never carry out your route in place
-of the user's. If the user reaffirms, it is the user's call: do it, and **in the same turn** add a ledger row
-`ruled by the user <date>: <the user's words>` with what you recommended and why (and the `G-` file at M or L), and say where
-you recorded it. With redman on, it is one pushback between the two skills; greenman's ledger holds the ruling.
+and what it costs if the user goes ahead. **On an M or L choice the pushback is this run:** the reply carries its menu (at
+L, the constraint table) and the record is written `awaiting`. **Once.** Then **wait for the user's answer**; never carry
+out your route in place of the user's. If the user reaffirms, it is the user's call: do it, and **in the same turn** add a ledger
+row `ruled by the user <date>: <the user's words>` with what you recommended and why (and the `G-` file at M or L), and say
+where you recorded it. With redman on, it is one pushback between the two skills; greenman's ledger holds the ruling.
 
 ## How it surfaces
 
 The eli5 receipt's `Greenman:` line, directly under `Redman:`; the forms are listed once, in the eli5 skill's
-`SKILL.md` (the `eli5` folder beside this skill's base directory); without eli5 the same line closes the turn: read
+`SKILL.md`; without eli5 the same line closes the turn: read
 that list for its form. An L call's question also goes in Need from you.
 
 ## Never
 
-Take a shortcut silently. Treat a refusal as a problem to solve, or run a denied operation again in any form. List an option only to lose. Pad to a number. Score
+Take a shortcut silently. Treat a refusal as a problem to solve. List an option only to lose. Pad to a number. Score
 options. Edit the roadmap. Reopen a ruled decision without new evidence. Debate taste.

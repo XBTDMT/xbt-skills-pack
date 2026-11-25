@@ -73,5 +73,8 @@
   "cc-plugin-plugin-authoring@builtin",
   "cc-plugin-privacy@builtin"
  ],
+ "builtin_plugins_off": [
+  "cc-plugin-easel@builtin"
+ ],
  "cli_version": "2.1.323"
 }

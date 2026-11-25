@@ -27,7 +27,8 @@ Two different things are measured, and they are not the same claim:
    sealed set of eight tasks, built on 16 November and run twice per setup, Fable 5.2 low scored <!-- fig:doctrine.h4.mean.fable52_page -->97.3<!-- /fig --> with its
    page against <!-- fig:doctrine.h4.mean.fable52_bare -->91.6<!-- /fig --> without one (<!-- fig:doctrine.h4.gap.fable52 -->+5.7<!-- /fig -->: <!-- fig:doctrine.h4.verdict.fable52 -->better, just past the 5-point rule<!-- /fig -->), the first result here
    past the rule on tasks no page was written from and whose misses nobody has read; Opus 5.5 medium scored
-   <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> against <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig --> (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->).
+   <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> against <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig --> (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->). Two one-sentence revisions to those two pages
+   since, each run on the same set beside the page it replaced, held level (Fable 5.2 <!-- fig:doctrine.h4.gap.fable52_announced -->−0.9<!-- /fig -->, Opus 5.5 <!-- fig:doctrine.h4.gap.opus55_pushback -->+1.1<!-- /fig -->) and are the pages that ship.
 
 Neither question is "does this make your code better", and nothing here answers that.
 
@@ -187,6 +188,8 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-18 | 19 (quick) | **19 / 19** | — |
 | 2026-11-19 | 19 (quick) | **19 / 19** | — |
 | 2026-11-20 | 19 (quick) | 18 / 19 | `shell_doc_eli5` on Fable |
+| 2026-11-23 | 19 (quick) | **19 / 19** | — |
+| 2026-11-25 | 19 (quick) | **19 / 19** | — |
 
 plus 68 targeted runs (`--only`), 76/110 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -550,8 +553,8 @@ careful ones 100. The whole set is sealed, with no tuning half: its scorer print
 score and the run's mean, never which check failed, and nobody, the author included, has read why any run lost
 points. It was committed before any paid run, and it is in the private source, like the other sets.
 
-Four setups ran on 16 and 17 November 2026, one fresh session per task: Fable 5.2 low with the page that ships for
-it and with no page, and Opus 5.5 medium with the page that ships for it and with no page. Each setup ran twice,
+Four setups ran on 16 and 17 November 2026, one fresh session per task: Fable 5.2 low with the page that shipped for
+it then and with no page, and Opus 5.5 medium with the page that shipped for it then and with no page. Each setup ran twice,
 hours apart, <!-- fig:doctrine.h4.runs -->8<!-- /fig --> runs for <!-- fig:doctrine.h4.cost_total -->$90.54<!-- /fig --> in all.
 
 | setup | first run | repeat | mean of the two | cost, first and repeat |
@@ -580,6 +583,24 @@ were wrong on the runs without a page (both models scored above the predicted ra
 Fable's gap, predicted at 3 to 5 points. Because the set stays sealed, nothing here says which checks the page
 changed: that is the price of a set that can be used again. The message checks are heuristics tuned never to fail an
 honest message, so some dishonest phrasings pass. Nothing was promoted or changed on these runs.
+
+Two page revisions since (24 November 2026). Each adds one sentence to the page's paragraph on pushing back, aimed
+at a habit a private set of two-turn tasks showed missing under pressure, where it moved that habit from absent to
+present in the first turn. The Opus 5.5 page's sentence makes a pushback on a real choice the greenman run itself, so
+the reply carries its options and its record waits for the user's answer. The Fable 5.2 page's sentence says a
+decision the user announces before the session has advised on it is not yet a ruling on that advice, so the session
+names the route it takes (reusing what the project has, deriving it, or adding a dependency) with a reason of its own.
+Before either shipped, each ran once on this sealed set beside the page it replaced, the same day, one fresh session
+per task, under a rule written first: the new page holds if it scores no more than <!-- fig:doctrine.h4.rule -->5<!-- /fig --> below the old one.
+
+| setup | new page | page it replaced | gap | verdict | cost, new and old |
+|---|---|---|---|---|---|
+| Opus 5.5 medium | <!-- fig:doctrine.h4.4OG.exact -->98.2<!-- /fig --> | <!-- fig:doctrine.h4.4OGC.exact -->97.1<!-- /fig --> | <!-- fig:doctrine.h4.gap.opus55_pushback -->+1.1<!-- /fig --> | <!-- fig:doctrine.h4.verdict.opus55_pushback -->holds<!-- /fig --> | <!-- fig:doctrine.h4.4OG.cost -->$7.65<!-- /fig -->, <!-- fig:doctrine.h4.4OGC.cost -->$8.00<!-- /fig --> |
+| Fable 5.2 low | <!-- fig:doctrine.h4.4FG.exact -->97.1<!-- /fig --> | <!-- fig:doctrine.h4.4FGC.exact -->98.0<!-- /fig --> | <!-- fig:doctrine.h4.gap.fable52_announced -->−0.9<!-- /fig --> | <!-- fig:doctrine.h4.verdict.fable52_announced -->holds<!-- /fig --> | <!-- fig:doctrine.h4.4FG.cost -->$17.37<!-- /fig -->, <!-- fig:doctrine.h4.4FGC.cost -->$16.31<!-- /fig --> |
+
+Both pairs are level, inside the spread of one setup's two runs above, so this shows the sentences cost nothing
+measurable on tasks they were not written for, not that they improve them; the set stays sealed, and nobody read
+why any of these runs lost points. These are the pages that ship now.
 
 ### What the benchmark does not show
 
@@ -777,8 +798,8 @@ version to reproduce the runs on this page. `--probe` launches on another versio
 check as unreviewed, never a pass, so its results are not comparable with the run table's until that version's
 lists are reviewed into `evals/sealed.json`.
 
-As this tree ships: <!-- fig:tests.public -->587<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.71<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->623<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.86<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. A

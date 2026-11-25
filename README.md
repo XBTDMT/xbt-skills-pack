@@ -156,7 +156,9 @@ hallucination at the token level. The full method, every run, and what is still 
   sealed half and promoted the same day. That sealed half was then read, so a second sealed set of eight tasks was
   built on 16 November and each setup run twice: Fable 5.2 low scored <!-- fig:doctrine.h4.mean.fable52_page -->97.3<!-- /fig --> with its page against <!-- fig:doctrine.h4.mean.fable52_bare -->91.6<!-- /fig -->
   without one (<!-- fig:doctrine.h4.gap.fable52 -->+5.7<!-- /fig -->: <!-- fig:doctrine.h4.verdict.fable52 -->better, just past the 5-point rule<!-- /fig -->), Opus 5.5 medium <!-- fig:doctrine.h4.mean.opus55_page -->95.9<!-- /fig --> against <!-- fig:doctrine.h4.mean.opus55_bare -->91.7<!-- /fig -->
-  (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->); nobody has read why any run lost points, so the set can be used again. Details in [`docs/evidence.md`](docs/evidence.md#a-held-out-set-eight-tasks-no-doctrine-page-was-written-from).
+  (<!-- fig:doctrine.h4.gap.opus55 -->+4.2<!-- /fig -->: <!-- fig:doctrine.h4.verdict.opus55 -->level within noise<!-- /fig -->); nobody has read why any run lost points, so the set can be used again. Two one-sentence revisions to those two
+  pages since, each run on the same set beside the page it replaced, held level (Fable 5.2 <!-- fig:doctrine.h4.gap.fable52_announced -->−0.9<!-- /fig -->, Opus 5.5 <!-- fig:doctrine.h4.gap.opus55_pushback -->+1.1<!-- /fig -->) and are the pages
+  that ship. Details in [`docs/evidence.md`](docs/evidence.md#a-held-out-set-eight-tasks-no-doctrine-page-was-written-from).
 - **An eval for the close-out ceremony** — `/closeout` and `/project-update` are the two skills the graded suite
   does not yet cover end to end; a scenario for each is planned, then their long reference document is trimmed the
   way greenman's and redman's were.
@@ -188,7 +190,7 @@ hallucination at the token level. The full method, every run, and what is still 
 
 | Piece | What it is for |
 |---|---|
-| `skills/greenman/` | Always on. At a real choice or a failed fix: routes that work differently, the shortcut test on each, the correct long-term route at a depth matched to the stakes, and a record in the project's decisions folder. The record names the assumptions the pick rests on, checked or not, and tells what was tested from what is argued; an assumption that cannot be checked gets the route that holds either way, never a bet. A big design call's record also carries a constraint table: each constraint the design keeps, where it comes from, what it buys, what it costs and how it is held. `REFERENCE.md` holds the record formats. |
+| `skills/greenman/` | Always on. At a real choice or a failed fix: routes that work differently, the shortcut test on each, the correct long-term route at a depth matched to the stakes, and a record in the project's decisions folder. The record names the assumptions the pick rests on, checked or not, and tells what was tested from what is argued; an assumption that cannot be checked gets the route that holds either way, never a bet. A big design call's record also carries a constraint table: each constraint the design keeps, where it comes from, what it buys, what it costs and how it is held. Pushing back on a route you proposed for such a call is the run itself: the menu goes in the reply and the record waits for your answer. `REFERENCE.md` holds the record formats. |
 | `skills/redman/` | `/redman` (manual only): a failed step answers what failed, why and the goal it served; side findings are sized, filed to the project's ledger and asked now-or-later. `/redman <path>` interrogates one document until nothing is undecided (`DEEP-RUN.md`). |
 | `skills/eli5/` | `/eli5`: every substantial answer ends with a fixed receipt (did, why, result, proof, files; redman, greenman; next, what it needs from you; the goal, then one sentence). |
 | `skills/doc-guardrails/` | Everything links to the roadmap. `LINKING.md` is the contract. Three layers: `turn_check.py` (end of every turn, for the documents that session wrote, named or committed; installed by default), `hook.py` (right after each Write or Edit; installed by default, Windows included) and a per-project commit gate `/closeout` registers, which catches the rest. Reports; never edits. |
@@ -336,8 +338,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->587<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.71<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->623<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$10.86<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,

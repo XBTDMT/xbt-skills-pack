@@ -1470,6 +1470,31 @@ class SealedAndLayer(unittest.TestCase):
     def verdict(self, case, name="sealed", scenario=None):
         return self.auto(case, scenario)[name]
 
+    def test_a_built_in_plugin_the_manifest_switches_off_fails_when_it_loads(self):
+        """A built-in plugin a server flag turns on for the account reached some sessions of one batch and not
+        others: the manifest switches it off, and a session that still loads it fails by name."""
+        self.manifest(builtin_plugins_off=["easel@builtin"])
+        plugins = self.init()["plugins"]
+        on = self.init(plugins=plugins + [{"name": "easel", "path": "builtin", "source": "easel@builtin"}])
+        passed, detail = self.verdict(self.case(init=on))
+        self.assertFalse(passed)
+        self.assertIn("switched off in the sealed settings but loaded: easel@builtin", detail)
+        self.assertNotIn("not reviewed", detail)
+        self.assertTrue(self.verdict(self.case())[0])                          # off and absent: sealed
+        other = self.init(plugins=plugins + [{"name": "tips", "path": "builtin", "source": "tips@builtin"}])
+        passed, detail = self.verdict(self.case(init=other))                   # neither reviewed nor off
+        self.assertFalse(passed)
+        self.assertIn("built-in plugin(s) not reviewed: tips@builtin", detail)
+
+    def test_a_switched_off_plugin_must_be_a_built_in_one_and_not_reviewed_as_on(self):
+        problems = evals.manifest_problems({"builtin_plugins": ["agents-md@builtin"],
+                                            "builtin_plugins_off": ["agents-md@builtin", "easel"]})
+        self.assertEqual(problems, [
+            "the manifest's builtin_plugins_off holds easel, which is not a built-in plugin id (<name>@builtin)",
+            "the manifest's builtin_plugins_off holds agents-md@builtin, which builtin_plugins also reviews as on"])
+        self.assertEqual(evals.manifest_problems(json.loads((Path(evals.HERE) / "sealed.json").read_text(
+            encoding="utf-8"))), [])                                           # the real manifest is usable
+
     def test_layer_check(self):
         good = self.auto(self.case())
         self.assertEqual((good["layer"][0], good["sealed"][0]), (True, True), good)
@@ -1563,6 +1588,17 @@ class SealedAndLayer(unittest.TestCase):
         passed, detail = self.verdict(self.case(init=demo2), scenario={"id": "t", "fixture_skills": ["demo"]})
         self.assertFalse(passed)
         self.assertIn("demo2", detail)
+        # a git fixture's own skills, read from its commit; an unreadable fixture fails, never passes
+        with mock.patch.object(evals.Suite, "fixture_skills", lambda self: frozenset({"demo"})):
+            self.assertTrue(self.verdict(self.case(init=demo))[0])
+            self.assertIn("demo2", self.verdict(self.case(init=demo2))[1])
+
+        def unreadable(self):
+            raise RuntimeError("the fixture's skills could not be read at 000000000000: bad object")
+        with mock.patch.object(evals.Suite, "fixture_skills", unreadable):
+            passed, detail = self.verdict(self.case())
+            self.assertFalse(passed)
+            self.assertIn("could not be read", detail)
         # account-supplied entries: the harvested 2.1.280 init
         synced = json.loads((SHAPES / "init_synced_2_1_280.json").read_text(encoding="utf-8"))
         passed, detail = self.verdict(self.case(init=synced))
@@ -2000,7 +2036,8 @@ class SealedBuilder(unittest.TestCase):
         settings = self.settings()
         self.assertEqual(self.built_keys(settings), self.expected(m))           # every entry logged
         self.assertNotIn("hooks", m)                                             # no literal hook list (R-25)
-        self.assertEqual({k: v for k, v in settings.items() if k != "hooks"}, self.KEYS)
+        self.assertEqual({k: v for k, v in settings.items() if k != "hooks"},
+                         dict(self.KEYS, **({"enabledPlugins": evals.builtins_off(m)} if evals.builtins_off(m) else {})))
         self.assertEqual(evals.sealed_settings_problems(settings), [])
         for rel, body in ((".credentials.json", b'{"token": "x"}'), (".claude.json", b"{}"), ("plugins/synced/x", b"x"),
                           ("skills/synced/y", b"y")):
@@ -2772,7 +2809,8 @@ class RegradeAll(unittest.TestCase):
                                   text=True).stdout.strip()
         then = review(cli_version="2.1.272", bundled_skills=["a"], builtin_plugins=["b@builtin"])
         review(cli_version="2.1.283", bundled_skills=["a"], builtin_plugins=["b@builtin"])
-        day = {"bundled_skills": ["a"], "builtin_plugins": ["b@builtin"], "cli_version": "2.1.272"}
+        day = {"bundled_skills": ["a"], "builtin_plugins": ["b@builtin"], "cli_version": "2.1.272",
+               "builtin_plugins_off": None}
         self.assertEqual(evals.reviewed_at(self.repo, then), day)
         self.assertEqual(evals.reviewed_at(self.repo, None), {})                 # no head recorded: no override
         self.assertEqual(evals.reviewed_at(self.repo, "0" * 40), {})             # a head this repository lacks
@@ -3230,6 +3268,40 @@ class Isolation(unittest.TestCase):
             self.assertNotIn("Workflow", cmd[cmd.index("--disallowedTools"):cmd.index("--add-dir")])
         self.assertEqual(rec["env"]["allowed_tools"], ["Workflow"])            # a graded run shows the grant
         self.assertEqual(json.loads((case / "record.json").read_text())["env"]["allowed_tools"], ["Workflow"])
+
+    def test_a_suite_s_denied_tools_budget_and_case_env_reach_every_turn(self):
+        root = self.tmp / "suite"
+        (root / "fixture").mkdir(parents=True)
+        (root / "fixture" / "README.md").write_text("fixture\n", encoding="utf-8")
+        (root / "scenarios.json").write_text('{"scenarios": []}', encoding="utf-8")
+        (root / "suite.json").write_text(json.dumps({"deny_tools": ["Agent", "Workflow", "Bash(docker:*)"],
+                                                     "max_budget_usd": 6, "case_env": {"TOOL_HOME": "{case}/home"}}),
+                                         encoding="utf-8")
+        try:
+            evals.use_suite(root)
+            scenario = {"id": "d", "turns": ["SMALL", "SMALL"], "seats": ["fable"], "checks": [],
+                        "allowed_tools": ["Bash(cargo:*)"]}
+            seen = []
+            case = self.tmp / "out" / "d-fable"
+            (self.tmp / "claude-bin").write_text("#!/bin/sh\n", encoding="utf-8")
+            with mock.patch.object(evals.subprocess, "run", self.fake_claude(seen)):
+                evals.run_case(case, scenario, "fable", SPEC["prompts"], self.config, str(self.tmp / "claude-bin"),
+                               "2.1.281")
+            turns = [(c, e) for c, e in seen if "-p" in c]
+            self.assertEqual(len(turns), 2)
+            for cmd, env in turns:
+                self.assertEqual(cmd.count("--disallowedTools"), 1)
+                deny = cmd[cmd.index("--disallowedTools") + 1:cmd.index("--add-dir")]
+                for tool in ("Agent", "Workflow", "Bash(docker:*)", "Bash(git push:*)"):
+                    self.assertIn(tool, deny)
+                self.assertEqual(cmd[cmd.index("--max-budget-usd") + 1], "6")
+                self.assertEqual(env["TOOL_HOME"], f"{case}/home")
+        finally:
+            evals.SUITE = None
+        for conf, word in [({"deny_tools": ["-x"]}, "deny_tools"), ({"deny_tools": "Agent"}, "deny_tools"),
+                           ({"max_budget_usd": 0}, "max_budget_usd"), ({"max_budget_usd": "5"}, "max_budget_usd")]:
+            (root / "suite.json").write_text(json.dumps(conf), encoding="utf-8")
+            self.assertIn(word, evals.Suite(root).check() or "", conf)
 
     def test_without_allowed_tools_the_command_is_todays(self):
         plain = {"id": "p", "turns": ["SMALL", "SMALL"], "seats": ["fable"], "checks": []}
@@ -4325,6 +4397,536 @@ class Repeats(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("no run since 2026-10-01", out.getvalue())
         self.assertFalse((Path(t) / "RUNS.jsonl").exists())
+
+
+class SuiteFolder(unittest.TestCase):
+    """--suite <folder>: a suite of its own (scenarios, fixture, overlays, probes, preps, its own run log) measured by
+    the same harness; evals/ stays the default, and the only suite whose runs refill the figures."""
+
+    SCENARIO = {"id": "alpha", "seats": ["fable"], "quick": ["fable"], "turns": ["hello"],
+                "checks": [["final_matches", 1, "hello"]]}
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())   # removed by remove_tree: git's read-only objects defeat rmtree on Windows
+
+    def tearDown(self):
+        evals.SUITE = None   # the default again, for every later test
+        remove_tree(self.tmp)
+
+    def git(self, repo, *args):
+        return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@local", *args],
+                              check=True, capture_output=True, encoding="utf-8").stdout.strip()
+
+    def make_suite(self, conf=None, scenarios=None):
+        root = self.tmp / "suite"
+        root.mkdir()
+        (root / "scenarios.json").write_text(json.dumps({"scenarios": scenarios or [self.SCENARIO]}), encoding="utf-8")
+        if conf is not None:
+            (root / "suite.json").write_text(json.dumps(conf), encoding="utf-8")
+        return root
+
+    def source_repo(self):
+        """A repository with two commits: the first holds old.txt, the second adds new.txt."""
+        src = self.tmp / "source"
+        src.mkdir()
+        self.git(src, "init", "-q", "-b", "main")
+        (src / "old.txt").write_text("old\n", encoding="utf-8")
+        self.git(src, "add", "-A")
+        self.git(src, "commit", "-q", "-m", "first")
+        first = self.git(src, "rev-parse", "HEAD")
+        (src / "new.txt").write_text("new\n", encoding="utf-8")
+        self.git(src, "add", "-A")
+        self.git(src, "commit", "-q", "-m", "second")
+        return src, first
+
+    def test_the_default_suite_is_evals_and_the_only_one_that_refills_the_figures(self):
+        s = evals.use_suite(None)
+        here = Path(evals.__file__).resolve().parent
+        self.assertTrue(s.default)
+        self.assertEqual((s.scenarios, s.overlays, s.probes), (here / "scenarios.json", here / "overlays", here / "probes"))
+        self.assertEqual(s.runs_file(), evals.RUNS_FILE)
+        self.assertTrue(s.figures)
+        self.assertEqual(s.runs_root(), Path.home() / "xbt-evals")
+        self.assertFalse(evals.Suite(self.make_suite()).figures)
+
+    def test_a_suite_inside_a_folder_that_ships_is_refused(self):
+        for shipped in ("evals", "public", "tests"):
+            problem = evals.Suite(evals.PACK / shipped / "a-private-suite").check()
+            self.assertIn("which ships", problem or "")
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            code = evals.main(["--suite", str(evals.PACK / "evals" / "a-private-suite"), "--dry-run"])
+        self.assertEqual(code, 2)
+        self.assertIn("ships", err.getvalue())
+
+    def test_a_suite_needs_scenarios_and_a_whole_git_fixture(self):
+        empty = self.tmp / "empty"
+        empty.mkdir()
+        self.assertIn("no scenarios.json", evals.Suite(empty).check())
+        root = self.make_suite({"fixture": {"git": "/somewhere"}})
+        self.assertIn("fixture must be", evals.Suite(root).check())
+
+    def test_a_named_suite_logs_into_its_own_run_log_and_refills_no_figures(self):
+        root = self.make_suite({"name": "side"})
+        evals.use_suite(root)
+        out = self.tmp / "runs" / "20261120-120000"
+        out.mkdir(parents=True)
+        grades = [{"scenario": "alpha", "seat": "fable", "passed": True, "cost": 0.25, "results": []}]
+        shipped = self.tmp / "shipped-RUNS.jsonl"
+        with mock.patch.object(evals, "RUNS_FILE", shipped), mock.patch.object(evals, "refill_figures") as refill:
+            evals.log_run(out, self.tmp / "runs", grades, "quick", pack_sha="a" * 40)
+        (r,) = evals.read_runs(root / "RUNS.jsonl")
+        self.assertEqual((r["run"], r["result"], r["cost"]), ("20261120-120000", "1/1", 0.25))
+        self.assertFalse(shipped.exists())
+        refill.assert_not_called()
+        self.assertEqual(evals.suite().runs_root(), Path.home() / "xbt-evals" / "side")
+
+    def test_a_git_fixture_is_cloned_at_its_commit_with_its_own_origin_and_the_source_untouched(self):
+        src, first = self.source_repo()
+        head_before, status_before = self.git(src, "rev-parse", "HEAD"), self.git(src, "status", "--porcelain")
+        root = self.make_suite({"fixture": {"git": str(src), "commit": first}, "overlay_message": "planted"})
+        (root / "overlays" / "plant" / "docs").mkdir(parents=True)
+        (root / "overlays" / "plant" / "docs" / "note.md").write_text("a planted fact\n", encoding="utf-8")
+        evals.use_suite(root)
+        case = self.tmp / "case"
+        proj = evals.build_project(case, {"id": "t", "overlay": "plant"})
+        self.assertTrue((proj / "old.txt").is_file())
+        self.assertFalse((proj / "new.txt").exists())
+        self.assertEqual((proj / "docs" / "note.md").read_text(encoding="utf-8"), "a planted fact\n")
+        self.assertEqual(self.git(proj, "log", "--format=%s"), "planted\nfirst")
+        self.assertEqual(self.git(proj, "status", "--porcelain"), "")
+        self.assertEqual(self.git(proj, "remote", "-v").split()[:2], ["origin", "../origin.git"])
+        self.assertEqual(self.git(proj, "branch", "--show-current"), "main")
+        self.assertEqual((self.git(src, "rev-parse", "HEAD"), self.git(src, "status", "--porcelain")),
+                         (head_before, status_before))
+
+    def test_a_git_fixture_s_own_skills_are_read_from_its_commit(self):
+        """The CLI lists a fixture's `.claude/skills/<n>/SKILL.md` and `.claude/workflows/<n>.js` as skills, so
+        the sealed check reads them from the fixture's commit; a later commit's entries and other files are not."""
+        src, first = self.source_repo()
+        for rel in (".claude/skills/demo/SKILL.md", ".claude/workflows/round.js", ".claude/workflows/README.md",
+                    ".claude/skills/loose.md", ".claude/skills/demo/notes/SKILL.md"):
+            (src / rel).parent.mkdir(parents=True, exist_ok=True)
+            (src / rel).write_text("x\n", encoding="utf-8")
+        self.git(src, "add", "-A")
+        self.git(src, "commit", "-q", "-m", "skills")
+        with_skills = self.git(src, "rev-parse", "HEAD")
+        (src / ".claude" / "workflows" / "later.js").write_text("x\n", encoding="utf-8")
+        self.git(src, "add", "-A")
+        self.git(src, "commit", "-q", "-m", "later")
+        s = evals.Suite(self.make_suite({"fixture": {"git": str(src), "commit": with_skills}}))
+        self.assertEqual(s.fixture_skills(), {"demo", "round"})
+        remove_tree(self.tmp / "suite")
+        self.assertEqual(evals.Suite(self.make_suite({"fixture": {"git": str(src), "commit": first}})).fixture_skills(),
+                         set())
+        remove_tree(self.tmp / "suite")
+        self.assertEqual(evals.Suite(self.make_suite({})).fixture_skills(), set())   # no git fixture: none
+        remove_tree(self.tmp / "suite")
+        gone = evals.Suite(self.make_suite({"fixture": {"git": str(src), "commit": "0" * 40}}))
+        with self.assertRaisesRegex(RuntimeError, "could not be read"):
+            gone.fixture_skills()
+
+    def test_a_git_fixture_with_no_overlay_adds_no_commit(self):
+        src, first = self.source_repo()
+        evals.use_suite(self.make_suite({"fixture": {"git": str(src), "commit": first}}))
+        proj = evals.build_project(self.tmp / "case", {"id": "t"})
+        self.assertEqual(self.git(proj, "log", "--format=%s"), "first")
+
+    def test_a_suite_adds_its_own_preps_and_may_not_replace_the_harness_s(self):
+        root = self.make_suite({})
+        (root / "fixture").mkdir()
+        (root / "fixture" / "README.md").write_text("fixture\n", encoding="utf-8")
+        (root / "preps.py").write_text("def plant(proj, env):\n    (proj / 'planted.txt').write_text('yes')\n\n"
+                                       "PREPS = {'plant': plant}\n", encoding="utf-8")
+        evals.use_suite(root)
+        proj = evals.build_project(self.tmp / "case", {"id": "t", "prep": "plant"})
+        self.assertEqual((proj / "planted.txt").read_text(), "yes")
+        self.assertTrue((proj / "README.md").is_file())
+        name = sorted(evals.PREPS)[0]
+        (root / "preps.py").write_text(f"PREPS = {{{name!r}: None}}\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "redefines"):
+            evals.suite().preps()
+
+    def test_a_suite_s_probe_is_read_from_its_own_probes(self):
+        root = self.make_suite({})
+        (root / "probes").mkdir()
+        (root / "probes" / "says_ok.py").write_text("print('OK')\n", encoding="utf-8")
+        evals.use_suite(root)
+        proj = self.tmp / "proj"
+        proj.mkdir()
+        self.assertEqual(evals.CHECKS["holdout"].fn(["says_ok"], {"proj": proj}, {})[0], True)
+        ok, detail = evals.CHECKS["holdout"].fn(["missing"], {"proj": proj}, {})
+        self.assertFalse(ok)
+        self.assertIn("suite's probes", detail)
+
+    def test_the_selftest_and_the_dry_run_read_the_named_suite(self):
+        import selftest
+        root = self.make_suite({})
+        evals.use_suite(root)
+        self.assertEqual([s["id"] for s in selftest.load_spec()["scenarios"]], ["alpha"])
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            code = evals.main(["--suite", str(root), "--dry-run", "--quick"])
+        self.assertEqual(code, 0)
+        self.assertIn("would run alpha on fable", out.getvalue())
+        self.assertIn("totals: 1 scenarios", out.getvalue())
+        self.assertIn("none recorded", out.getvalue())
+
+
+class SuiteTestRunner(unittest.TestCase):
+    """A suite may declare its own test runner (`tests`: a command, its output's format, a timeout), the folders a
+    snapshot skips (`ignore`, such as a build folder) and the probes' timeout; tests_pass then compares test ids from
+    that runner against the baseline as it does for unittest. The default suite is unchanged."""
+
+    CARGO_OUT = "\n".join([
+        "   Compiling engine-core v0.1.0 (/p/crates/engine-core)",
+        "     Running unittests src/lib.rs (target/debug/deps/engine_core-56f1bbc924e1d010)",
+        "",
+        "running 2 tests",
+        "test money::tests::adds ... ok",
+        "test money::tests::slow ... ignored, needs postgres",
+        "",
+        "test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "     Running tests/fence_boundary.rs (target/debug/deps/fence_boundary-df913f6bf98fc003)",
+        "test the_fence_holds ... FAILED",
+        "test money::tests::adds ... ok",
+        "   Doc-tests engine_runtime",
+        "test crates/engine-runtime/src/lib.rs - ConsoleState (line 123) - compile fail ... ok",
+        "test crates/engine-runtime/src/lib.rs - ConsoleState (line 132) - compile fail ... ok",
+        "",
+        "failures:",
+        "---- the_fence_holds stdout ----",
+        "test result: FAILED. 1 passed; 1 failed; 0 ignored",
+    ])
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        evals.SUITE = None
+        remove_tree(self.tmp)
+
+    def make_suite(self, conf):
+        root = self.tmp / "suite"
+        root.mkdir()
+        (root / "scenarios.json").write_text(json.dumps({"scenarios": []}), encoding="utf-8")
+        (root / "suite.json").write_text(json.dumps(conf), encoding="utf-8")
+        return root
+
+    def printer(self, text, sleep=0):
+        """A stand-in test command: a script printing `text` (half to stderr, as cargo splits it) after `sleep` s."""
+        script = self.tmp / "printer.py"
+        lines = text.splitlines()
+        script.write_text("import sys, time\n"
+                          f"time.sleep({sleep})\n"
+                          f"for i, line in enumerate({lines!r}):\n"
+                          "    (sys.stderr if 'Running' in line or 'Doc-tests' in line else sys.stdout).write(line + '\\n')\n"
+                          "    (sys.stderr if 'Running' in line or 'Doc-tests' in line else sys.stdout).flush()\n",
+                          encoding="utf-8")
+        return [sys.executable, str(script)]
+
+    def test_cargo_output_parses_to_ids_named_by_their_binary_with_doctest_lines_dropped(self):
+        ids = evals.parse_cargo_tests(self.CARGO_OUT)
+        self.assertEqual(ids, {
+            "engine_core:unittests src/lib.rs::money::tests::adds": "ok",
+            "engine_core:unittests src/lib.rs::money::tests::slow": "skipped",
+            "fence_boundary:tests/fence_boundary.rs::the_fence_holds": "FAIL",
+            "fence_boundary:tests/fence_boundary.rs::money::tests::adds": "ok",
+            "doc:engine_runtime::crates/engine-runtime/src/lib.rs - ConsoleState - compile fail": "ok",
+            "doc:engine_runtime::crates/engine-runtime/src/lib.rs - ConsoleState - compile fail#2": "ok",
+        })
+
+    def test_a_suite_s_runner_feeds_tests_pass_and_a_gone_baseline_test_fails_it(self):
+        evals.use_suite(self.make_suite({"tests": {"command": self.printer(self.CARGO_OUT), "format": "cargo",
+                                                   "timeout": 60}}))
+        proj = self.tmp / "proj"
+        proj.mkdir()
+        ids, code, _ = evals.run_tests(proj)
+        self.assertEqual(len(ids), 6)
+        self.assertEqual(code, 0)
+        base = dict(ids)
+        base["fence_boundary:tests/fence_boundary.rs::the_fence_holds"] = "ok"
+        ok, detail = evals.CHECKS["tests_pass"].fn(["no_worse"], {"proj": proj, "record": {"baseline_tests": base}}, {})
+        self.assertFalse(ok)
+        self.assertIn("the_fence_holds", detail)
+        base["fence_boundary:tests/fence_boundary.rs::a_deleted_test"] = "ok"
+        ok, detail = evals.CHECKS["tests_pass"].fn(["no_worse"], {"proj": proj, "record": {"baseline_tests": base}}, {})
+        self.assertFalse(ok)
+        self.assertIn("baseline test(s) gone", detail)
+
+    def test_a_runner_past_its_timeout_reports_no_test_ran(self):
+        evals.use_suite(self.make_suite({"tests": {"command": self.printer("test a ... ok", sleep=5),
+                                                   "format": "cargo", "timeout": 1}}))
+        proj = self.tmp / "proj"
+        proj.mkdir()
+        ok, detail = evals.CHECKS["tests_pass"].fn([], {"proj": proj, "record": {"baseline_tests": {}}}, {})
+        self.assertFalse(ok)
+        self.assertIn("timed out after 1 s", detail)
+
+    def test_a_malformed_runner_ignore_or_probe_timeout_is_refused(self):
+        for conf, word in [({"tests": {"command": "cargo test", "format": "cargo"}}, "tests"),
+                           ({"tests": {"command": ["cargo", "test"], "format": "pytest"}}, "format"),
+                           ({"tests": {"command": ["cargo", "test"], "format": "cargo", "timeout": 0}}, "timeout"),
+                           ({"ignore": ["target/debug"]}, "ignore"),
+                           ({"probe_timeout": "long"}, "probe_timeout")]:
+            root = self.make_suite(conf)
+            self.assertIn(word, evals.Suite(root).check() or "", conf)
+            remove_tree(root)
+
+    def test_a_snapshot_skips_the_suite_s_ignored_folders_and_the_default_keeps_them(self):
+        proj = self.tmp / "proj"
+        (proj / "target" / "debug").mkdir(parents=True)
+        (proj / "target" / "debug" / "build.o").write_text("x", encoding="utf-8")
+        (proj / "src").mkdir()
+        (proj / "src" / "lib.rs").write_text("fn f() {}\n", encoding="utf-8")
+        self.assertIn("target/debug/build.o", evals.snapshot(proj))
+        evals.use_suite(self.make_suite({"ignore": ["target"]}))
+        self.assertEqual(sorted(evals.snapshot(proj)), ["src/lib.rs"])
+
+    def test_the_case_env_reaches_the_test_run_and_the_probe_with_the_case_s_folder(self):
+        script = self.tmp / "says_home.py"
+        script.write_text("import os\nprint('test ' + os.environ['TOOL_HOME'] + ' ... ok')\n", encoding="utf-8")
+        root = self.make_suite({"tests": {"command": [sys.executable, str(script)], "format": "cargo"},
+                                "case_env": {"TOOL_HOME": "{case}/tool-home"}})
+        (root / "probes").mkdir()
+        (root / "probes" / "home.py").write_text("import os\nprint('OK' if os.environ['TOOL_HOME'].endswith("
+                                                 "'case/tool-home') else os.environ['TOOL_HOME'])\n", encoding="utf-8")
+        evals.use_suite(root)
+        case = self.tmp / "case"
+        (case / "project").mkdir(parents=True)
+        ids, _, _ = evals.run_tests(case / "project")
+        self.assertEqual(list(ids), [f"?::{case}/tool-home"])
+        self.assertEqual(evals.CHECKS["holdout"].fn(["home"], {"proj": case / "project"}, {})[0], True)
+        self.assertEqual(evals.Suite().case_env(case), {})
+        bad = self.tmp / "bad"
+        bad.mkdir()
+        (bad / "scenarios.json").write_text('{"scenarios": []}', encoding="utf-8")
+        (bad / "suite.json").write_text('{"case_env": {"TOOL_HOME": 3}}', encoding="utf-8")
+        self.assertIn("case_env", evals.Suite(bad).check())
+
+    def test_a_cargo_suite_s_test_violation_removes_a_rust_test_file_and_skips_ignored_folders(self):
+        import selftest
+        evals.use_suite(self.make_suite({"tests": {"command": ["cargo", "test"], "format": "cargo"},
+                                         "ignore": ["target"]}))
+        proj = self.tmp / "proj"
+        for rel in ("crates/a/tests/fence.rs", "crates/b/tests/teeth.rs", "target/debug/tests/built.rs"):
+            (proj / rel).parent.mkdir(parents=True, exist_ok=True)
+            (proj / rel).write_text("#[test]\nfn t() {}\n", encoding="utf-8")
+        selftest.apply_op(proj, ["fail_tests"], None, None)
+        self.assertFalse((proj / "crates/a/tests/fence.rs").exists())
+        self.assertTrue((proj / "crates/b/tests/teeth.rs").exists())
+        self.assertTrue((proj / "target/debug/tests/built.rs").exists())
+        self.assertEqual([p.name for p in selftest._text_files(proj)], ["teeth.rs"])
+
+    def test_a_named_suite_answers_for_its_own_kinds_and_not_the_shipped_floor(self):
+        import selftest
+        spec = {"scenarios": [{"id": "a", "checks": [["file_matches", "x", "y"],
+                                                     ["any_of", ["holdout", "p"], ["after_turn", 1, ["tests_pass"]]]]}]}
+        self.assertIsNone(selftest.suite_kinds(spec))   # the default suite: every kind
+        evals.use_suite(self.make_suite({}))
+        self.assertEqual(selftest.suite_kinds(spec), ["file_matches", "holdout", "tests_pass"])
+
+    def test_a_graded_case_loses_the_suite_s_clean_after_grade_folders_and_the_default_keeps_all(self):
+        case = self.tmp / "case"
+        for rel in ("project/target/debug/big.o", "project/src/lib.rs"):
+            (case / rel).parent.mkdir(parents=True, exist_ok=True)
+            (case / rel).write_text("x", encoding="utf-8")
+        evals.prune_case(case)
+        self.assertTrue((case / "project/target/debug/big.o").exists())
+        evals.use_suite(self.make_suite({"clean_after_grade": ["target"]}))
+        evals.prune_case(case)
+        self.assertFalse((case / "project/target").exists())
+        self.assertTrue((case / "project/src/lib.rs").exists())
+        for conf in ({"clean_after_grade": ["../x"]}, {"clean_after_grade": [".."]}, {"selftest_env": {"A": 1}}):
+            bad = self.tmp / "bad"
+            bad.mkdir()
+            (bad / "scenarios.json").write_text('{"scenarios": []}', encoding="utf-8")
+            (bad / "suite.json").write_text(json.dumps(conf), encoding="utf-8")
+            self.assertIn(next(iter(conf)), evals.Suite(bad).check() or "", conf)
+            remove_tree(bad)
+
+    def test_the_selftest_s_pass_puts_selftest_env_over_the_case_env_and_takes_it_off_after(self):
+        import selftest
+        root = self.make_suite({"case_env": {"TOOL_HOME": "{case}/home", "LEAN": "1"},
+                                "selftest_env": {"TOOL_HOME": "{home}/.tool", "BUILD": "{book}/build"}})
+        evals.use_suite(root)
+        case = self.tmp / "case"
+        self.assertEqual(evals.suite().test_env(case), {"TOOL_HOME": f"{case}/home", "LEAN": "1"})
+        with selftest.Book(spec={"scenarios": [], "prompts": {}}) as book:
+            self.assertEqual(evals.suite().test_env(case), {"TOOL_HOME": f"{Path.home()}/.tool", "LEAN": "1",
+                                                            "BUILD": f"{book.root}/build"})
+        self.assertEqual(evals.suite().test_env(case), {"TOOL_HOME": f"{case}/home", "LEAN": "1"})
+
+
+    def test_the_probe_timeout_is_the_suite_s_and_the_default_stays_120(self):
+        self.assertEqual(evals.suite().probe_timeout, 120)
+        self.assertIsNone(evals.suite().tests)
+        root = self.make_suite({"probe_timeout": 1})
+        (root / "probes").mkdir()
+        (root / "probes" / "slow.py").write_text("import time\ntime.sleep(3)\nprint('OK')\n", encoding="utf-8")
+        evals.use_suite(root)
+        self.assertEqual(evals.suite().probe_timeout, 1)
+        proj = self.tmp / "proj"
+        proj.mkdir()
+        ok, detail = evals.CHECKS["holdout"].fn(["slow"], {"proj": proj}, {})
+        self.assertFalse(ok)
+        self.assertIn("timed out after 1 s", detail)
+
+
+class AfterTurnReadsThatTurn(unittest.TestCase):
+    """`after_turn n` reads the project as turn n left it, for the kinds that read text, git or tests as well as the
+    hash snapshot's: a snapshot keeps hashes only, so a record written in turn 1 and changed in turn 2 was once read
+    in its turn-2 form (a run's turn-1 status detail quoted the turn-2 prompt)."""
+
+    SCENARIO = {"id": "t", "turns": ["ask", "go"],
+                "checks": [["any_of", ["after_turn", 1, ["record_status", "**/G-*.md", "^awaiting"]],
+                            ["final_matches", 1, "never"]]]}
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        remove_tree(self.tmp)
+
+    def case(self, keep=True):
+        case = make_case(self.tmp, [{"final": "pushed back"}, {"final": "done"}])
+        proj = case / "project"
+        (proj / "docs").mkdir(parents=True)
+        (proj / "docs" / "G-1-swap.md").write_text("# G-1\nstatus: awaiting the user\n", encoding="utf-8")
+        (proj / "__pycache__").mkdir()
+        (proj / "__pycache__" / "x.pyc").write_bytes(b"x")
+        (proj / ".git").mkdir()
+        (proj / ".git" / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+        if keep:
+            evals.keep_turn_state(self.SCENARIO, proj, case, 1)
+        (proj / "docs" / "G-1-swap.md").write_text("# G-1\nstatus: decided — delegated by the user\n", encoding="utf-8")
+        return case
+
+    def test_the_turns_kept_are_the_ones_after_turn_names_before_the_last(self):
+        self.assertEqual(evals.after_turns(self.SCENARIO), {1})
+        self.assertEqual(evals.after_turns(dict(self.SCENARIO, turns=["ask"])), set())   # the last: the project itself
+        self.assertEqual(evals.after_turns({"turns": ["a", "b"], "checks": [["file_matches", "x", "y"]]}), set())
+
+    def test_the_copy_keeps_git_and_drops_the_snapshot_s_ignored_folders(self):
+        copy = evals.turn_copy(self.case(), 1)
+        self.assertTrue((copy / ".git" / "HEAD").is_file())
+        self.assertFalse((copy / "__pycache__").exists())
+        self.assertIn("awaiting", (copy / "docs" / "G-1-swap.md").read_text(encoding="utf-8"))
+
+    def test_a_record_s_turn_one_status_is_read_from_turn_one(self):
+        case = self.case()
+        self.assertEqual(verdicts(case, ["after_turn", 1, ["record_status", "**/G-*.md", "^awaiting"]]), [True])
+        self.assertEqual(verdicts(case, ["after_turn", 1, ["record_status", "**/G-*.md", "^decided"]]), [False])
+        self.assertEqual(verdicts(case, ["record_status", "**/G-*.md", "^decided"]), [True])          # the end state
+        self.assertEqual(verdicts(case, ["after_turn", 2, ["record_status", "**/G-*.md", "^decided"]]), [True])
+        self.assertEqual(verdicts(case, *self.SCENARIO["checks"]), [True])
+
+    def test_without_a_copy_the_check_fails_and_says_so(self):
+        case = self.case(keep=False)
+        (detail,) = details(case, ["after_turn", 1, ["record_status", "**/G-*.md", "^decided"]])
+        self.assertIn("no copy of the project after turn 1", detail)
+        self.assertEqual(verdicts(case, ["after_turn", 1, ["record_status", "**/G-*.md", "^decided"]]), [False])
+        self.assertEqual(verdicts(case, ["after_turn", 1, ["unchanged", "docs"]]), [True])   # a hash kind needs none
+
+    def test_every_kind_that_reads_the_project_is_listed(self):
+        reads = {name for name, c in evals.CHECKS.items() if re.search(r'ctx(\["proj"\]|\.get\("proj"\))', inspect.getsource(c.fn))}
+        self.assertEqual(reads - evals.PROJECT_KINDS, set())
+
+    def test_prune_cleans_the_turn_copies_too(self):
+        case = self.case()
+        s = evals.suite()
+        saved = s.clean_after_grade
+        s.clean_after_grade = ["docs"]
+        try:
+            evals.prune_case(case)
+        finally:
+            s.clean_after_grade = saved
+        self.assertFalse((evals.turn_copy(case, 1) / "docs").exists())
+        self.assertFalse((case / "project" / "docs").exists())
+
+
+class CandidatePage(unittest.TestCase):
+    """`--layer`: a candidate doctrine page is measured before it is live, so a run can force it on every case; the
+    layer check then expects the candidate, a page forced from the shell never reaches a run that did not ask for one,
+    and a candidate's run is logged as its own selection, never a listed result, and kept out of a case's history."""
+    setUp = BatchBinary.setUp
+    fake = BatchBinary.fake
+
+    def page(self, name="opus-5-5-layer-2099-01-01.md", body="candidate body"):
+        p = self.tmp / "layers" / name
+        p.parent.mkdir(exist_ok=True)
+        p.write_text(f"# Working notes (injected: this session runs Claude Opus 5.5)\n\n{body}\n", encoding="utf-8")
+        return p
+
+    def run_one(self, layer=None, shell=None):
+        real, envs = subprocess.run, []
+
+        def recording(cmd, *a, **kw):
+            if cmd and "-p" in cmd:
+                envs.append(kw.get("env") or {})
+            return real(cmd, *a, **kw)
+        cli = os.path.realpath(str(self.claude))
+        environ = dict(os.environ, **({"DOCTRINE_LAYER": shell} if shell else {}))
+        with mock.patch.object(evals.subprocess, "run", recording), mock.patch.dict(os.environ, environ, clear=True):
+            grades, _ = evals.run_batch([(self.scenarios[1], "fable")], SPEC, self.tmp / "out", self.config, cli,
+                                        evals.cli_version_of(cli), parallel=1, layer=layer)
+        rec = json.loads(next((self.tmp / "out").rglob("record.json")).read_text(encoding="utf-8"))
+        return envs, rec
+
+    def test_a_candidate_page_is_forced_on_every_turn_and_is_the_layer_the_check_expects(self):
+        cand = self.page()
+        envs, rec = self.run_one(layer=cand, shell=str(self.tmp / "elsewhere.md"))
+        self.assertEqual([e.get("DOCTRINE_LAYER") for e in envs], [str(cand)] * 2)   # both turns, the shell's replaced
+        exp = rec["layer_expected"]
+        self.assertEqual((exp["file"], exp["forced"]), (cand.name, str(cand)))
+        header = evals.resolve_models([evals.seat_model("fable")])[0]["header"]
+        text = evals.loader_module().render_bytes(cand.read_bytes(), header).decode("utf-8")
+        self.assertEqual(exp["sha256"], hashlib.sha256(text.encode("utf-8")).hexdigest())   # the seat's header on it
+        self.assertEqual(evals.candidate_layer(self.tmp / "out"), cand.name)
+
+    def test_a_page_forced_from_the_shell_never_reaches_a_run_that_did_not_ask_for_one(self):
+        envs, rec = self.run_one(shell=str(self.page()))
+        self.assertEqual([("DOCTRINE_LAYER" in e) for e in envs], [False, False])
+        self.assertNotIn("forced", rec.get("layer_expected") or {})
+        self.assertIsNone(evals.candidate_layer(self.tmp / "out"))
+
+    def test_a_run_on_two_pages_is_refused_by_the_log(self):
+        for name, forced in (("a-fable", "/x/one.md"), ("b-fable", None)):
+            (self.tmp / "mixed" / name).mkdir(parents=True)
+            exp = {"file": "one.md", **({"forced": forced} if forced else {})}
+            (self.tmp / "mixed" / name / "record.json").write_text(json.dumps({"layer_expected": exp}), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            evals.candidate_layer(self.tmp / "mixed")
+
+    def test_a_candidate_run_is_its_own_selection_never_a_listed_result(self):
+        import argparse
+        args = argparse.Namespace(layer="x.md", repeat=2, confirm=None, only=["p5"], quick=False, seat="opus55")
+        self.assertEqual(evals.selection_of(args), "candidate")
+        run = self.tmp / "runs" / "20990101-000000"
+        run.mkdir(parents=True)
+        grades = [{"scenario": "p5", "seat": "opus55", "repeat": k, "passed": True, "cost": 1.0, "results": []}
+                  for k in (1, 2)]
+        r = evals.run_record(run, self.tmp / "runs", grades, "candidate", "abc", costs={}, layer="x.md")
+        self.assertEqual((r["selection"], r["published"], r["layer"]), ("candidate", False, "x.md"))
+        self.assertEqual(sorted(r), sorted(evals.RUN_FIELDS + ("layer",)))   # added, nothing renamed
+        plain = evals.run_record(run, self.tmp / "runs", grades, "only", "abc", costs={})
+        self.assertEqual((plain["selection"], sorted(plain)), ("repeat", sorted(evals.RUN_FIELDS)))
+
+    def test_a_candidate_run_is_left_out_of_a_case_s_history(self):
+        spec = {"scenarios": [{"id": "p5", "seats": ["opus55"], "quick": ["opus55"], "checks": []}]}
+        rows = [{"run": "gone-1", "date": "2099-01-01", "selection": "quick", "failed": [["p5", "opus55"]],
+                 "layer": "x.md"},
+                {"run": "gone-2", "date": "2099-01-01", "selection": "quick", "failed": []}]
+        table, _, from_log, _ = evals.case_history(rows, self.tmp / "runs", spec, since="2000-01-01")
+        self.assertEqual((table[("p5", "opus55")]["runs"], table[("p5", "opus55")]["passes"], from_log), (1, 1, 1))
+
+    def test_layer_needs_one_seat_and_a_file_and_takes_no_confirm(self):
+        import argparse
+        cand = self.page()
+        ns = lambda **k: argparse.Namespace(**dict({"layer": str(cand), "seat": "opus55", "confirm": None}, **k))
+        self.assertEqual(evals.candidate_page(ns(layer=None)), (0, "", None))
+        self.assertEqual(evals.candidate_page(ns())[::2], (0, cand.resolve()))
+        self.assertEqual(evals.candidate_page(ns(seat=None))[0], 2)
+        self.assertEqual(evals.candidate_page(ns(confirm="20990101-000000"))[0], 2)
+        self.assertEqual(evals.candidate_page(ns(layer=str(self.tmp / "missing.md")))[0], 2)
 
 
 if __name__ == "__main__":

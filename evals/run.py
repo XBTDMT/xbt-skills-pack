@@ -115,12 +115,12 @@ def rule_path(d, pathmod=os.path):
     return "/" + d
 
 
-def permission_flags(tools, dirs, sessions=()):
+def permission_flags(tools, dirs, sessions=(), extra_deny=()):
     """The allow-list, one deny list (git push; Write and Edit inside the skill folders; in a session folder, its
     transcripts only, so its memory/ stays writable as in a real session), and both kinds of folder as added
     directories. One --disallowedTools flag, so no deny can be dropped by a second."""
     deny = ["Bash(git push:*)", *(f"{tool}({rule_path(d)}/**)" for d in dirs for tool in ("Write", "Edit")),
-            *(f"{tool}({rule_path(d)}/**/*.jsonl)" for d in sessions for tool in ("Write", "Edit"))]
+            *(f"{tool}({rule_path(d)}/**/*.jsonl)" for d in sessions for tool in ("Write", "Edit")), *extra_deny]
     added = [*dirs, *sessions]
     return ["--allowedTools", *tools, "--disallowedTools", *deny, *(["--add-dir", *added] if added else [])]
 
@@ -146,6 +146,191 @@ def pack_path(rel):
     if there.exists():
         return there
     raise FileNotFoundError(f"{rel} is in neither layout: not {here} (this repo's) nor {there} (the public tree's)")
+
+
+class Suite:
+    """What a batch measures: the scenarios, the fixture a case's project starts from, the overlays, probes and preps
+    they name, the known runs, the run log and the runs root. `evals/` is the default suite, the one that ships and the
+    only one whose runs refill the figures. `--suite <folder>` names another, whose `suite.json` may set `fixture`
+    ({"git": <repo>, "commit": <sha>}: each case clones it, origin re-pointed to the case's own), `runs_root` and
+    `overlay_message`; its `preps.py`, if any, adds named preps. Its run log is its own `RUNS.jsonl`, so its results never reach
+    the shipped one, and it may not sit inside a folder the public tree is built from. A suite whose project is not
+    Python's may declare its test runner (`tests`: {"command": [...], "format": "cargo" | "unittest", "timeout": s}),
+    the folders a snapshot skips (`ignore`: names such as a build folder, matched as whole path parts, like `.git`) and
+    the probes' timeout (`probe_timeout`, 120 s by default), and `case_env`, variables every case's session, test run
+    and probe get, `{case}` standing for the case's folder (a build tool's home kept inside the case, say);
+    `deny_tools`, tools every session of the suite is refused, joined to the one deny list; and `max_budget_usd`,
+    each session's spending cap (the CLI's --max-budget-usd); `clean_after_grade`, folders a batch removes from a
+    case's project once it is graded (a build folder nothing reads afterwards), which the selftest also removes after
+    each build and grade; `selftest_env`, variables the selftest's test runs and probes get over the case's own
+    (`{home}` the home folder: the shared cargo cache, since the selftest launches no session; never a shared build
+    folder, which cargo reuses across clones of one repo by relative path and so grades one case on another's code);
+    and `selftest_workers`, how many cases the selftest builds and grades at once."""
+
+    SHIPPED = ("evals", "public", "tests")
+    TEST_FORMATS = ("unittest", "cargo")
+
+    def __init__(self, root=None):
+        self.root = Path(root or HERE).resolve()
+        self.default = self.root == HERE.resolve()
+        conf_path = self.root / "suite.json"
+        self.conf = json.loads(conf_path.read_text(encoding="utf-8")) if not self.default and conf_path.is_file() else {}
+        self.name = self.conf.get("name") or self.root.name
+        self.fixture = self.conf.get("fixture")
+        self.figures = self.default   # the figures are the shipped suite's; no other suite's run refills them
+        self.scenarios = self.root / "scenarios.json"
+        self.overlays = self.root / "overlays"
+        self.probes = self.root / "probes"
+        self.known = self.root / "known"
+        self.tests = self.conf.get("tests")   # None: unittest discover, as the default suite runs it
+        self.ignore = self.conf.get("ignore", [])
+        self.probe_timeout = self.conf.get("probe_timeout", 120)
+        self._case_env = self.conf.get("case_env", {})
+        self.deny_tools = self.conf.get("deny_tools", [])
+        self.clean_after_grade = self.conf.get("clean_after_grade", [])
+        self.selftest_env = self.conf.get("selftest_env", {})
+        self.grade_env = {}   # set by the selftest for its pass (selftest_env, expanded); empty otherwise
+        self.selftest_workers = self.conf.get("selftest_workers")
+        self.max_budget_usd = self.conf.get("max_budget_usd")
+        self._fixture_skills = None
+
+    def fixture_skills(self):
+        """The skills a git fixture brings itself, named as the CLI lists them: each `.claude/skills/<name>/SKILL.md`
+        and each `.claude/workflows/<name>.js` at the fixture's commit (the CLI's init lists a project's workflow
+        `<name>.js` among its skills as `<name>`). Read from the fixture, never declared, so a fixture bump cannot
+        leave the list stale. Empty for a suite without a git fixture: its
+        scenarios name theirs (`fixture_skills`). Raises when the fixture cannot be read, so the sealed check fails
+        rather than passing on a guess."""
+        if not self.fixture:
+            return frozenset()
+        if self._fixture_skills is None:
+            r = subprocess.run(["git", "-C", str(Path(self.fixture["git"]).expanduser()), "ls-tree", "-r", "--name-only",
+                                self.fixture["commit"], "--", ".claude"],
+                               capture_output=True, encoding="utf-8", errors="replace", env=READ_ONLY_GIT)
+            if r.returncode != 0:
+                raise RuntimeError(f"the fixture's skills could not be read at {self.fixture['commit'][:12]}: "
+                                   f"{(r.stderr or '').strip()[:200]}")
+            names = set()
+            for path in r.stdout.splitlines():
+                parts = path.split("/")
+                if len(parts) == 4 and parts[1] == "skills" and parts[3] == "SKILL.md":
+                    names.add(parts[2])
+                elif len(parts) == 3 and parts[1] == "workflows" and parts[2].endswith(".js") and len(parts[2]) > 3:
+                    names.add(parts[2][:-3])
+            self._fixture_skills = frozenset(names)
+        return self._fixture_skills
+
+    def case_env(self, case_dir):
+        """The suite's `case_env` for one case, `{case}` replaced by its folder; {} for a suite that sets none."""
+        return {k: v.replace("{case}", str(case_dir)) for k, v in self._case_env.items()}
+
+    def test_env(self, case_dir):
+        """What a test run or probe of the case gets beyond the process environment: its case_env, and while the
+        selftest runs, the suite's selftest_env over it."""
+        return {**self.case_env(case_dir), **self.grade_env}
+
+    def ignored(self):
+        """The path parts a snapshot skips: .git and __pycache__ always, and the suite's own `ignore`."""
+        return IGNORED_PARTS | set(self.ignore)
+
+    def check(self):
+        """None, or why this folder cannot be a suite (a private suite inside a shipped folder, no scenarios)."""
+        if self.default:
+            return None
+        try:
+            rel = self.root.relative_to(PACK.resolve())
+        except ValueError:
+            rel = None
+        if rel is not None and rel.parts and rel.parts[0] in self.SHIPPED:
+            return f"{self.root} is inside {rel.parts[0]}/, which ships: a suite of its own lives outside it"
+        if not self.scenarios.is_file():
+            return f"{self.root} has no scenarios.json"
+        if self.fixture is not None and not (isinstance(self.fixture, dict) and self.fixture.get("git")
+                                             and self.fixture.get("commit")):
+            return f"{self.root / 'suite.json'}: fixture must be {{\"git\": <repo>, \"commit\": <sha>}}"
+        t = self.tests
+        if t is not None:
+            if not (isinstance(t, dict) and isinstance(t.get("command"), list) and t["command"]
+                    and all(isinstance(a, str) for a in t["command"])):
+                return f"{self.root / 'suite.json'}: tests must be {{\"command\": [<arg>, ...], \"format\": ..., \"timeout\": s}}"
+            if t.get("format") not in self.TEST_FORMATS:
+                return f"{self.root / 'suite.json'}: tests format must be one of {', '.join(self.TEST_FORMATS)}"
+            if not _positive_int(t.get("timeout", 600)):
+                return f"{self.root / 'suite.json'}: tests timeout must be a whole number of seconds above 0"
+        if not (isinstance(self.ignore, list) and all(isinstance(n, str) and n and "/" not in n and "\\" not in n
+                                                      for n in self.ignore)):
+            return f"{self.root / 'suite.json'}: ignore must list folder names (one path part each, no slash)"
+        if not _positive_int(self.probe_timeout):
+            return f"{self.root / 'suite.json'}: probe_timeout must be a whole number of seconds above 0"
+        if not (isinstance(self._case_env, dict) and all(isinstance(k, str) and k and isinstance(v, str)
+                                                          for k, v in self._case_env.items())):
+            return f"{self.root / 'suite.json'}: case_env must map variable names to strings"
+        if not isinstance(self.deny_tools, list) or (self.deny_tools and allowed_tools_error(self.deny_tools)):
+            return f"{self.root / 'suite.json'}: deny_tools must list distinct tool names, none a flag"
+        for key, value in (("clean_after_grade", self.clean_after_grade),):
+            if not (isinstance(value, list) and all(isinstance(n, str) and n and "/" not in n and "\\" not in n
+                                                    and n not in (".", "..") for n in value)):
+                return f"{self.root / 'suite.json'}: {key} must list folder names (one path part each, no slash)"
+        if not (isinstance(self.selftest_env, dict) and all(isinstance(k, str) and k and isinstance(v, str)
+                                                             for k, v in self.selftest_env.items())):
+            return f"{self.root / 'suite.json'}: selftest_env must map variable names to strings"
+        if self.selftest_workers is not None and not _positive_int(self.selftest_workers):
+            return f"{self.root / 'suite.json'}: selftest_workers must be a whole number above 0"
+        b = self.max_budget_usd
+        if b is not None and not (isinstance(b, (int, float)) and not isinstance(b, bool) and b > 0):
+            return f"{self.root / 'suite.json'}: max_budget_usd must be a number of dollars above 0"
+        return None
+
+    def spec(self):
+        return json.loads(self.scenarios.read_text(encoding="utf-8"))
+
+    def runs_file(self):
+        return RUNS_FILE if self.default else self.root / "RUNS.jsonl"
+
+    def runs_root(self):
+        base = Path.home() / "xbt-evals"
+        if self.default:
+            return base
+        return Path(self.conf["runs_root"]).expanduser() if self.conf.get("runs_root") else base / self.name
+
+    def preps(self):
+        """The preps a scenario may name: run.py's, plus the suite's own (its preps.py's PREPS), never one replacing."""
+        if self.default or not (self.root / "preps.py").is_file():
+            return PREPS
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(f"suite_preps_{self.name}", self.root / "preps.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        clash = sorted(set(PREPS) & set(getattr(mod, "PREPS", {})))
+        if clash:
+            raise ValueError(f"{self.root / 'preps.py'} redefines run.py's preps: {', '.join(clash)}")
+        return {**PREPS, **getattr(mod, "PREPS", {})}
+
+
+def _positive_int(v):
+    return isinstance(v, int) and not isinstance(v, bool) and v > 0
+
+
+SUITE = None   # the suite this process measures: use_suite() sets it; None until then means the default
+
+
+def suite():
+    global SUITE
+    if SUITE is None:
+        SUITE = Suite()
+    return SUITE
+
+
+def use_suite(root=None):
+    """Measure the suite at `root` (None: the default) for the rest of this process; refuses a folder that cannot be
+    one (Suite.check), naming why."""
+    global SUITE
+    s = Suite(root)
+    problem = s.check()
+    if problem:
+        raise ValueError(problem)
+    SUITE = s
+    return s
 
 
 SESSION_TIMEOUT = 1200
@@ -303,20 +488,33 @@ def build_project(case_dir, scenario):
     proj = case_dir / "project"
     (case_dir / "state").mkdir(parents=True, exist_ok=True)
     stray = shutil.ignore_patterns("__pycache__")   # bytecode a test run left beside the sources is no part of a case
-    shutil.copytree(HERE / "fixture", proj, ignore=stray)
-    overlays = scenario.get("overlay") or []
-    for name in [overlays] if isinstance(overlays, str) else overlays:
-        shutil.copytree(HERE / "overlays" / name, proj, dirs_exist_ok=True, ignore=stray)
+    s = suite()
     git_env = dict(os.environ, **FIXTURE_COMMIT_ENV)
     git = lambda *a: subprocess.run(["git", "-C", str(proj), *a], check=True, capture_output=True, env=git_env)
-    git("init", "-q", "-b", "main")
-    git("add", "-A")
-    git("commit", "-q", "-m", "fixture")
+    if s.fixture:   # a repository at a commit: its history kept, its source never written, the case's origin its own
+        subprocess.run(["git", "clone", "-q", "--no-hardlinks", "--no-checkout", str(s.fixture["git"]), str(proj)],
+                       check=True, capture_output=True, env=git_env)
+        git("checkout", "-q", "-B", "main", s.fixture["commit"])
+        git("remote", "remove", "origin")
+    else:
+        shutil.copytree(s.root / "fixture", proj, ignore=stray)
+    overlays = scenario.get("overlay") or []
+    for name in [overlays] if isinstance(overlays, str) else overlays:
+        shutil.copytree(s.overlays / name, proj, dirs_exist_ok=True, ignore=stray)
+    if s.fixture:
+        git("add", "-A")
+        if git("status", "--porcelain").stdout.strip():
+            git("commit", "-q", "-m", s.conf.get("overlay_message") or "fixture")
+    else:
+        git("init", "-q", "-b", "main")
+        git("add", "-A")
+        git("commit", "-q", "-m", "fixture")
     subprocess.run(["git", "init", "-q", "--bare", str(case_dir / "origin.git")], check=True, capture_output=True)
     git("remote", "add", "origin", "../origin.git")
     preps = scenario.get("prep") or []
+    table = s.preps()
     for prep in [preps] if isinstance(preps, str) else preps:
-        PREPS[prep](proj, grader_env(case_dir / "state"))
+        table[prep](proj, grader_env(case_dir / "state"))
     return proj
 
 
@@ -363,11 +561,11 @@ PREPS = {"readme_change": _prep_readme_change, "untracked_ledger": _prep_untrack
 
 
 def snapshot(proj):
-    """{relative path: sha1} for every file outside .git and __pycache__."""
-    out = {}
+    """{relative path: sha1} for every file outside .git, __pycache__ and the suite's ignored folders."""
+    out, skip = {}, suite().ignored()
     for p in sorted(proj.rglob("*")):
         rel = p.relative_to(proj)
-        if p.is_file() and not IGNORED_PARTS.intersection(rel.parts):
+        if p.is_file() and not skip.intersection(rel.parts):
             out[rel.as_posix()] = hashlib.sha1(p.read_bytes()).hexdigest()
     return out
 
@@ -673,17 +871,19 @@ def resolve_models(models):
     return json.loads(r.stdout)
 
 
-def layer_expected(seat, doctrine=None):
+def layer_expected(seat, doctrine=None, forced=None):
     """The seat's layer as the loader will inject it, read at launch: the layer `gate.py --resolve` names for the
     seat's model, rendered with the header it names: {file, sha256, header (the rendered first line), model}; None
-    if the layer is not installed. `doctrine` is the folder the layers are read from (default: the live login's)."""
+    if the layer is not installed. `doctrine` is the folder the layers are read from (default: the live login's).
+    `forced` is a candidate page's path (`--layer`): the loader injects it through DOCTRINE_LAYER with the same
+    header, so it is the expected layer, and the result carries `forced` (its path) beside its file name."""
     r = resolve_models([seat_model(seat)])[0]
-    path = Path(doctrine or Path.home() / ".claude" / "doctrine") / r["layer"]
+    path = Path(forced) if forced else Path(doctrine or Path.home() / ".claude" / "doctrine") / r["layer"]
     if not path.is_file():
         return None
     text = loader_module().render_bytes(path.read_bytes(), r["header"]).decode("utf-8")
-    return {"file": r["layer"], "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-            "header": text.split("\n", 1)[0], "model": r["header"]}
+    return {"file": path.name if forced else r["layer"], "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "header": text.split("\n", 1)[0], "model": r["header"], **({"forced": str(path)} if forced else {})}
 
 
 def _head(repo):
@@ -758,12 +958,14 @@ def first_request_cache(turns):
     return None
 
 
-def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0):
+def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_version, probe=False, repeat=0, layer=None):
     """One case in the sealed config: every turn launched through the batch's resolved binary, with the sealed
     folder as its config, the case's own state and hook log, no MCP server and the updater off (§5.7). Nothing is
     read from or written to the live config. The scenario's `allowed_tools` join the one --allowedTools list of every
     turn, resumed turns included, and the case's `env` records them. The session runs in the case
-    folder's `project`, the path every check reads afterwards."""
+    folder's `project`, the path every check reads afterwards. `layer` is a candidate page (`--layer`), forced on
+    every turn through DOCTRINE_LAYER and recorded as the expected layer; without it a DOCTRINE_LAYER in the shell
+    never reaches the session."""
     granted = scenario_allowed_tools(scenario)   # checked before anything is built or launched
     case_dir.mkdir(parents=True)
     proj = build_project(case_dir, scenario)
@@ -784,7 +986,7 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         record = {"scenario": scenario["id"], "seat": seat, "turns": turns, "snapshots": snaps,
                   "baseline_tests": baseline, "hooks": [list(e) for e in entries],
                   "loader": list(found[0]) if found[0] else None, "env": env_record,
-                  "layer_expected": layer_expected(seat), "probe": bool(probe),
+                  "layer_expected": layer_expected(seat, forced=layer), "probe": bool(probe),
                   "first_request_cache": first_request_cache(turns),
                   **({"repeat": repeat} if repeat else {}), **extra}
         (case_dir / "record.json").write_text(json.dumps(record, indent=1), encoding="utf-8")
@@ -806,7 +1008,8 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         # the session ran in).
         scratch = case_dir / "scratch"; scratch.mkdir(exist_ok=True)
         cmd = [str(cli_path), "-p", prompt, *(["--resume", sid] if sid else []), *SEATS[seat],
-               "--permission-mode", "acceptEdits", *permission_flags(tools, readable, sessions),
+               "--permission-mode", "acceptEdits", *permission_flags(tools, readable, sessions, suite().deny_tools),
+               *(["--max-budget-usd", str(suite().max_budget_usd)] if suite().max_budget_usd is not None else []),
                "--add-dir", str(scratch),
                "--append-system-prompt", f"Scratchpad directory: {scratch} — use it for temporary files (a worklist, a note, "
                                          f"intermediate output); write the path literally, without shell variables.",
@@ -814,7 +1017,11 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         # every hook the sealed config runs appends one line to the case's hook log (evals/hook_log.py)
         env = dict(os.environ, TMPDIR=str(scratch), CLAUDE_CONFIG_DIR=str(config_dir),
                    DOC_GUARDRAILS_STATE=str(case_dir / "state"), XBT_EVAL_HOOK_LOG=str(case_dir / "hooks.jsonl"),
-                   DISABLE_AUTOUPDATER="1", CLAUDE_CODE_PROMPT_CACHE_TTL=PROMPT_CACHE_TTL)
+                   DISABLE_AUTOUPDATER="1", CLAUDE_CODE_PROMPT_CACHE_TTL=PROMPT_CACHE_TTL,
+                   **suite().case_env(case_dir))
+        env.pop("DOCTRINE_LAYER", None)
+        if layer:
+            env["DOCTRINE_LAYER"] = str(layer)
         t_start = utc_now()
         try:
             r = subprocess.run(cmd, cwd=proj, capture_output=True, encoding="utf-8", errors="replace", timeout=SESSION_TIMEOUT, env=env)
@@ -830,6 +1037,7 @@ def run_case(case_dir, scenario, seat, prompts, config_dir, cli_path, cli_versio
         if turn.get("api_error"):
             break  # later turns would only hit the same wall
         snaps.append(snapshot(proj))
+        keep_turn_state(scenario, proj, case_dir, n)   # an `after_turn n` check's project, as the session left it
         for dest, src in between_turns_writes(scenario, n, proj):   # the case project only, never a skills folder
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(src.read_bytes())
@@ -860,8 +1068,9 @@ def _files(proj, pattern):
     """The project's files matching the glob, as the snapshot sees the project: never under .git or __pycache__ (a
     violation that removes "**/*" removes the work tree, not git's read-only objects, which Windows refuses to
     unlink)."""
+    skip = suite().ignored()   # the snapshot's own skip list, so a check never reads what the snapshot leaves out
     return [p for p in sorted(proj.glob(pattern))
-            if p.is_file() and not IGNORED_PARTS.intersection(p.relative_to(proj).parts)]
+            if p.is_file() and not skip.intersection(p.relative_to(proj).parts)]
 
 
 # A registry entry: `fn(args, ctx, snap) -> (passed, detail)`, and `violate(args, run) -> run'`, which builds a run
@@ -985,7 +1194,10 @@ STATUS_RE = re.compile(r" \.\.\. (ok|FAIL|ERROR|skipped.*|expected failure|unexp
 def run_tests(proj):
     """({test id: status}, exit code, last line of stderr) from `unittest discover -s tests -v` in the project. The id
     is module.Class.method on every interpreter (3.9 prints `name (module.Class)`, 3.11 on `name
-    (module.Class.name)`); a docstring moves the status to the next line."""
+    (module.Class.name)`); a docstring moves the status to the next line. A suite that declares its own runner
+    (`tests` in suite.json) is run by run_suite_tests instead."""
+    if suite().tests is not None:
+        return run_suite_tests(proj, suite().tests)
     r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=proj,
                        capture_output=True, encoding="utf-8", errors="replace", timeout=120,
                        env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
@@ -1003,6 +1215,119 @@ def run_tests(proj):
         ids[dotted if dotted.endswith("." + name) else f"{dotted}.{name}"] = \
             "skipped" if status.startswith("skipped") else status
     return ids, r.returncode, (r.stderr.strip().splitlines() or ["(no output)"])[-1]
+
+
+CARGO_RUNNING_RE = re.compile(r"^\s*Running (.+?) \(.*?deps[/\\]([\w-]+?)-[0-9a-f]+(?:\.exe)?\)\s*$")
+CARGO_DOC_RE = re.compile(r"^\s*Doc-tests (\S+)\s*$")
+CARGO_TEST_RE = re.compile(r"^test (.+?) \.\.\. (ok|FAILED|ignored)(?:,.*)?$")
+CARGO_STATUS = {"ok": "ok", "FAILED": "FAIL", "ignored": "skipped"}
+
+
+def parse_cargo_tests(text):
+    """{test id: status} from `cargo test`'s combined output. An id is the test binary (its deps name and source, or
+    `doc:<crate>` for doctests) then `::` and the test's name; a doctest's `(line N)` is dropped, since an edit above
+    it moves the number, and same-named doctests are numbered `#2`, `#3` in the order printed."""
+    ids, label, seen = {}, "?", {}
+    for line in text.splitlines():
+        m = CARGO_RUNNING_RE.match(line)
+        if m:
+            label = f"{m.group(2)}:{m.group(1)}"
+            continue
+        m = CARGO_DOC_RE.match(line)
+        if m:
+            label = f"doc:{m.group(1)}"
+            continue
+        m = CARGO_TEST_RE.match(line)
+        if not m:
+            continue
+        name = re.sub(r" \(line \d+\)", "", m.group(1)) if label.startswith("doc:") else m.group(1)
+        key = f"{label}::{name}"
+        seen[key] = seen.get(key, 0) + 1
+        ids[key if seen[key] == 1 else f"{key}#{seen[key]}"] = CARGO_STATUS[m.group(2)]
+    return ids
+
+
+def run_suite_tests(proj, tests):
+    """run_tests for a suite's own runner: its command in the project, stdout and stderr read as one stream (cargo
+    prints the binary names on stderr and the results on stdout), parsed by its format, with the suite's `case_env`
+    for the case the project sits in; a run past its timeout reports no tests and says so."""
+    timeout = tests.get("timeout", 600)
+    try:
+        r = subprocess.run(tests["command"], cwd=proj, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           encoding="utf-8", errors="replace", timeout=timeout,
+                           env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", **suite().test_env(proj.parent)))
+    except subprocess.TimeoutExpired:
+        return {}, None, f"timed out after {timeout} s"
+    except OSError as e:
+        return {}, None, f"the test command did not start: {e}"
+    out = r.stdout or ""
+    if tests["format"] == "cargo":
+        ids = parse_cargo_tests(out)
+    else:
+        ids = {}
+        lines = out.splitlines()
+        for i, line in enumerate(lines):
+            m = TEST_LINE_RE.match(line)
+            if not m:
+                continue
+            name, dotted, status = m.groups()
+            if status is None and i + 1 < len(lines):
+                nxt = STATUS_RE.search(lines[i + 1])
+                status = nxt.group(1) if nxt else None
+            if status is not None:
+                ids[dotted if dotted.endswith("." + name) else f"{dotted}.{name}"] = \
+                    "skipped" if status.startswith("skipped") else status
+    return ids, r.returncode, (out.strip().splitlines() or ["(no output)"])[-1]
+
+
+def prune_case(case_dir):
+    """Remove the suite's `clean_after_grade` folders from a graded case's project and its turn copies (a build folder:
+    the record, the snapshots and the grade never read it); nothing for the default suite."""
+    for proj in [Path(case_dir) / "project"] + sorted(Path(case_dir).glob("after-turn-*")):
+        for name in suite().clean_after_grade:
+            shutil.rmtree(proj / name, ignore_errors=True)
+
+
+# The kinds that read the project itself (its files' text, its git, its tests), not the snapshot's hashes. Under
+# `after_turn n` before the last turn they read the copy kept after turn n, never the end state; a test holds this
+# list to every kind whose code reads ctx["proj"].
+PROJECT_KINDS = frozenset({
+    "commits_at_least", "commits_at_most", "committed_file_matches", "facts_list_nonempty", "file_matches",
+    "file_not_matches", "gate_fires", "gate_ran", "holdout", "no_removed_lines", "record_status", "roadmap_status",
+    "tests_pass", "tracked"})
+
+
+def after_turns(scenario):
+    """The turns before the last that the scenario's `after_turn` checks name: the ones whose project is kept."""
+    found = set()
+
+    def walk(c):
+        if isinstance(c, list) and c:
+            if c[0] == "after_turn":
+                found.add(c[1])
+                walk(c[2])
+            elif c[0] == "any_of":
+                for inner in c[1:]:
+                    walk(inner)
+    for c in scenario.get("checks") or []:
+        walk(c)
+    return {n for n in found if isinstance(n, int) and 0 < n < len(scenario.get("turns") or [])}
+
+
+def turn_copy(case_dir, n):
+    return Path(case_dir) / f"after-turn-{n}"
+
+
+def keep_turn_state(scenario, proj, case_dir, n):
+    """Copy the project as turn n left it, its .git with it and the snapshot's ignored folders without, when an
+    `after_turn n` check will read it: a snapshot keeps hashes only, so a kind that reads text, git or tests would
+    otherwise read the end state."""
+    if n not in after_turns(scenario):
+        return
+    skip = suite().ignored() - {".git"}
+    dest = turn_copy(case_dir, n)
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(proj, dest, symlinks=True, ignore=lambda d, names: [x for x in names if x in skip])
 
 
 def baseline_tests(proj):
@@ -1158,11 +1483,23 @@ def _roadmap_status(args, ctx, snap):
 def _holdout(args, ctx, snap):
     """evals/probes/<probe>.py, run in the project, prints OK: the fix holds on an input the tests do not name."""
     try:
-        probe = pack_path(f"evals/probes/{args[0]}.py")
+        if suite().default:
+            probe = pack_path(f"evals/probes/{args[0]}.py")
+        else:
+            probe = suite().probes / f"{args[0]}.py"
+            if not probe.is_file():
+                raise FileNotFoundError(f"{probe} is not in the suite's probes")
     except FileNotFoundError as e:
         return False, str(e)
-    r = subprocess.run([sys.executable, str(probe)], cwd=ctx["proj"], capture_output=True, encoding="utf-8",
-                       errors="replace", timeout=120, env=READ_ONLY_PYTHON)
+    timeout = suite().probe_timeout
+    try:
+        r = subprocess.run([sys.executable, str(probe)], cwd=ctx["proj"], capture_output=True, encoding="utf-8",
+                           errors="replace", timeout=timeout,
+                           env=dict(READ_ONLY_PYTHON, **suite().test_env(Path(ctx["proj"]).parent)))
+    except subprocess.TimeoutExpired:
+        if suite().default:
+            raise   # the shipped suite's behaviour, unchanged
+        return False, f"timed out after {timeout} s"
     out = (r.stdout or "").strip()
     return out == "OK", out.splitlines()[-1][:160] if out else f"no output (exit {r.returncode}): {r.stderr.strip()[-160:]}"
 
@@ -1647,7 +1984,9 @@ def build_sealed(config_dir, probe=False):
     build: the installer's own registration for manifest["installer"] (public/install.py's registered(),
     the function every user's install calls), plus manifest["extra_hooks"] (the pack hooks the installer
     does not write), plus probe_hooks with `probe` (E-1's), each merged by the installer's one merge step
-    and each written to log its runs; then the manifest's three account keys. No env key:
+    and each written to log its runs; then the manifest's three account keys, and `enabledPlugins` switching off each
+    built-in plugin in manifest["builtin_plugins_off"] (one a server flag can turn on for the account, so a batch
+    would otherwise run some sessions with it and some without). No env key:
     XBT_EVAL_HOOK_LOG passes from each session to every hook untouched. Never reads the old settings.json;
     writes the new one through a temp file and os.replace. Idempotent; never touches credentials, .claude.json,
     projects/, plugins/ or any entry of skills/ that is not its own link. Returns the settings written."""
@@ -1672,6 +2011,9 @@ def build_sealed(config_dir, probe=False):
         for g in groups:
             g["hooks"] = [wrap_hook(event, h) for h in g["hooks"]]
     settings.update(m.get("settings") or {})
+    off = builtins_off(m)
+    if off:
+        settings["enabledPlugins"] = off
     fd, tmp = tempfile.mkstemp(dir=str(config), prefix=".settings-", suffix=".json")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
@@ -1697,8 +2039,11 @@ def sealed_build_problems(config_dir):
     except (OSError, ValueError) as e:
         return [f"settings.json: unreadable ({e})"]
     problems = sealed_settings_problems(settings)
-    problems += [f"settings.json: {k} is not a sealed key (only hooks and the three account keys are)"
-                 for k in settings if k != "hooks" and k not in dict(ACCOUNT_KEYS)]
+    problems += [f"settings.json: {k} is not a sealed key (only hooks, enabledPlugins and the three account keys are)"
+                 for k in settings if k not in ("hooks", "enabledPlugins") and k not in dict(ACCOUNT_KEYS)]
+    if (settings.get("enabledPlugins") or {}) != builtins_off(m):
+        problems.append(f"settings.json: enabledPlugins is {json.dumps(settings.get('enabledPlugins'), sort_keys=True)}, "
+                        f"not the manifest's built-in plugins switched off {json.dumps(builtins_off(m), sort_keys=True)}")
     if "XBT_EVAL_HOOK_LOG" in (settings.get("env") or {}):
         problems.append("settings.json: env sets XBT_EVAL_HOOK_LOG, which would override every case's own hook log")
     roots = sealed_roots(config)
@@ -1804,10 +2149,21 @@ def live_parity(live_settings, live_path):
     return problems, owned
 
 
+def builtins_off(m):
+    """The `enabledPlugins` map the sealed settings carry: each built-in plugin the manifest switches off, false."""
+    return {p: False for p in m.get("builtin_plugins_off") or []}
+
+
 def manifest_problems(m):
-    """What makes a manifest unusable whatever the case: an account skill among the reviewed bundled skills."""
-    return [f"the manifest's bundled_skills holds an account skill: {s}"
-            for s in m.get("bundled_skills") or [] if s.startswith("anthropic-skills:")]
+    """What makes a manifest unusable whatever the case: an account skill among the reviewed bundled skills; a
+    plugin switched off that is not a built-in one, or that is also among the reviewed ones."""
+    reviewed = set(m.get("builtin_plugins") or [])
+    return ([f"the manifest's bundled_skills holds an account skill: {s}"
+             for s in m.get("bundled_skills") or [] if s.startswith("anthropic-skills:")]
+            + [f"the manifest's builtin_plugins_off holds {p}, which is not a built-in plugin id (<name>@builtin)"
+               for p in m.get("builtin_plugins_off") or [] if not p.endswith("@builtin")]
+            + [f"the manifest's builtin_plugins_off holds {p}, which builtin_plugins also reviews as on"
+               for p in m.get("builtin_plugins_off") or [] if p in reviewed])
 
 
 def _is_script(script, entry_path):
@@ -1916,6 +2272,10 @@ def _sealed(args, ctx, snap):
         fails.append("no hook log")
     fails += bad
     pack, fixture = set(m.get("skills") or []), set((ctx.get("scenario") or {}).get("fixture_skills") or [])
+    try:
+        fixture |= suite().fixture_skills()   # a git fixture's own, read from its commit
+    except RuntimeError as e:
+        fails.append(str(e))
     bundled, builtins = set(m.get("bundled_skills") or []), set(m.get("builtin_plugins") or [])
     for field in REVIEWED:
         if not m.get(field):
@@ -1933,6 +2293,11 @@ def _sealed(args, ctx, snap):
         if foreign:
             fails.append(f"turn {n}: plugin(s) not built in: {', '.join(foreign)}")
         unlisted = [p["source"] for p in plugins if p.get("path") == "builtin" and p.get("source") not in builtins]
+        loaded_off = [p for p in unlisted if p in builtins_off(m)]
+        if loaded_off:
+            fails.append(f"turn {n}: built-in plugin(s) switched off in the sealed settings but loaded: "
+                         f"{', '.join(loaded_off)}")
+            unlisted = [p for p in unlisted if p not in loaded_off]
         if unlisted and "builtin_plugins" not in stale:
             (stale.append("builtin_plugins") if rec.get("probe") else
              fails.append(f"turn {n}: built-in plugin(s) not reviewed: {', '.join(unlisted)}"))
@@ -2640,6 +3005,11 @@ def check(name, args, ctx, snap_index=None):
     if name in COMBINATORS:
         return COMBINATORS[name](args, ctx, snap_index)
     snaps = ctx["record"]["snapshots"]
+    if snap_index is not None and snap_index < len(snaps) - 1 and name in PROJECT_KINDS:
+        state = turn_copy(ctx.get("case_dir") or Path(ctx["proj"]).parent, snap_index)
+        if not state.is_dir():   # a record from before turn copies were kept: say so, never read the end state
+            return False, f"no copy of the project after turn {snap_index}: {name} cannot read that turn's state"
+        ctx = dict(ctx, proj=state)
     return CHECKS[name].fn(args, ctx, snaps[-1] if snap_index is None else snaps[snap_index])
 
 
@@ -2729,13 +3099,15 @@ def totals_line(spec):
 
 
 def selection_of(args):
+    if getattr(args, "layer", None):   # a candidate page's run is another configuration: never a listed result
+        return "candidate"
     if getattr(args, "repeat", None) or getattr(args, "confirm", None):
         return "repeat"
     return "only" if args.only else "quick" if args.quick else "seat" if args.seat else "full"
 
 
 def read_runs(path=None):
-    path = Path(path or RUNS_FILE)
+    path = Path(path or suite().runs_file())
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()] if path.is_file() else []
 
 
@@ -2797,36 +3169,40 @@ def case_costs(run_dir, grades):
     return out
 
 
-def run_record(run_dir, runs_root, grades, selection, pack_sha=None, costs=None, note="", verdicts=None):
+def run_record(run_dir, runs_root, grades, selection, pack_sha=None, costs=None, note="", verdicts=None, layer=None):
     """One RUNS.jsonl record: never an absolute path (`run` is relative to the runs root). A confirm run adds `verdicts`
-    ({"<scenario>-<seat>": {"runs": "PPF", "verdict": …}}, confirm_verdicts) beside RUN_FIELDS; no other run has it."""
+    ({"<scenario>-<seat>": {"runs": "PPF", "verdict": …}}, confirm_verdicts) beside RUN_FIELDS; no other run has it.
+    A candidate page's run (`--layer`) is selection `candidate`, repeats or not, and adds `layer`, the page's file
+    name; no other run has it."""
     costs = costs if costs is not None else case_costs(run_dir, grades)
     passed = sum(1 for g in grades if g.get("passed"))
     not_run = sum(1 for g in grades if g.get("not_run"))
     known = [c for c, _, _ in costs.values()]
-    layer = [r["passed"] for g in grades for r in g.get("results") or [] if list(r.get("check") or []) == ["layer"]]
-    if any(g.get("repeat") for g in grades):   # a case's repeats are one measurement, never a quick or full result
-        selection = "repeat"
+    checks = [r["passed"] for g in grades for r in g.get("results") or [] if list(r.get("check") or []) == ["layer"]]
+    if any(g.get("repeat") for g in grades) and selection != "candidate":   # a case's repeats are one measurement,
+        selection = "repeat"                                                  # never a quick or full result
     return {"run": Path(run_dir).resolve().relative_to(Path(runs_root).resolve()).as_posix(),
             "date": _stamp_date(run_dir), "selection": selection, "seats": sorted({g["seat"] for g in grades}),
             "cases": len(grades), "passed": passed, "not_run": not_run, "result": f"{passed}/{len(grades)}",
             "cost": None if any(c is None for c in known) else round(sum(known), 2),
             "failed": [[g["scenario"], g["seat"]] for g in grades if not g.get("passed") and not g.get("not_run")],
-            "layer_ok": (all(v is True for v in layer) if layer and None not in layer else None) if layer else None,
+            "layer_ok": (all(v is True for v in checks) if None not in checks else None) if checks else None,
             "pack_sha": pack_sha, "published": selection in LISTED, "note": note,
-            **({"verdicts": verdicts} if verdicts is not None else {})}
+            **({"verdicts": verdicts} if verdicts is not None else {}), **({"layer": layer} if layer else {})}
 
 
 def append_run(record, path=None):
-    with open(Path(path or RUNS_FILE), "a", encoding="utf-8") as f:
+    with open(Path(path or suite().runs_file()), "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def log_run(out, runs_root, grades, selection, pack_sha=None, verdicts=None):
-    """The graded run's one record, appended to RUNS.jsonl (R-29 § 6); `verdicts` is a confirm run's per-case table."""
-    record = run_record(out, runs_root, grades, selection, pack_sha, verdicts=verdicts)
+def log_run(out, runs_root, grades, selection, pack_sha=None, verdicts=None, layer=None):
+    """The graded run's one record, appended to the suite's RUNS.jsonl (R-29 § 6); `verdicts` is a confirm run's
+    per-case table, `layer` a candidate page's file name. Only the default suite's runs refill the figures."""
+    record = run_record(out, runs_root, grades, selection, pack_sha, verdicts=verdicts, layer=layer)
     append_run(record)
-    refill_figures(RUNS_FILE)
+    if suite().figures:
+        refill_figures(suite().runs_file())
     return record
 
 
@@ -2866,12 +3242,29 @@ def _batch(run_dir):
     return {}
 
 
+def candidate_layer(run_dir):
+    """The candidate page a recorded run was forced onto (`--layer`), read from its cases' records: the page's file
+    name, or None for a run on the live pages. A run whose cases disagree raises ValueError: one run is one page."""
+    names = set()
+    for rec in sorted(Path(run_dir).glob("*/record.json")):
+        try:
+            expected = json.loads(rec.read_text(encoding="utf-8")).get("layer_expected") or {}
+        except (OSError, ValueError):
+            continue
+        names.add(expected.get("file") if expected.get("forced") else None)
+    if len(names) > 1:
+        raise ValueError(f"{run_dir}: its cases ran on different pages: {sorted(map(str, names))}")
+    return next(iter(names), None)
+
+
 def derive_selection(run_dir, grades, repo=None):
     """What a recorded run ran, from its cases (a run recorded before the log kept its argv): the day's full or quick
     set (its batch's pack commit, else the scenarios committed at its stamp, less the scenarios the batch excluded),
     one seat's set, or one scenario (`only`). A run sized as the suite (11 cases or more, § 4.9 of R-29) whose day's
     committed scenarios lag it is `full`, or `seat` on one seat; any other is an `--only` run."""
     repo = Path(repo or PACK)
+    if candidate_layer(run_dir):
+        return "candidate"
     if any(g.get("repeat") for g in grades):
         return "repeat"
     cases = {(g["scenario"], g["seat"]) for g in grades}
@@ -2978,7 +3371,8 @@ def backfill(runs_root, runs_file=None, regrade=None, page=None, repo=None, toda
         elif run_id in p0_costs:
             stops.append(f"{run_id}: costs.md says ${p0_costs[run_id][0]:.2f} → ${p0_costs[run_id][1]:.2f}, the "
                          f"instrument reads ${old:.2f} unchanged")
-        record = run_record(d, runs_root, grades, derive_selection(d, first, repo), None, costs)
+        record = run_record(d, runs_root, grades, derive_selection(d, first, repo), None, costs,
+                            layer=candidate_layer(d))
         record["pack_sha"] = _batch(d).get("pack_head")
         for rc in rechecks:
             later = json.loads(rc.read_text(encoding="utf-8"))
@@ -3091,7 +3485,7 @@ def reviewed_at(repo, pack_head):
     if r.returncode != 0:
         return {}
     m = json.loads(r.stdout)
-    return {k: m.get(k) for k in REVIEWED}
+    return {k: m.get(k) for k in REVIEWED + ("builtin_plugins_off",)}   # the switch-off the case ran under, too
 
 
 def _spec_at(repo, commit, cache):
@@ -3229,7 +3623,7 @@ def rebuild_real(entry, case_dir):
     record of its turns and snapshots (no env: graded as a run recorded before the sealed config)."""
     case_dir = Path(case_dir)
     case_dir.mkdir(parents=True)
-    spec = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+    spec = suite().spec()
     scenario = next(x for x in spec["scenarios"] if x["id"] == entry["scenario"])
     proj = build_project(case_dir, scenario)
     for rel, text in entry["files"].items():
@@ -3274,7 +3668,7 @@ def harvest_case(case_dir, name, out_dir):
     parts = case_dir.resolve().parts
     entry["source"] = "/".join(parts[-3:]) if len(parts) >= 3 else case_dir.name
     with tempfile.TemporaryDirectory() as tmp:
-        spec = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+        spec = suite().spec()
         scenario = next(x for x in spec["scenarios"] if x["id"] == entry["scenario"])
         g = grade(rebuild_real(entry, Path(tmp) / "case"), scenario)
     entry["fails"] = sorted({k for r in g["results"] if r["passed"] is False for k in _kinds(r["check"])} & REPRODUCIBLE)
@@ -3475,7 +3869,8 @@ def case_history(records, runs_root, spec, since=HISTORY_SINCE):
     (its cases today's scenarios', less the record's `failed`) — and counted unread otherwise. `env` counts the failed
     sessions whose every failing check is an automatic one (`sealed` on an unreviewed CLI, `layer` during a page
     promotion): the environment's failure, not the scenario's behaviour. Only a grades.json can tell the two apart;
-    a failure read from the log alone stays a plain failure."""
+    a failure read from the log alone stays a plain failure. A candidate page's run (its record names a `layer`)
+    measured another page, not the live one, and is left out."""
     table, read, from_log, unread = {}, 0, 0, 0
     S = spec["scenarios"]
     sets = {"full": [(s["id"], st) for s in S for st in s["seats"]],
@@ -3488,7 +3883,7 @@ def case_history(records, runs_root, spec, since=HISTORY_SINCE):
         row["env"] += 1 if env and not passed else 0
 
     for r in records:
-        if (r.get("date") or "") < since:
+        if (r.get("date") or "") < since or r.get("layer"):
             continue
         try:
             grades = json.loads((Path(runs_root) / r["run"] / "grades.json").read_text(encoding="utf-8"))
@@ -3606,11 +4001,28 @@ def report(grades, out, stem=None, head=None):
 
 
 
+def candidate_page(args):
+    """(code, message, path) for `--layer`: (0, "", None) without it; else the candidate page's absolute path, refused
+    (exit 2) when it is not a file, when no single --seat is named (a page is one model's), or with --confirm (a
+    confirm reruns a run's own configuration)."""
+    if not getattr(args, "layer", None):
+        return 0, "", None
+    if getattr(args, "confirm", None) or not getattr(args, "seat", None):
+        return 2, "--layer runs one seat on a candidate page: it takes --seat, and no --confirm", None
+    path = Path(args.layer).expanduser().resolve()
+    if not path.is_file():
+        return 2, f"--layer: no file {path}", None
+    return 0, "", path
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--seat", choices=sorted(SEATS))
+    ap.add_argument("--layer", metavar="FILE", help="force a candidate doctrine page on every case (DOCTRINE_LAYER), "
+                    "expected by the layer check; one --seat, no --confirm; logged as selection `candidate`, never a "
+                    "listed result")
     ap.add_argument("--parallel", type=int, default=4)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--recheck")
@@ -3642,14 +4054,25 @@ def main(argv=None):
     ap.add_argument("--sealed-check", action="store_true", help="build the sealed config into a scratch folder and check it")
     ap.add_argument("--login", action="store_true", help="build the sealed config (--config), account sync off, then "
                     "print the one login command to run; refused if sync already reached the folder")
+    ap.add_argument("--suite", metavar="DIR", help="measure the suite in DIR (its scenarios.json, fixture, overlays, probes, "
+                    "known runs and its own RUNS.jsonl) instead of evals/; one that ships is refused")
     ap.add_argument("--probe", action="store_true", help="review a Claude Code version sealed.json has not reviewed: launch on it, with the manifest's "
                          "probe_hooks built in, and grade each case's sealed check unreviewed, never a pass")
     args = ap.parse_args(argv)
+    try:
+        use_suite(args.suite)
+    except (ValueError, OSError) as e:
+        print(f"--suite: {e}", file=sys.stderr)
+        return 2
+    if not suite().default and (args.backfill or args.regrade_all):
+        print("--backfill and --regrade-all read the shipped suite's history; they take no --suite", file=sys.stderr)
+        return 2
+    home_runs = suite().runs_root()
     if args.harvest:
         if not args.name:
             print("--harvest needs --name <id>", file=sys.stderr)
             return 2
-        entry = harvest_case(args.harvest, args.name, HERE / "known" / "real")
+        entry = harvest_case(args.harvest, args.name, suite().known / "real")
         print(f"harvested {entry['source']} as {args.name}: fails {entry['fails'] or 'nothing reproducible'}")
         return 0
     if args.regrade_all:
@@ -3660,7 +4083,7 @@ def main(argv=None):
     if args.backfill:
         return backfill(args.backfill, RUNS_FILE, args.regrade, args.page)
     if args.counts:
-        print(json.dumps(counts(json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))), ensure_ascii=False))
+        print(json.dumps(counts(suite().spec()), ensure_ascii=False))
         return 0
     if args.selftest:
         import selftest
@@ -3669,7 +4092,8 @@ def main(argv=None):
         settings = build_sealed(args.config)
         print(f"built {args.config}: {len(manifest()['skills'])} skill link(s), "
               f"{sum(len(v) for v in settings['hooks'].values())} hook(s), "
-              + ", ".join(f"{k} {str(settings.get(k)).lower()}" for k, _ in ACCOUNT_KEYS))
+              + ", ".join(f"{k} {str(settings.get(k)).lower()}" for k, _ in ACCOUNT_KEYS)
+              + f", built-in plugin(s) off: {', '.join(settings.get('enabledPlugins') or {}) or 'none'}")
         return 0
     if args.sealed_check:
         return sealed_check()
@@ -3677,16 +4101,20 @@ def main(argv=None):
         code, text = login(args.config)
         print(text, file=sys.stderr if code else sys.stdout)
         return code
-    spec = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+    spec = suite().spec()
     by_id = {s["id"]: s for s in spec["scenarios"]}
     if args.history is not None:
-        return history_report(args.history, RUNS_FILE, Path(args.out) if args.out else Path.home() / "xbt-evals", spec)
+        return history_report(args.history, suite().runs_file(), Path(args.out) if args.out else home_runs, spec)
     if args.recheck:
         run_dir = Path(args.recheck)
         grades = [grade(d, by_id[json.loads((d / "record.json").read_text(encoding="utf-8"))["scenario"]])
                   for d in sorted(run_dir.iterdir()) if (d / "record.json").is_file()]
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         return 0 if report(grades, Path(args.out) if args.out else run_dir, stem=f"regrade-{stamp}") else 1
+    code, message, layer = candidate_page(args)
+    if code:
+        print(message, file=sys.stderr)
+        return code
     cases = plan(spec, args.quick, args.only, args.seat)
     if args.confirm:
         if args.quick or args.only or args.seat or args.repeat:
@@ -3695,7 +4123,7 @@ def main(argv=None):
             return 2
         run_dir = Path(args.confirm)
         if not run_dir.is_absolute() and not (run_dir / "grades.json").is_file():
-            run_dir = (Path(args.out) if args.out else Path.home() / "xbt-evals") / args.confirm
+            run_dir = (Path(args.out) if args.out else home_runs) / args.confirm
         if not (run_dir / "grades.json").is_file():
             print(f"--confirm: no grades.json in {run_dir}", file=sys.stderr)
             return 2
@@ -3713,10 +4141,12 @@ def main(argv=None):
                   f"{len(s['turns'])} turn(s), {len(s['checks'])} check(s)" if args.confirm else
                   f"would run {s['id']} on {st}{f' (repeat {k})' if k else ''}: {len(s['turns'])} turn(s), "
                   f"{len(s['checks'])} check(s)")
+        if layer:
+            print(f"every case on the candidate page {layer}")
         print(totals_line(spec))
         if args.quick or args.only or args.seat:
             print(last_run_line(selection_of(args), cases=[(s, st) for s, st, _ in cases],
-                                runs_root=Path(args.out) if args.out else Path.home() / "xbt-evals"))
+                                runs_root=Path(args.out) if args.out else home_runs))
         return 0
     found = shutil.which("claude")
     if not found:
@@ -3731,19 +4161,20 @@ def main(argv=None):
     version = cli_version_of(cli)
     config = Path(args.config)
     build_sealed(config, probe=args.probe)
-    runs_root = Path(args.out) if args.out else Path.home() / "xbt-evals"
+    runs_root = Path(args.out) if args.out else home_runs
     code, message = preflight(cli, config, probe=args.probe, runs_root=runs_root)
     if code:
         print(message, file=sys.stderr)
         return code
     out = runs_root / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     on_graded, head = None, None
-    print(f"running {len(cases)} case(s) into {out} on {cli} ({version})", flush=True)
+    print(f"running {len(cases)} case(s) into {out} on {cli} ({version})"
+          + (f" on the candidate page {layer}" if layer else ""), flush=True)
     if args.confirm:   # one fresh session at a time, each read before the next, stopped by the rule
         grades, changed = confirm_batch([(by_id[sid], st) for sid, st in pairs], spec, out, config, cli, version,
                                         probe=args.probe, on_graded=on_graded)
     else:
-        grades, changed = run_batch(cases, spec, out, config, cli, version, args.parallel, probe=args.probe,
+        grades, changed = run_batch(cases, spec, out, config, cli, version, args.parallel, probe=args.probe, layer=layer,
                                     on_graded=on_graded)
     if args.probe:
         build_sealed(config)   # the probe entry is E-1's alone: the next build leaves it out
@@ -3755,7 +4186,8 @@ def main(argv=None):
         print("\n".join(lines))
         with open(out / "report.txt", "a", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
-    log_run(out, runs_root, grades, selection_of(args), _head(PACK), verdicts=verdicts)
+    log_run(out, runs_root, grades, selection_of(args), _head(PACK), verdicts=verdicts,
+            layer=layer.name if layer else None)
     if changed:
         print(f"CLI changed mid-batch: {changed[0]} → {changed[1]} — the batch stopped; review the new version with a "
               f"--probe run before the next batch", file=sys.stderr)
@@ -3782,7 +4214,8 @@ def sealed_check():
                 lines.append(f"  {_describe(hook_key(event, matcher, h, roots))} — {form}")
             except ValueError as e:
                 lines.append(f"  {event} {settings_script(h)} — {e}")
-    keys = ", ".join(f"{k} {str(settings.get(k)).lower()}" for k, _ in ACCOUNT_KEYS)
+    keys = (", ".join(f"{k} {str(settings.get(k)).lower()}" for k, _ in ACCOUNT_KEYS)
+            + f"; built-in plugin(s) off: {', '.join(settings.get('enabledPlugins') or {}) or 'none'}")
     count = len(_entries(settings))
     if problems:
         print("sealed: the build is not the installer's registration plus extra_hooks:\n" + "\n".join(f"  {p}" for p in problems))
@@ -3809,10 +4242,11 @@ def sealed_check():
     return 1 if problems or live_problems else 0
 
 
-def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, on_graded=None):
+def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, on_graded=None, layer=None):
     """(grades, (old, new) or None): every case on the binary resolved at the batch's start. An API error skips the
     cases not yet started; a CLI change stops every launch after it (the changed case not completed, the rest not
-    launched). `on_graded(case folder)` runs as each launched case is graded."""
+    launched). `on_graded(case folder)` runs as each launched case is graded. `layer` is a candidate page (`--layer`),
+    forced on every case."""
     out.mkdir(parents=True, exist_ok=True)
     limited, stopped, changed, grades = threading.Event(), threading.Event(), [], []
 
@@ -3824,7 +4258,7 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
         if stopped.is_set():
             return "not launched"
         try:
-            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k)
+            run_case(case_dir, s, st, spec["prompts"], config, cli, version, probe, repeat=k, layer=layer)
         except CLIChanged as e:
             changed.append((e.old, e.new))
             stopped.set()
@@ -3845,6 +4279,7 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
                     print(f"  {outcome} {s['id']} on {st}", flush=True)
                     continue
                 g = dict(grade(here, s), **rep)
+                prune_case(here)
                 if g.get("not_run"):
                     limited.set()
                 grades.append(g)
@@ -3862,4 +4297,5 @@ def run_batch(cases, spec, out, config, cli, version, parallel=4, probe=False, o
     return grades, (changed[0] if changed else None)
 
 if __name__ == "__main__":
+    sys.modules.setdefault("run", sys.modules[__name__])   # selftest's `import run` is this module, its suite with it
     sys.exit(main())

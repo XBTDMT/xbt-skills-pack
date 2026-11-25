@@ -44,7 +44,8 @@ WORKERS = 8
 
 
 def load_spec():
-    return json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+    """The suite run.py measures (evals/ unless --suite named another)."""
+    return run.suite().spec()
 
 
 def reviewed_manifest(root):
@@ -103,12 +104,14 @@ def _git(proj, *args, env=None):
 
 
 def _text_files(target):
-    """The text files at or under a path, as the snapshot sees them (no .git, no __pycache__)."""
+    """The text files at or under a path, as the snapshot sees them (no .git, no __pycache__, none of the suite's
+    ignored folders)."""
     if target.is_file():
         return [target]
     if not target.is_dir():
         return []
-    return sorted(p for p in target.rglob("*") if p.is_file() and not run.IGNORED_PARTS.intersection(p.parts))
+    skip = run.suite().ignored()
+    return sorted(p for p in target.rglob("*") if p.is_file() and not skip.intersection(p.parts))
 
 
 def _comment(path):
@@ -162,6 +165,12 @@ def apply_op(proj, op, env, fixture_head):
                 del lines[hit]
                 p.write_text("".join(lines), encoding="utf-8")
                 break
+    elif kind == "fail_tests" and (run.suite().tests or {}).get("format") == "cargo":
+        # a cargo suite's: the first integration-test file is deleted, so its baseline ids are gone
+        files = run._files(proj, "**/tests/*.rs")
+        if not files:
+            raise ValueError("fail_tests: no tests/*.rs file to remove")
+        files[0].unlink()
     elif kind == "fail_tests":    # every test of the first test class fails
         for p in sorted((proj / "tests").glob("test_*.py")):
             m = re.search(r"^class (\w+)\(", p.read_text(encoding="utf-8"), re.M)
@@ -240,7 +249,8 @@ def build_known(scenario, known, root, prompts):
     quiet_turns = set(known.get("omit_loader_log") or [])
     init = {"type": "system", "subtype": "init", "session_id": "known", "claude_code_version": m["cli_version"],
             "model": seat, "mcp_servers": [],
-            "skills": list(m["skills"]) + list(m["bundled_skills"]) + list(scenario.get("fixture_skills") or []),
+            "skills": list(m["skills"]) + list(m["bundled_skills"]) + list(scenario.get("fixture_skills") or [])
+                      + sorted(run.suite().fixture_skills()),   # what a real init lists from a git fixture
             "plugins": [{"name": src.split("@")[0], "path": "builtin", "source": src} for src in m["builtin_plugins"]]}
     init.update(known.get("init_patch") or {})
     start = datetime.datetime(2026, 9, 23, 10, 0, tzinfo=datetime.timezone.utc)
@@ -352,6 +362,7 @@ def build_known(scenario, known, root, prompts):
         (case / f"turn{n}.jsonl").write_text(text, encoding="utf-8")
         turns.append(dict(run.parse_stream(text), prompt=prompt, t_start=_at(start, n, 0), t_end=_at(start, n, 300)))
         snaps.append(run.snapshot(proj))
+        run.keep_turn_state(scenario, proj, case, n)   # as run_case keeps it
     (case / "transcripts").mkdir()
     (case / "transcripts" / "known.jsonl").write_text("\n".join(json.dumps(r) for r in transcript) + "\n", encoding="utf-8")
     for name, records in agent_files.items():
@@ -376,13 +387,17 @@ class Book:
         self.spec = spec or load_spec()
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        self.workers = workers
+        self.workers = run.suite().selftest_workers or workers
         self.cases, self.n = {}, 0
         self._saved = run.SEALED
         run.SEALED = reviewed_manifest(self.root)
+        # a suite's selftest_env (the shared cargo cache, say) for this pass only
+        run.suite().grade_env = {k: v.replace("{book}", str(self.root)).replace("{home}", str(Path.home()))
+                                 for k, v in run.suite().selftest_env.items()}
 
     def close(self):
         run.SEALED = self._saved
+        run.suite().grade_env = {}
         self.tmp.cleanup()
 
     def __enter__(self):
@@ -400,7 +415,9 @@ class Book:
         def one(job):
             key, scenario, known, folder = job
             try:
-                return key, build_known(scenario, known, folder, self.spec["prompts"])
+                case = build_known(scenario, known, folder, self.spec["prompts"])
+                run.prune_case(case)         # a suite's build folder: kept by no case between its uses
+                return key, case
             except Exception as e:           # a run that cannot be built is a problem, never a pass
                 return key, e
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as pool:
@@ -415,7 +432,10 @@ class Book:
             case = self.cases[key]
             if isinstance(case, Exception):
                 return key, {"passed": False, "results": [], "built": f"{type(case).__name__}: {case}"}
-            return key, run.grade(case, scenario)
+            try:
+                return key, run.grade(case, scenario)
+            finally:
+                run.prune_case(case)
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as pool:
             return dict(pool.map(one, pairs))
 
@@ -495,15 +515,18 @@ def known_problems(book):
     return problems, ok, owned
 
 
-LAYER_RUNS = HERE / "known" / "layer_runs.json"
+def layer_runs_file():
+    """The suite's layer known runs (the default suite's: evals/known/layer_runs.json); a suite may have none."""
+    return run.suite().known / "layer_runs.json"
 
 
 def layer_run_jobs(spec):
     """R-26 test 26: the `layer` known runs, each a scenario's first good run on a seat with the loader output it
-    names (evals/known/layer_runs.json)."""
+    names (the suite's known/layer_runs.json; none when the suite keeps no such file)."""
     by_id = {s["id"]: s for s in spec["scenarios"]}
-    jobs = []
-    for i, r in enumerate(json.loads(LAYER_RUNS.read_text(encoding="utf-8"))["runs"]):
+    jobs, path = [], layer_runs_file()
+    runs = json.loads(path.read_text(encoding="utf-8"))["runs"] if path.is_file() else []
+    for i, r in enumerate(runs):
         scenario = by_id[r["scenario"]]
         base = dict(first_good(scenario), _prompts=_prompts_of(scenario, spec))
         known = dict(base, **{k: v for k, v in r.items() if k != "scenario"})
@@ -640,8 +663,9 @@ def load_bearing(book, kinds=None):
 # ------------------------------------------------------------------------------------------------ the real failures
 
 def real_failures(spec):
-    """(still failing, problems): each kept case of evals/known/real/, rebuilt and graded, fails on its `fails`."""
-    real = HERE / "known" / "real"
+    """(still failing, problems): each kept case of the suite's known/real/ (the default's evals/known/real/), rebuilt
+    and graded, fails on its `fails`."""
+    real = run.suite().known / "real"
     index = json.loads((real / "INDEX.json").read_text(encoding="utf-8")) if (real / "INDEX.json").is_file() else {"entries": []}
     by_id, ok, problems = {s["id"]: s for s in spec["scenarios"]}, 0, []
     with tempfile.TemporaryDirectory() as tmp:
@@ -862,6 +886,25 @@ def floor_problems(spec, entries=None):
     return problems
 
 
+def suite_kinds(spec):
+    """The check kinds the suite must show load-bearing: every kind, for the default suite (each kind is proven on
+    the shipped suite); for another, the kinds its own scenarios name, inside combinators too."""
+    if run.suite().default:
+        return None
+    found = set()
+
+    def walk(c):
+        if c[0] in run.COMBINATORS:
+            for inner in (c[2:] if c[0] == "after_turn" else c[1:]):
+                walk(inner)
+        else:
+            found.add(c[0])
+    for sc in spec["scenarios"]:
+        for c in sc.get("checks", []):
+            walk(c)
+    return sorted(found)
+
+
 def main(argv=None, quiet=False):
     """Run every proof; print the summary line (or, quiet, nothing but the problems) and return the number of
     problems, 0 when the graders are proven."""
@@ -872,10 +915,12 @@ def main(argv=None, quiet=False):
         lp, l_ok = layer_run_problems(book)
         vp, v_ok, table = violation_problems(book)
         cp = co_fail_problems(spec)
-        bearing, rest = load_bearing(book)
+        kinds = suite_kinds(spec)
+        bearing, rest = load_bearing(book, kinds)
     real_ok, rp = real_failures(spec)
     stop_ok, sp = stop_text_problems(spec)
-    problems = (kp + lp + vp + cp + rp + sp + floor_problems(spec) + schema_problems(spec)
+    floor = floor_problems(spec) if run.suite().default else []   # the quick floor is the shipped suite's policy
+    problems = (kp + lp + vp + cp + rp + sp + floor + schema_problems(spec)
                 + [f"not load-bearing: {k}" for k in rest])
     if "--co-fail" in argv:
         print("scenario | check | violation fails also | why")
@@ -888,7 +933,7 @@ def main(argv=None, quiet=False):
     elif not quiet:
         print(f"selftest: {k_ok} known runs as declared · {sum(owned.values())} owned-expected"
               f"{f' ({owners})' if owners else ''} · {l_ok} layer runs as declared · {v_ok} checks fail on their violation · "
-              f"{len(bearing)} of {len(run.CHECKS)} kinds load-bearing · {real_ok} real failures still fail · "
+              f"{len(bearing)} of {len(kinds) if kinds is not None else len(run.CHECKS)} kinds load-bearing · {real_ok} real failures still fail · "
               f"{stop_ok} end-of-turn holds re-derived · 0 problems")
     return len(problems)
 
