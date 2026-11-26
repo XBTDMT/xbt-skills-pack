@@ -190,6 +190,7 @@ Every case also gets the <!-- fig:eval.automatic_kinds -->3<!-- /fig --> automat
 | 2026-11-20 | 19 (quick) | 18 / 19 | `shell_doc_eli5` on Fable |
 | 2026-11-23 | 19 (quick) | **19 / 19** | — |
 | 2026-11-25 | 19 (quick) | **19 / 19** | — |
+| 2026-11-25 | 55 | 53 / 55 | `redman_no_edit` on Opus 5.5; `suffixed_doc_map` on Opus 5.5 |
 
 plus 68 targeted runs (`--only`), 76/110 cases passed; every run is in `evals/RUNS.jsonl`
 
@@ -670,7 +671,7 @@ author's claude.ai account: 254 skills in all, 7 of them this pack's, most of th
 skills-absent sessions listed none. So that extra cost measured carrying all 254 listings, not this pack's skills alone.*
 
 **What that means.** The skills change what a session does *when they are invoked*, which is what the graded
-behaviour suite measures (its last full run: <!-- fig:run.full.result -->53/53<!-- /fig --> on <!-- fig:run.full.date -->2026-11-17<!-- /fig -->, with account sync and connectors
+behaviour suite measures (its last full run: <!-- fig:run.full.result -->53/55<!-- /fig --> on <!-- fig:run.full.date -->2026-11-25<!-- /fig -->, with account sync and connectors
 off). Merely present, they did not help on
 tasks that never call them, and they are not free. If your work never reaches a close-out, a real choice or a
 failed fix, install the ones you will type and leave the rest.
@@ -799,7 +800,7 @@ check as unreviewed, never a pass, so its results are not comparable with the ru
 lists are reviewed into `evals/sealed.json`.
 
 As this tree ships: <!-- fig:tests.public -->623<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.86<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$39.37<!-- /fig -->.
+<!-- fig:run.quick.cost -->$10.86<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$40.89<!-- /fig -->.
 
 Runs land in `~/xbt-evals/<timestamp>/`: one folder per case, each holding every turn's stream, the project, its
 scratch folder, and its snapshot after every turn (`record.json`), with the run's `grades.json` beside them. A
