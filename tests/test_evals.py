@@ -409,6 +409,31 @@ class Grading(unittest.TestCase):
         self.assertEqual([(s["id"], st) for s, st in alias], [("failed_fork", "opus")])
         self.assertEqual(len(evals.plan(SPEC, False, None, "opus")), len(evals.plan(SPEC, False, None, "opus55")))
 
+    def test_the_default_fable_seat_is_the_seat_in_use_and_5_1_is_one_flag_away(self):
+        # 2026-11-25: the scenarios name fable52 (Fable 5.2, the seat in use); the word "fable" keeps meaning Fable 5.1
+        seats = {st for _, st in evals.plan(SPEC, False, None, None)}
+        self.assertEqual(seats, {"fable52", "opus55"})
+        self.assertEqual({st for _, st in evals.plan(SPEC, True, None, None)}, {"fable52", "opus55"})
+        self.assertEqual(evals.SEATS["fable"][1], "claude-fable-5-1")        # a stored row's word keeps its model
+        self.assertEqual(evals.SEATS["fable52"][1], "claude-fable-5-2")
+        comparison = evals.plan(SPEC, False, None, "fable")
+        self.assertEqual({st for _, st in comparison}, {"fable"})
+        self.assertEqual(len(comparison), len(evals.plan(SPEC, False, None, "fable52")))
+
+    def test_a_quick_set_s_last_run_is_one_on_the_same_seats(self):
+        log = Path(tempfile.mkdtemp()) / "RUNS.jsonl"
+        self.addCleanup(shutil.rmtree, log.parent, True)
+        rows = [{"run": "20990101-000000", "date": "2099-01-01", "selection": "quick", "seats": ["fable", "opus55"],
+                 "passed": 19, "cases": 19, "cost": 10.0}]
+        log.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+        cases = evals.plan(SPEC, True, None, None)
+        self.assertEqual(evals.last_run_line("quick", log, cases), "last run of this selection: none recorded")
+        rows.append(dict(rows[0], run="20990102-000000", date="2099-01-02", seats=["fable52", "opus55"], cost=11.0))
+        log.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+        self.assertIn("(20990102-000000)", evals.last_run_line("quick", log, cases))
+        self.assertIn("(20990101-000000)", evals.last_run_line("quick", log, evals.plan(SPEC, True, None, "fable")
+                                                                + evals.plan(SPEC, True, None, "opus55")))
+
 
 class Registry(unittest.TestCase):
     def test_registry_is_the_only_list_of_kinds(self):
@@ -1305,6 +1330,30 @@ class TestsPass(unittest.TestCase):
         self.assertEqual(self.grade(case, proj, baseline, ["tests_pass", "no_worse"]), [True])   # R-1 still red, nothing worse
         self.assertIn("malformed", details(case, ["tests_pass", "some"])[0])
 
+    def test_a_declared_rename_stands_in_for_its_baseline_id_and_nothing_else_does(self):
+        # G-106: a change that makes a test's name false renames it; the scenario declares that one id and the
+        # pattern its new name takes, and the new test must pass where the old one did
+        old = "test_report.LowStock.test_nothing_low"
+        renamed = {"renamed": {old: r"test_report\.LowStock\.test_\w+_low"}}
+        case, proj, baseline = self.project()
+        tests = proj / "tests" / "test_report.py"
+        text = tests.read_text(encoding="utf-8")
+        tests.write_text(text.replace("def test_nothing_low", "def test_none_low"), encoding="utf-8")
+        self.assertEqual(self.grade(case, proj, baseline, ["tests_pass", "no_worse"],
+                                    ["tests_pass", "no_worse", renamed]), [False, True])
+        # the stand-in must pass where the old test passed
+        tests.write_text(text.replace("def test_nothing_low(self):", "def test_none_low(self):\n        self.fail()\n"),
+                         encoding="utf-8")
+        self.assertEqual(self.grade(case, proj, baseline, ["tests_pass", "no_worse", renamed]), [False])
+        # a name the pattern does not take is still a missing test
+        tests.write_text(text.replace("def test_nothing_low", "def test_other"), encoding="utf-8")
+        self.assertEqual(self.grade(case, proj, baseline, ["tests_pass", "no_worse", renamed]), [False])
+        # an undeclared id that goes missing still fails, rename or not
+        other = {"renamed": {"test_report.LowStock.test_elsewhere": r".*"}}
+        tests.write_text(text.replace("def test_nothing_low", "def test_none_low"), encoding="utf-8")
+        self.assertEqual(self.grade(case, proj, baseline, ["tests_pass", "no_worse", other]), [False])
+        self.assertIn("malformed", details(case, ["tests_pass", "no_worse", {"rename": {}}])[0])
+
 
 RECEIPT = ("ELI5 v5\n- Did: fixed the report\n- Why: uncounted items were reported\n- Result: worked\n"
            "- Proof: 2 tests pass\n- Files: shelf/report.py\n\n- Redman: filed 1 small → knowledge/redman/LEDGER.md\n"
@@ -1740,8 +1789,8 @@ class KnownRuns(unittest.TestCase):
         hook's block in each subagent's first message, both seats, in the quick floor on opus55), each with a
         known-bad that fails offline; their seats and quick marks as R-31 plans them."""
         by_id = {s["id"]: s for s in SPEC["scenarios"]}
-        for sid, seats, quick in (("greenman_no_edit", ["fable", "opus55"], []),
-                                  ("subagent_brief", ["fable", "opus55"], ["opus55"])):
+        for sid, seats, quick in (("greenman_no_edit", ["fable52", "opus55"], []),
+                                  ("subagent_brief", ["fable52", "opus55"], ["opus55"])):
             self.assertEqual((by_id[sid]["seats"], by_id[sid]["quick"]), (seats, quick), sid)
         no_edit = by_id["redman_no_edit"]
         self.assertEqual(no_edit["overlay"], "no_edit_big")
@@ -1807,7 +1856,7 @@ class KnownRuns(unittest.TestCase):
         self.assertIn("full_flow_two_lane", by_id)
         flow, lane = by_id["full_flow"], by_id["full_flow_two_lane"]
         for s in (flow, lane):
-            self.assertEqual((s["seats"], s["quick"]), (["fable"], []), s["id"])
+            self.assertEqual((s["seats"], s["quick"]), (["fable52"], []), s["id"])
             self.assertEqual(s["turns"][:2], ["/redman", "/eli5"], s["id"])
             self.assertEqual([t.split()[0] for t in s["turns"][-2:]], ["/project-update", "/closeout"], s["id"])
             self.assertEqual([k["label"] for k in s["known"] if "owned_by" in k], [], s["id"])
@@ -3570,7 +3619,7 @@ class SkillChangedKnownRuns(unittest.TestCase):
 
     def test_the_scenario_as_planned(self):
         s = scenario_of("skill_changed_midsession")
-        self.assertEqual((s["seats"], s["quick"], s["fixture_skills"]), (["fable", "opus55"], ["fable"], ["demo"]))
+        self.assertEqual((s["seats"], s["quick"], s["fixture_skills"]), (["fable52", "opus55"], ["fable52"], ["demo"]))
         self.assertEqual(len(s["turns"]), 3)
         self.assertIn(["hook_fired", "SessionStart", "demo skill changed", "block", "eli5/skill_fresh.py", {"turn": 2}],
                       s["checks"])
@@ -4048,9 +4097,9 @@ class RunLog(unittest.TestCase):
         self.assertEqual(lines()[-1], f"totals: {c['scenarios']} scenarios, {c['graded sessions']} graded sessions, "
                                       f"{c['turns']} turns, {c['checks']} checks ({c['check-runs']} check-runs)")
         self.runs.write_text("".join(json.dumps(r) + "\n" for r in (
-            {"run": "a", "date": "2026-09-22", "selection": "quick", "cases": 11, "passed": 11, "cost": 9.0},
-            {"run": "b", "date": "2026-09-25", "selection": "full", "cases": 43, "passed": 41, "cost": 30.1},
-            {"run": "c", "date": "2026-09-25", "selection": "quick", "cases": 17, "passed": 15, "cost": 8.34})),
+            {"run": "a", "seats": ["fable52", "opus55"], "date": "2026-09-22", "selection": "quick", "cases": 11, "passed": 11, "cost": 9.0},
+            {"run": "b", "seats": ["fable52", "opus55"], "date": "2026-09-25", "selection": "full", "cases": 43, "passed": 41, "cost": 30.1},
+            {"run": "c", "seats": ["fable52", "opus55"], "date": "2026-09-25", "selection": "quick", "cases": 17, "passed": 15, "cost": 8.34})),
             encoding="utf-8")
         quick = lines("--quick")
         self.assertTrue(quick[-2].startswith("totals: "))
@@ -4066,8 +4115,8 @@ class RunLog(unittest.TestCase):
                 self.assertEqual(evals.main(["--dry-run", *argv, "--out", str(self.root)]), 0)
             return out.getvalue().strip().splitlines()[-1]
         self.mkrun("20260928-122600", [("refusal-opus55", [("2.1.283", 0.26)])])
-        self.mkrun("20260928-213010", [("refusal-fable", [("2.1.283", 0.5)]), ("refusal-opus55", [("2.1.283", 0.5)])])
-        self.mkrun("20260929-110714", [("pushback_ruling-fable", [("2.1.283", 0.4)])])
+        self.mkrun("20260928-213010", [("refusal-fable52", [("2.1.283", 0.5)]), ("refusal-opus55", [("2.1.283", 0.5)])])
+        self.mkrun("20260929-110714", [("pushback_ruling-fable52", [("2.1.283", 0.4)])])
         self.runs.write_text("".join(json.dumps(r) + "\n" for r in (
             {"run": "20260928-122600", "date": "2026-09-28", "selection": "only", "cases": 1, "passed": 1, "cost": 0.26},
             {"run": "20260928-213010", "date": "2026-09-28", "selection": "only", "cases": 2, "passed": 2, "cost": 1.0},
@@ -4088,8 +4137,8 @@ class RunLog(unittest.TestCase):
             with mock.patch.object(evals, "RUNS_FILE", self.runs), contextlib.redirect_stdout(io.StringIO()) as out:
                 self.assertEqual(evals.main(["--dry-run", *argv, "--out", str(self.root)]), 0)
             return out.getvalue().strip().splitlines()[-1]
-        self.mkrun("20261115-004609", [("full_flow-fable", [("2.1.323", 15.7)])])     # a repeat's grades name each
-        self.mkrun("20261118-150344", [("refusal-fable", [("2.1.323", 0.4)]),         # case once per repeat; the
+        self.mkrun("20261115-004609", [("full_flow-fable52", [("2.1.323", 15.7)])])     # a repeat's grades name each
+        self.mkrun("20261118-150344", [("refusal-fable52", [("2.1.323", 0.4)]),         # case once per repeat; the
                                        ("refusal-opus55", [("2.1.323", 0.4)])])     # match reads their set
         self.runs.write_text("".join(json.dumps(r) + "\n" for r in (
             {"run": "20261115-004609", "date": "2026-11-15", "selection": "repeat", "cases": 4, "passed": 0, "cost": 15.7},
@@ -4810,6 +4859,39 @@ class AfterTurnReadsThatTurn(unittest.TestCase):
         self.assertTrue((copy / ".git" / "HEAD").is_file())
         self.assertFalse((copy / "__pycache__").exists())
         self.assertIn("awaiting", (copy / "docs" / "G-1-swap.md").read_text(encoding="utf-8"))
+
+    def test_the_copy_skips_git_s_lock_files_and_keeps_the_project_s_own(self):
+        # a lock is a git process's moment, gone between the listing and the copy (the 2026-11-24 selftest death)
+        case = make_case(self.tmp, [{"final": "pushed back"}, {"final": "done"}])
+        proj = case / "project"
+        (proj / ".git" / "objects").mkdir(parents=True)
+        (proj / ".git" / "objects" / "maintenance.lock").write_text("", encoding="utf-8")
+        (proj / ".git" / "index.lock").write_text("", encoding="utf-8")
+        (proj / "deps.lock").write_text("pinned\n", encoding="utf-8")
+        evals.keep_turn_state(self.SCENARIO, proj, case, 1)
+        copy = evals.turn_copy(case, 1)
+        self.assertEqual(sorted(p.name for p in copy.rglob("*.lock")), ["deps.lock"])
+
+    def test_a_case_s_repositories_start_no_background_upkeep(self):
+        case = self.tmp / "quiet"
+        case.mkdir()
+        proj = evals.build_project(case, {"id": "t"})
+        get = lambda repo, key: subprocess.run(["git", "-C", str(repo), "config", "--local", key],
+                                               capture_output=True, text=True).stdout.strip()
+        self.assertEqual((get(proj, "gc.auto"), get(proj, "maintenance.auto")), ("0", "false"))
+        origin = case / "origin.git"
+        self.assertEqual((get(origin, "gc.auto"), get(origin, "maintenance.auto"), get(origin, "receive.autogc")),
+                         ("0", "false", "false"))
+
+    def test_two_batches_in_one_second_get_two_folders(self):
+        t = datetime.datetime(2099, 1, 1, 0, 0, 0, 400000)
+        clock, waits = [t, t, t + datetime.timedelta(seconds=1)], []
+        first = evals.new_run_dir(self.tmp / "runs", now=lambda: clock.pop(0), wait=waits.append)
+        second = evals.new_run_dir(self.tmp / "runs", now=lambda: clock.pop(0), wait=waits.append)
+        self.assertEqual((first.name, second.name), ("20990101-000000", "20990101-000001"))
+        self.assertTrue(first.is_dir() and second.is_dir())
+        self.assertEqual(len(waits), 1)
+        self.assertAlmostEqual(waits[0], 0.61)   # to the next second, not a fixed second
 
     def test_a_record_s_turn_one_status_is_read_from_turn_one(self):
         case = self.case()

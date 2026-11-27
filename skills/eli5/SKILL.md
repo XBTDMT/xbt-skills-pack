@@ -36,7 +36,7 @@ ELI5 v5
 - Files:
 
 - Redman: off | NA | filed N small → <ledger path> | held N — no edits allowed | big: <finding> → <ledger path> — now or later? | deep run <path>: <state>
-- Greenman: NA | NA — go-ahead | NA — info | NA — scope | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected → <record path> | G-<n> (M): awaiting you — <question> → <record path> | G-<n> (L): awaiting you — <question> → <record path> | G-<n> (L): <chose> over <others> — delegated by the user → <record path> | G-<n> (<depth>): shortcut taken — real fix owed → <record path> | held — no edits allowed (<depth> call in the report) | ruled by the user → <ledger path>
+- Greenman: NA — go-ahead | NA — info | NA — scope (when Need from you asks anything, one of these or a decision's form, never a bare NA) | NA (only when Need from you is none) | decided N small → <ledger path> | G-<n> (M): <chose> over <others>, <shortcut> rejected → <record path> | G-<n> (M): awaiting you — <question> → <record path> | G-<n> (L): awaiting you — <question> → <record path> | G-<n> (L): <chose> over <others> — delegated by the user → <record path> | G-<n> (<depth>): shortcut taken — real fix owed → <record path> | held — no edits allowed (<depth> call in the report) | ruled by the user → <ledger path>
 
 - Next:
 - Need from you: <one question, and how it serves the goal | none>

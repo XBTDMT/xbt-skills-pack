@@ -67,11 +67,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PACK = HERE.parent
 SEATS = {"fable": ["--model", "claude-fable-5-1", "--effort", "low"],      # Fable 5.1, `cc fable51` since 2026-11-13 (the seat word keeps the run log's meaning)
-         "fable52": ["--model", "claude-fable-5-2", "--effort", "low"],    # `cc fable` since 2026-11-13: the 5.1 page copied, measured on 5.2
+         "fable52": ["--model", "claude-fable-5-2", "--effort", "low"],    # `cc fable` since 2026-11-13, on its own page; the default seat since 2026-11-25
          "opus55": ["--model", "claude-opus-5-5", "--effort", "high"],   # the reviewer seat since 2026-09-22; the scenarios name it
          "opus": ["--model", "claude-opus-5", "--effort", "high"]}       # the reviewer seat until 2026-09-22; --seat opus runs the Opus scenarios on it
 SEAT_ALIAS = {"opus": "opus55",   # a seat that stands in for another: the scenarios name "opus55"; --seat opus runs those on Opus 5
-              "fable52": "fable"}  # the scenarios name "fable" (5.1); --seat fable52 runs those on Fable 5.2 (2026-11-12)
+              "fable": "fable52"}  # the scenarios name "fable52", the seat in use, since 2026-11-25; --seat fable runs those
+                                   # on Fable 5.1, the comparison seat (each word keeps the model it named in the run log)
 GIT_ALLOWED = ("status", "diff", "log", "add", "commit")
 # Each git command allowed bare is allowed in its `git -C <dir>` form too: the doctrine pages tell a session to run git
 # that way, never `cd … &&` in front of it, and the full run of 2026-10-07 had a session refused `git -C <project> status`.
@@ -479,6 +480,19 @@ FIXTURE_COMMIT_ENV = {"GIT_AUTHOR_NAME": "evals", "GIT_AUTHOR_EMAIL": "evals@loc
                       "GIT_AUTHOR_DATE": "2026-01-01T00:00:00 +0000", "GIT_COMMITTER_DATE": "2026-01-01T00:00:00 +0000"}
 
 
+# Git starts its own upkeep in the background after a commit or a push (`maintenance.auto`, `gc.auto`; a bare repository
+# also on receive, `receive.autogc`), and it writes `.git/objects/maintenance.lock` while it runs: a snapshot copied
+# then lists the lock and finds it gone (a quick set's selftest died on it, 2026-11-24). A case's repositories are
+# throwaway, so their own config turns that upkeep off for every git that touches them: ours, the grader's and the
+# session's.
+QUIET_GIT = (("gc.auto", "0"), ("maintenance.auto", "false"))
+
+
+def quiet_git(repo, receive=False):
+    for key, value in QUIET_GIT + ((("receive.autogc", "false"),) if receive else ()):
+        subprocess.run(["git", "-C", str(repo), "config", key, value], check=True, capture_output=True)
+
+
 def build_project(case_dir, scenario):
     """The case's project: the fixture, its overlays, git with a bare origin, then its preps — run with the case's own
     DOC_GUARDRAILS_STATE and the pack under test's closeout.py, the values the session and the grader use, so no prep
@@ -502,14 +516,17 @@ def build_project(case_dir, scenario):
     for name in [overlays] if isinstance(overlays, str) else overlays:
         shutil.copytree(s.overlays / name, proj, dirs_exist_ok=True, ignore=stray)
     if s.fixture:
+        quiet_git(proj)
         git("add", "-A")
         if git("status", "--porcelain").stdout.strip():
             git("commit", "-q", "-m", s.conf.get("overlay_message") or "fixture")
     else:
         git("init", "-q", "-b", "main")
+        quiet_git(proj)
         git("add", "-A")
         git("commit", "-q", "-m", "fixture")
     subprocess.run(["git", "init", "-q", "--bare", str(case_dir / "origin.git")], check=True, capture_output=True)
+    quiet_git(case_dir / "origin.git", receive=True)
     git("remote", "add", "origin", "../origin.git")
     preps = scenario.get("prep") or []
     table = s.preps()
@@ -1327,7 +1344,10 @@ def keep_turn_state(scenario, proj, case_dir, n):
     skip = suite().ignored() - {".git"}
     dest = turn_copy(case_dir, n)
     shutil.rmtree(dest, ignore_errors=True)
-    shutil.copytree(proj, dest, symlinks=True, ignore=lambda d, names: [x for x in names if x in skip])
+    # a lock file is a git process's moment, never the project's state: it can vanish between the listing and the copy
+    shutil.copytree(proj, dest, symlinks=True,
+                    ignore=lambda d, names: [x for x in names if x in skip or (x.endswith(".lock") and ".git" in
+                                                                               Path(d).relative_to(Path(proj)).parts)])
 
 
 def baseline_tests(proj):
@@ -1342,23 +1362,35 @@ PASSED = ("ok", "expected failure")
 def _tests_pass(args, ctx, snap):
     """`all` (default): every baseline test id still exists and passes, and the run passes with ≥1 test; `no_worse`:
     every baseline id still exists and each that passed at baseline still passes. The same on 3.9 and 3.13, whose
-    unittest exit codes differ when nothing runs (W-29)."""
+    unittest exit codes differ when nothing runs (W-29). An optional `{"renamed": {<baseline id>: <regex>}}` names a
+    test a correct change must rename (its name states what the change makes false): that id counts as present when
+    one id that was not at baseline fully matches the regex, and that id stands in for it; any other missing id fails
+    as before."""
     mode = args[0] if args else "all"
     if mode not in ("all", "no_worse"):
         raise ValueError(f"malformed tests_pass: mode {mode!r}")
+    opts = args[1] if len(args) > 1 else {}
+    if len(args) > 2 or not isinstance(opts, dict) or set(opts) - {"renamed"} or not isinstance(opts.get("renamed", {}), dict):
+        raise ValueError(f"malformed tests_pass: the option is {{\"renamed\": {{<id>: <regex>}}}}, not {args[1:]}")
+    renamed = opts.get("renamed", {})
     now, code, last = run_tests(ctx["proj"])
     base = ctx["record"].get("baseline_tests")
     if not now:
         return False, f"no test ran: {last}"
     if base is None:   # a record written before baseline ids were kept
         return code == 0, last
-    gone = sorted(t for t in base if t not in now)
+    stand_in = {}
+    for t in sorted(t for t in base if t not in now and t in renamed):
+        new = sorted(n for n in now if n not in base and n not in stand_in.values() and re.fullmatch(renamed[t], n))
+        if new:
+            stand_in[t] = new[0]
+    gone = sorted(t for t in base if t not in now and t not in stand_in)
     if gone:
         return False, f"{len(gone)} baseline test(s) gone: {gone[:3]}"
     if mode == "all":
         bad = sorted(t for t, st in now.items() if st not in PASSED and not (st == "skipped" and base.get(t) == "skipped"))
         return not bad and code == 0, f"not passing: {bad[:3]}" if bad else last
-    worse = sorted(t for t, st in base.items() if st in PASSED and now[t] not in PASSED)
+    worse = sorted(t for t, st in base.items() if st in PASSED and now[stand_in.get(t, t)] not in PASSED)
     return not worse, f"passed at baseline, not now: {worse[:3]}" if worse else f"no worse than baseline ({len(now)} ran)"
 
 
@@ -3128,8 +3160,12 @@ def _run_cases(runs_root, record):
 def last_run_line(selection, path=None, cases=None, runs_root=None):
     """The dry run's last-run line. `only` and `repeat` name an ad-hoc set, so each is matched on that set's scenarios
     and seats (each run's own grades.json under runs_root), never on the kind alone, a repeat whatever its number of
-    repeats; quick, seat and full are matched by kind."""
+    repeats; quick, seat and full are matched by kind and by the seats the row names, so a quick set on Fable 5.2 never
+    shows the last one on Fable 5.1 (the default seat moved on 2026-11-25)."""
     last = [r for r in read_runs(path) if r.get("selection") == selection]
+    if selection in ("quick", "full", "seat") and cases is not None:
+        want = sorted({st for _, st in cases})
+        last = [r for r in last if sorted(r.get("seats") or []) == want]
     if selection in ("only", "repeat") and cases is not None:
         root = runs_root or Path.home() / "xbt-evals"
         if selection == "only":
@@ -3240,6 +3276,20 @@ def refill_figures(runs_file, python=None):
 def _batch(run_dir):
     """A run of this copy keeps no batch record."""
     return {}
+
+
+def new_run_dir(runs_root, now=datetime.datetime.now, wait=time.sleep):
+    """A run's own folder, named to the second (`%Y%m%d-%H%M%S`, the name the history and the log read). Two batches
+    launched in the same second once shared one and the later report replaced the other's (2026-11-24): the folder is
+    claimed by an exclusive mkdir, and a batch that finds its second taken waits for the next free one."""
+    Path(runs_root).mkdir(parents=True, exist_ok=True)
+    while True:
+        t = now()
+        try:
+            (Path(runs_root) / t.strftime("%Y%m%d-%H%M%S")).mkdir(exist_ok=False)
+            return Path(runs_root) / t.strftime("%Y%m%d-%H%M%S")
+        except FileExistsError:
+            wait(1.0 - t.microsecond / 1e6 + 0.01)
 
 
 def candidate_layer(run_dir):
@@ -4166,7 +4216,7 @@ def main(argv=None):
     if code:
         print(message, file=sys.stderr)
         return code
-    out = runs_root / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = new_run_dir(runs_root)
     on_graded, head = None, None
     print(f"running {len(cases)} case(s) into {out} on {cli} ({version})"
           + (f" on the candidate page {layer}" if layer else ""), flush=True)

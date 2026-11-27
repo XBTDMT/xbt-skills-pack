@@ -50,7 +50,7 @@ Two things, measured separately, and neither is a claim that your finished work 
 
 | | |
 |---|---|
-| **The skills** | <!-- fig:eval.scenarios -->30<!-- /fig --> scenarios · <!-- fig:eval.sessions -->55<!-- /fig --> graded sessions · <!-- fig:eval.checks -->229<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->53/55<!-- /fig -->** (<!-- fig:run.full.date -->2026-11-25<!-- /fig -->; Fable 5.1 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
+| **The skills** | <!-- fig:eval.scenarios -->30<!-- /fig --> scenarios · <!-- fig:eval.sessions -->55<!-- /fig --> graded sessions · <!-- fig:eval.checks -->229<!-- /fig --> checks · last full run **<!-- fig:run.full.result -->53/55<!-- /fig -->** (<!-- fig:run.full.date -->2026-11-25<!-- /fig -->; Fable 5.2 and Claude Opus 5.5) · behaviour failures in <!-- fig:eval.early.pairs -->4<!-- /fig --> scenario-and-seat pairs caught by the full and quick runs before the first public release in mid-September, sessions given another model's doctrine page left out (the targeted reruns of those days failed <!-- fig:eval.early.targeted_pairs -->2<!-- /fig --> more), named on the evidence page, and every failure of a full, quick or seat run since in the evidence page's run table |
 | **The doctrine layer** *(optional)* | the nine-task set: <!-- fig:doctrine.configurations -->11<!-- /fig --> configurations (a model at one effort), each run **with a doctrine page and without** (its own page; for Sonnet 5 the Opus 5 page the loader gives it; for Sonnet 5.5 the Opus 5.5 page of 29 September, which the loader does not give it), <!-- fig:doctrine.overview_runs -->29<!-- /fig --> runs on the correctness-and-cost chart and <!-- fig:doctrine.nine.runs_total -->57<!-- /fig --> nine-task runs in all · the held-out set: eight tasks no page was written from, <!-- fig:doctrine.heldout_runs -->24<!-- /fig --> runs: the 29 September, 7 October and 19 October page revisions each against the page it replaced, Opus 5.5 medium on the 29 September page with no control run, and Sonnet 5.5 with the Opus 5.5 page and without one |
 
 Graded sessions are real Claude Code sessions in real (small) repositories, checked in code — files that must exist
@@ -338,8 +338,8 @@ python3 evals/run.py --quick            # the quick set of real sessions
 python3 evals/run.py                    # the full set
 ```
 
-As this tree ships: <!-- fig:tests.public -->623<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
-<!-- fig:run.quick.cost -->$10.86<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$40.89<!-- /fig -->.
+As this tree ships: <!-- fig:tests.public -->629<!-- /fig --> unit tests; the quick set is <!-- fig:eval.quick -->19<!-- /fig --> real sessions, and its last run cost
+<!-- fig:run.quick.cost -->$9.23<!-- /fig -->; the full set's last run cost <!-- fig:run.full.cost -->$32.76<!-- /fig -->.
 
 The graded sessions do not run in your own `~/.claude`. Each runs in a sealed config folder, `~/.claude-evals`
 (`--config` names another), which `run.py` rebuilds from `evals/sealed.json` before every batch: this clone's skills,
@@ -350,7 +350,7 @@ is not logged in, when one of its hooks does not resolve, or when your `claude -
 <!-- fig:eval.sealed.cli_version -->2.1.323<!-- /fig -->, the version whose bundled skills and plugins the sealed environment was reviewed on
 (`cli_version` in `evals/sealed.json`); it names both versions. To reproduce the published runs, run that version;
 `--probe` launches on another one, but grades every case's `sealed` check as unreviewed, never a pass. You also need
-a plan with both Fable 5.1 and Opus 5.5 (`--seat opus` runs the Opus scenarios on Opus 5 instead, and `--seat fable52` the Fable scenarios on Fable 5.2, whose page was tuned from its own measured misses on 13 November 2026); `--seat fable` or
+a plan with both Fable 5.2 and Opus 5.5, the seats in daily use (`--seat opus` runs the Opus scenarios on Opus 5 instead, and `--seat fable` the Fable scenarios on Fable 5.1, the Fable seat of the runs before 25 November 2026); `--seat fable52` or
 `--seat opus55` runs one of them. `docs/evidence.md` has the method, what each case checks, and what the numbers do
 and do not show.
 
